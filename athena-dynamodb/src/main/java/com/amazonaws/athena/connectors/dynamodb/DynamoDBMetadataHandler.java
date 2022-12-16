@@ -30,6 +30,8 @@ import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler;
+import com.amazonaws.athena.connector.lambda.metadata.GetDataSourceCapabilitiesRequest;
+import com.amazonaws.athena.connector.lambda.metadata.GetDataSourceCapabilitiesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
@@ -40,6 +42,9 @@ import com.amazonaws.athena.connector.lambda.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.glue.GlueFieldLexer;
+import com.amazonaws.athena.connector.lambda.metadata.optimizations.DataSourceOptimizations;
+import com.amazonaws.athena.connector.lambda.metadata.optimizations.FilterPushdownSubType;
+import com.amazonaws.athena.connector.lambda.metadata.optimizations.LimitPushdownSubType;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connectors.dynamodb.constants.DynamoDBConstants;
 import com.amazonaws.athena.connectors.dynamodb.model.DynamoDBIndex;
@@ -157,6 +162,19 @@ public class DynamoDBMetadataHandler
         this.glueClient = glueClient;
         this.ddbClient = ddbClient;
         this.tableResolver = new DynamoDBTableResolver(invoker, ddbClient);
+    }
+
+    @Override
+    public GetDataSourceCapabilitiesResponse doGetDataSourceCapabilities(BlockAllocator allocator, GetDataSourceCapabilitiesRequest request)
+    {
+        Map<String, List<String>> capabilities = new HashMap<>();
+        capabilities.putAll(DataSourceOptimizations.SUPPORTS_LIMIT_PUSHDOWN.withSupportedSubTypes(
+            LimitPushdownSubType.ALL
+        ));
+        capabilities.putAll(DataSourceOptimizations.SUPPORTS_FILTER_PUSHDOWN.withSupportedSubTypes(
+            FilterPushdownSubType.ALL
+        ));
+        return new GetDataSourceCapabilitiesResponse(request.getCatalogName(), capabilities);
     }
 
     /**
