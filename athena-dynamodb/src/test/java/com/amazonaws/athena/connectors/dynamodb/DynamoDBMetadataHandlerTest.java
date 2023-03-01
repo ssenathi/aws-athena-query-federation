@@ -20,6 +20,7 @@
 package com.amazonaws.athena.connectors.dynamodb;
 
 import com.amazonaws.AmazonServiceException;
+import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
@@ -30,7 +31,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.EquatableValueSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
@@ -42,6 +42,8 @@ import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
+import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.dynamodbv2.document.ItemUtils;
@@ -502,14 +504,21 @@ public class DynamoDBMetadataHandlerTest
                 SchemaBuilder.newBuilder().build(),
                 Collections.EMPTY_SET));
 
-        GetSplitsRequest req = new GetSplitsRequest(TEST_IDENTITY,
-                TEST_QUERY_ID,
-                TEST_CATALOG_NAME,
-                TEST_TABLE_NAME,
-                layoutResponse.getPartitions(),
-                ImmutableList.of(),
-                new Constraints(new HashMap<>()),
-                null);
+        GetSplitsRequest req = GetSplitsRequest.newBuilder()
+            .setIdentity(FederatedIdentity.newBuilder()
+                .setAccount(TEST_IDENTITY.getAccount())
+                .setArn(TEST_IDENTITY.getArn())
+                .build())
+            .setCatalogName(TEST_CATALOG_NAME)
+            .setQueryId(TEST_QUERY_ID)
+            .setTableName(
+                com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
+                .setSchemaName(TEST_TABLE_NAME.getSchemaName())
+                .setTableName(TEST_TABLE_NAME.getTableName())
+                .build())
+            .setPartitions(ProtoUtils.toProtoBlock(layoutResponse.getPartitions()))
+            .build();
+
         logger.info("doGetSplits: req[{}]", req);
 
         MetadataResponse rawResponse = handler.doGetSplits(allocator, req);
@@ -546,14 +555,23 @@ public class DynamoDBMetadataHandlerTest
                 SchemaBuilder.newBuilder().build(),
                 Collections.EMPTY_SET));
 
-        GetSplitsRequest req = new GetSplitsRequest(TEST_IDENTITY,
-                TEST_QUERY_ID,
-                TEST_CATALOG_NAME,
-                TEST_TABLE_NAME,
-                layoutResponse.getPartitions(),
-                ImmutableList.of("col_0"),
-                new Constraints(new HashMap<>()),
-                null);
+
+        GetSplitsRequest req = GetSplitsRequest.newBuilder()
+        .setIdentity(FederatedIdentity.newBuilder()
+            .setAccount(TEST_IDENTITY.getAccount())
+            .setArn(TEST_IDENTITY.getArn())
+            .build())
+        .setCatalogName(TEST_CATALOG_NAME)
+        .setQueryId(TEST_QUERY_ID)
+        .setTableName(
+            com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
+            .setSchemaName(TEST_TABLE_NAME.getSchemaName())
+            .setTableName(TEST_TABLE_NAME.getTableName())
+            .build())
+        .setPartitions(ProtoUtils.toProtoBlock(layoutResponse.getPartitions()))
+        .addAllPartitionCols(List.of("col_0"))
+        .build();
+
         logger.info("doGetSplits: req[{}]", req);
 
         GetSplitsResponse response = handler.doGetSplits(allocator, req);
@@ -567,7 +585,24 @@ public class DynamoDBMetadataHandlerTest
         assertThat(response.getSplits().size(), equalTo(MAX_SPLITS_PER_REQUEST));
         assertThat(response.getSplits().stream().map(split -> split.getProperty("col_0")).distinct().count(), equalTo((long) MAX_SPLITS_PER_REQUEST));
 
-        response = handler.doGetSplits(allocator, new GetSplitsRequest(req, continuationToken));
+        GetSplitsRequest nextReq = GetSplitsRequest.newBuilder()
+        .setIdentity(FederatedIdentity.newBuilder()
+            .setAccount(TEST_IDENTITY.getAccount())
+            .setArn(TEST_IDENTITY.getArn())
+            .build())
+        .setCatalogName(TEST_CATALOG_NAME)
+        .setQueryId(TEST_QUERY_ID)
+        .setTableName(
+            com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
+            .setSchemaName(TEST_TABLE_NAME.getSchemaName())
+            .setTableName(TEST_TABLE_NAME.getTableName())
+            .build())
+        .setPartitions(ProtoUtils.toProtoBlock(layoutResponse.getPartitions()))
+        .addAllPartitionCols(List.of("col_0"))
+        .setContinuationToken(continuationToken)
+        .build();
+
+        response = handler.doGetSplits(allocator, nextReq);
 
         logger.info("doGetSplits: continuationToken[{}] - numSplits[{}]", continuationToken, response.getSplits().size());
 

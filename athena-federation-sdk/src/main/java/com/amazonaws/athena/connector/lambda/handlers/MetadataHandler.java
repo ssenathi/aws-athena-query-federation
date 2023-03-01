@@ -34,7 +34,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.ConstraintEvaluato
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocationVerifier;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
@@ -46,6 +45,7 @@ import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequest;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationResponse;
 import com.amazonaws.athena.connector.lambda.request.PingRequest;
@@ -65,6 +65,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.AbstractMessage;
 import org.apache.arrow.vector.types.Types;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.Schema;
@@ -200,6 +201,16 @@ public abstract class MetadataHandler
         return (encryptionKeyFactory != null) ? encryptionKeyFactory.create() : null;
     }
 
+    protected SpillLocation makeSpillLocation(String queryId)
+    {
+        return S3SpillLocation.newBuilder()
+                .withBucket(spillBucket)
+                .withPrefix(spillPrefix)
+                .withQueryId(queryId)
+                .withSplitId(UUID.randomUUID().toString())
+                .build();
+    }
+
     /**
      * Used to make a spill location for a split. Each split should have a unique spill location, so be sure
      * to call this method once per split!
@@ -220,8 +231,18 @@ public abstract class MetadataHandler
             throws IOException
     {
         try (BlockAllocator allocator = new BlockAllocatorImpl()) {
+            byte[] allInputBytes = inputStream.readAllBytes();
+            // protobuf behavior
+            try {
+                var getSplitsRequest = GetSplitsRequest.parseFrom(allInputBytes);
+            }
+            catch (Exception e) {
+                //whatever
+            }
+
+          // behavior before protobuf
             ObjectMapper objectMapper = VersionedObjectMapperFactory.create(allocator);
-            try (FederationRequest rawReq = objectMapper.readValue(inputStream, FederationRequest.class)) {
+            try (FederationRequest rawReq = objectMapper.readValue(allInputBytes, FederationRequest.class)) {
                 if (rawReq instanceof PingRequest) {
                     try (PingResponse response = doPing((PingRequest) rawReq)) {
                         assertNotNull(response);
@@ -240,6 +261,19 @@ public abstract class MetadataHandler
                 logger.warn("handleRequest: Completed with an exception.", ex);
                 throw (ex instanceof RuntimeException) ? (RuntimeException) ex : new RuntimeException(ex);
             }
+        }
+    }
+
+    // for protobuf
+    protected final void doHandleRequest(BlockAllocator allocator,
+            AbstractMessage message,
+            OutputStream outputStream)
+            throws Exception
+    {
+        // TODO: add logic to figure out which method to call
+        // for now, just blindly call get splits
+        try (var response = doGetSplits(allocator, (GetSplitsRequest) message)) {
+            // todo: write once GetSplitsResponse is protobuf'd
         }
     }
 
@@ -281,14 +315,14 @@ public abstract class MetadataHandler
                     objectMapper.writeValue(outputStream, response);
                 }
                 return;
-            case GET_SPLITS:
-                verifier.checkBucketAuthZ(spillBucket);
-                try (GetSplitsResponse response = doGetSplits(allocator, (GetSplitsRequest) req)) {
-                    logger.info("doHandleRequest: response[{}]", response);
-                    assertNotNull(response);
-                    objectMapper.writeValue(outputStream, response);
-                }
-                return;
+//            case GET_SPLITS:
+//                verifier.checkBucketAuthZ(spillBucket);
+//                try (GetSplitsResponse response = doGetSplits(allocator, (GetSplitsRequest) req)) {
+//                    logger.info("doHandleRequest: response[{}]", response);
+//                    assertNotNull(response);
+//                    objectMapper.writeValue(outputStream, response);
+//                }
+//                return;
             default:
                 throw new IllegalArgumentException("Unknown request type " + type);
         }

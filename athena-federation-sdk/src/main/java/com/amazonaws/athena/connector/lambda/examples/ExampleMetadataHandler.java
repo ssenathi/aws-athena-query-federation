@@ -20,6 +20,7 @@ package com.amazonaws.athena.connector.lambda.examples;
  * #L%
  */
 
+import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
@@ -30,7 +31,6 @@ import com.amazonaws.athena.connector.lambda.domain.Split;
 import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.exceptions.FederationThrottleException;
 import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
@@ -39,6 +39,7 @@ import com.amazonaws.athena.connector.lambda.metadata.ListSchemasRequest;
 import com.amazonaws.athena.connector.lambda.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationRequest;
 import com.amazonaws.athena.connector.lambda.request.PingRequest;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
@@ -47,6 +48,7 @@ import com.amazonaws.athena.connector.lambda.security.FederatedIdentity;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.google.common.collect.ImmutableList;
+import com.google.protobuf.AbstractMessage;
 import org.apache.arrow.util.VisibleForTesting;
 import org.apache.arrow.vector.complex.reader.FieldReader;
 import org.apache.arrow.vector.types.DateUnit;
@@ -168,6 +170,10 @@ public class ExampleMetadataHandler
     {
         FederatedIdentity identity = request.getIdentity();
         logger.info("logCaller: account[" + identity.getAccount() + "] arn[" + identity.getArn() + "]");
+    }
+    private void logCaller(AbstractMessage request)
+    {
+      logger.info("logCaller: ...");
     }
 
     /**
@@ -353,7 +359,7 @@ public class ExampleMetadataHandler
     public GetSplitsResponse doGetSplits(BlockAllocator allocator, GetSplitsRequest request)
     {
         logCaller(request);
-        logger.info("doGetSplits: spill location " + makeSpillLocation(request));
+        logger.info("doGetSplits: spill location " + makeSpillLocation(request.getQueryId()));
 
         /**
          * It is important to try and throw any throttling events before writing data since Athena may not be able to
@@ -369,7 +375,7 @@ public class ExampleMetadataHandler
         int partContd = requestToken.getPart();
 
         Set<Split> splits = new HashSet<>();
-        Block partitions = request.getPartitions();
+        Block partitions = ProtoUtils.fromProtoBlock(allocator, request.getPartitions());
         for (int curPartition = partitionContd; curPartition < partitions.getRowCount(); curPartition++) {
             //We use the makeEncryptionKey() method from our parent class to make an EncryptionKey
             EncryptionKey encryptionKey = makeEncryptionKey();
@@ -392,7 +398,7 @@ public class ExampleMetadataHandler
                 }
 
                 //We use makeSpillLocation(...) from our parent class to get a unique SpillLocation for each split
-                Split.Builder splitBuilder = Split.newBuilder(makeSpillLocation(request), encryptionEnabled ? encryptionKey : null)
+                Split.Builder splitBuilder = Split.newBuilder(makeSpillLocation(request.getQueryId()), encryptionEnabled ? encryptionKey : null)
                         .add(SplitProperties.LOCATION.getId(), String.valueOf(locationReader.readText()))
                         .add(SplitProperties.SERDE.getId(), String.valueOf(storageClassReader.readText()))
                         .add(SplitProperties.SPLIT_PART.getId(), String.valueOf(curPart));
@@ -400,7 +406,7 @@ public class ExampleMetadataHandler
                 //Add the partition column values to the split's properties.
                 //We are doing this because our example record reader depends on it, your specific needs
                 //will likely vary. Our example only supports a limited number of partition column types.
-                for (String next : request.getPartitionCols()) {
+                for (String next : request.getPartitionColsList()) {
                     FieldReader reader = partitions.getFieldReader(next);
                     reader.setPosition(curPartition);
 

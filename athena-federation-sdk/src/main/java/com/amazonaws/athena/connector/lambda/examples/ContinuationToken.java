@@ -1,5 +1,7 @@
 package com.amazonaws.athena.connector.lambda.examples;
 
+import com.google.common.base.Strings;
+
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
@@ -74,7 +76,8 @@ public class ContinuationToken
      */
     public static ContinuationToken decode(String token)
     {
-        if (token != null) {
+        // protobuf defaults strings to the empty string, whereas our constructors will right now set this field as null if it is not provided
+        if (!Strings.isNullOrEmpty(token)) {
             //if we have a continuation token, lets decode it. The format of this token is owned by this class
             String[] tokenParts = token.split(CONTINUATION_TOKEN_DIVIDER);
 

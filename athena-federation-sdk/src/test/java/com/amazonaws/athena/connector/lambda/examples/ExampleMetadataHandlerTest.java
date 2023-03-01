@@ -20,6 +20,7 @@ package com.amazonaws.athena.connector.lambda.examples;
  * #L%
  */
 
+import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.data.BlockUtils;
@@ -30,7 +31,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
@@ -42,6 +42,7 @@ import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.athena.connector.lambda.serde.ObjectMapperUtil;
@@ -311,16 +312,39 @@ public class ExampleMetadataHandlerTest
         partitions.setRowCount(num_partitions);
 
         String continuationToken = null;
-        GetSplitsRequest originalReq = new GetSplitsRequest(IdentityUtil.fakeIdentity(), "queryId", "catalog_name",
-                new TableName("schema", "table_name"),
-                partitions,
-                partitionCols,
-                new Constraints(constraintsMap),
-                continuationToken);
         int numContinuations = 0;
         do {
-            GetSplitsRequest req = new GetSplitsRequest(originalReq, continuationToken);
-            ObjectMapperUtil.assertSerialization(req);
+            // TODO - figure out right way to copy a Message
+
+            GetSplitsRequest.Builder reqBuilder = GetSplitsRequest.newBuilder()
+            .setIdentity(
+                com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity.newBuilder()
+                    .setPrincipal("principal")
+                    .setAccount("123")
+                    .setArn("arn")
+                    .build())
+            .setQueryId("queryId")
+            .setCatalogName("catalog_name")
+            .setTableName(
+                com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
+                .setSchemaName("schema")
+                .setTableName("table_name")
+                .build()
+            )
+            .setPartitions(ProtoUtils.toProtoBlock(partitions))
+            .setConstraints(
+                com.amazonaws.athena.connector.lambda.proto.domain.predicate.Constraints.newBuilder()
+                .putAllSummary(ProtoUtils.toProtoSummary(constraintsMap))
+                .build()
+            )
+            .addAllPartitionCols(partitionCols);
+
+            if (continuationToken != null)
+            {
+                reqBuilder.setContinuationToken(continuationToken);
+            }
+            GetSplitsRequest req = reqBuilder.build();
+            
 
             logger.info("doGetSplits: req[{}]", req);
             metadataHandler.setEncryption(numContinuations % 2 == 0);

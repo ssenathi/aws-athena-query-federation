@@ -23,6 +23,7 @@ package com.amazonaws.athena.connector.lambda.handlers;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.records.RecordRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationResponse;
@@ -33,6 +34,8 @@ import com.amazonaws.athena.connector.lambda.udf.UserDefinedFunctionRequest;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.AbstractMessage;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,8 +98,19 @@ public class CompositeHandler
             throws IOException
     {
         try (BlockAllocatorImpl allocator = new BlockAllocatorImpl()) {
+            // TODO: if inputStream can be processed as a protobuf message, call the protobuf handleRequest method instead.
+            byte[] allInputBytes = inputStream.readAllBytes();
+            try {
+                GetSplitsRequest.parseFrom(allInputBytes);
+            } 
+            catch (InvalidProtocolBufferException e) {
+                // just log and continue
+                logger.warn("handleRequest: failed to process request as a GetSplitsRequest (this is not abnormal)");
+            }
+            
+
             ObjectMapper objectMapper = VersionedObjectMapperFactory.create(allocator);
-            try (FederationRequest rawReq = objectMapper.readValue(inputStream, FederationRequest.class)) {
+            try (FederationRequest rawReq = objectMapper.readValue(allInputBytes, FederationRequest.class)) {
                 if (rawReq instanceof MetadataRequest) {
                     ((MetadataRequest) rawReq).setContext(context);
                 }
@@ -107,6 +121,16 @@ public class CompositeHandler
             logger.warn("handleRequest: Completed with an exception.", ex);
             throw (ex instanceof RuntimeException) ? (RuntimeException) ex : new RuntimeException(ex);
         }
+    }
+
+    /**
+     * For protobuf
+     */
+    public final void handleRequest(BlockAllocator allocator, AbstractMessage protobufMessage, OutputStream outputStream)
+            throws Exception
+    {
+        // TODO: add logic to figure out which handler to pass this to
+        metadataHandler.doHandleRequest(allocator, protobufMessage, outputStream);
     }
 
     /**

@@ -20,6 +20,7 @@
 package com.amazonaws.athena.connectors.dynamodb;
 
 import com.amazonaws.athena.connector.credentials.CrossAccountCredentialsProvider;
+import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.ThrottlingInvoker;
 import com.amazonaws.athena.connector.lambda.data.Block;
@@ -31,7 +32,6 @@ import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
@@ -41,6 +41,7 @@ import com.amazonaws.athena.connector.lambda.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.glue.GlueFieldLexer;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connectors.dynamodb.constants.DynamoDBConstants;
 import com.amazonaws.athena.connectors.dynamodb.model.DynamoDBIndex;
@@ -408,7 +409,7 @@ public class DynamoDBMetadataHandler
     {
         int partitionContd = decodeContinuationToken(request);
         Set<Split> splits = new HashSet<>();
-        Block partitions = request.getPartitions();
+        Block partitions = ProtoUtils.fromProtoBlock(allocator, request.getPartitions());
         Map<String, String> partitionMetadata = partitions.getSchema().getCustomMetadata();
         String partitionType = partitionMetadata.get(PARTITION_TYPE_METADATA);
         if (partitionType == null) {
@@ -422,7 +423,7 @@ public class DynamoDBMetadataHandler
                 hashKeyValueReader.setPosition(curPartition);
 
                 //Every split must have a unique location if we wish to spill to avoid failures
-                SpillLocation spillLocation = makeSpillLocation(request);
+                SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
 
                 // copy all partition metadata to the split
                 Map<String, String> splitMetadata = new HashMap<>(partitionMetadata);
@@ -448,7 +449,7 @@ public class DynamoDBMetadataHandler
             int segmentCount = segmentCountReader.readInteger();
             for (int curPartition = partitionContd; curPartition < segmentCount; curPartition++) {
                 //Every split must have a unique location if we wish to spill to avoid failures
-                SpillLocation spillLocation = makeSpillLocation(request);
+                SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
 
                 // copy all partition metadata to the split
                 Map<String, String> splitMetadata = new HashMap<>(partitionMetadata);
