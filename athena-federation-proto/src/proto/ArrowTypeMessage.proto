@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package com.amazonaws.athena.connector.lambda.proto.arrowtype;
+
+option java_multiple_files = true;
+
+enum Precision { // constructor variable for ArrowType.FloatingPoint
+  DOUBLE = 0;
+  HALF = 1;
+  SINGLE = 2;
+}
+
+message FloatingPoint { // subtype of ArrowType
+  optional Precision precision = 1;
+}
+
+// TODO: All of the subclasses (we support) need to be in the oneof subtype field below.
+// refer to athena-federation-sdk/src/main/java/com/amazonaws/athena/connector/lambda/serde/v2/ArrowTypeSerDe.java for those types
+message ArrowTypeMessage {
+  optional string type = 1 [json_name="@type"];
+  oneof subtype {
+    FloatingPoint floatingPoint = 2;
+  }
+}
