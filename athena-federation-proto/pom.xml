@@ -49,17 +49,24 @@ Adapted from https://github.com/apache/avro/blob/master/doc/examples/java-exampl
                 <inputDirectories>
                   <include>src/proto</include>
                 </inputDirectories>
-              				<outputTargets>
-					<outputTarget>
-						<type>java</type>
-						<addSources>none</addSources>
-						<outputDirectory>src/main/java</outputDirectory>
-					</outputTarget>
-				</outputTargets>
+                <outputTargets>
+                  <outputTarget>
+                    <type>java</type>
+                    <addSources>none</addSources>
+                    <outputDirectory>src/main/java</outputDirectory>
+                  </outputTarget>
+                </outputTargets>
               </configuration>
             </execution>
           </executions>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-checkstyle-plugin</artifactId>
+          <configuration>
+              <skip>true</skip>
+          </configuration>
+      </plugin>
     </plugins>
     <pluginManagement>
       <plugins>
