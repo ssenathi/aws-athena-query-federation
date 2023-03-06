@@ -24,6 +24,7 @@ import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
+import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
 import com.amazonaws.athena.connector.lambda.records.RecordRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationResponse;
@@ -42,6 +43,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 /**
  * This class allows you to have a single Lambda function be responsible for both metadata and data operations by
@@ -101,11 +105,13 @@ public class CompositeHandler
             // TODO: if inputStream can be processed as a protobuf message, call the protobuf handleRequest method instead.
             byte[] allInputBytes = inputStream.readAllBytes();
             try {
-                GetSplitsRequest.parseFrom(allInputBytes);
+                TypeHeader typeHeader = TypeHeader.parseFrom(allInputBytes);
+                handleRequest(allocator, typeHeader, allInputBytes, outputStream);
+                return; // if protobuf was successful, stop
             } 
             catch (InvalidProtocolBufferException e) {
-                // just log and continue
-                logger.warn("handleRequest: failed to process request as a GetSplitsRequest (this is not abnormal)");
+                // could not parse as a protobuf message
+                logger.warn("Could not parse input as a protobuf message (this is not abnormal yet)");
             }
             
 
@@ -123,14 +129,39 @@ public class CompositeHandler
         }
     }
 
+    // Needed to handle the checked exceptions from the protobuf parseFrom method
+    private AbstractMessage uncheckedWrapper(Callable<AbstractMessage> callable)
+    {
+        try {
+            return callable.call();
+        }
+        catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     /**
      * For protobuf
      */
-    public final void handleRequest(BlockAllocator allocator, AbstractMessage protobufMessage, OutputStream outputStream)
+    public final void handleRequest(BlockAllocator allocator, TypeHeader typeHeader, byte[] inputBytes, OutputStream outputStream)
             throws Exception
     {
         // TODO: add logic to figure out which handler to pass this to
-        metadataHandler.doHandleRequest(allocator, protobufMessage, outputStream);
+        String type = typeHeader.getType();
+        Map<String, Function<byte[], AbstractMessage>> parserMap = Map.of(
+            "@GetSplitsRequest", (byte[] in) -> uncheckedWrapper(() -> GetSplitsRequest.parseFrom(in)) 
+        );
+        AbstractMessage msg = parserMap.get(type).apply(inputBytes);
+
+        // TODO: once we add ping / records /other requests, uncomment below and remove this.
+        metadataHandler.doHandleRequest(allocator, msg, outputStream); 
+//        if (msg instanceof PingRequest) {
+//
+//        } else if (msg instanceof ReadRecordsRequest) {
+//
+//        } else {
+//            metadataHandler.doHandleRequest(allocator, msg, outputStream); 
+//        }
     }
 
     /**

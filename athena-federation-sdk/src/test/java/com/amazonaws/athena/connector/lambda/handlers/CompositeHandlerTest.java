@@ -40,6 +40,7 @@ import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
+import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
 import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.records.ReadRecordsResponse;
 import com.amazonaws.athena.connector.lambda.request.PingRequest;
@@ -211,7 +212,16 @@ public class CompositeHandlerTest
         SpillLocationVerifier mockVerifier = mock(SpillLocationVerifier.class);
         doNothing().when(mockVerifier).checkBucketAuthZ(nullable(String.class));
         Whitebox.setInternalState(mockMetadataHandler, "verifier", mockVerifier);
-        compositeHandler.handleRequest(allocator, req, new ByteArrayOutputStream());
+        
+        TypeHeader typeHeader = TypeHeader.newBuilder()
+            .setType("@GetSplitsRequest")
+            .build();
+        GetSplitsRequest request = GetSplitsRequest.newBuilder()
+            .setType("@GetSplitsRequest")
+            .build();
+        byte[] inputBytes = request.toByteArray(); // equivalent to serializing and loading into byte array
+
+        compositeHandler.handleRequest(allocator, typeHeader, inputBytes, new ByteArrayOutputStream());
         verify(mockMetadataHandler, times(1)).doGetSplits(nullable(BlockAllocatorImpl.class), nullable(GetSplitsRequest.class));
     }
 
