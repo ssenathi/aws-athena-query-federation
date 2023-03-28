@@ -31,7 +31,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
@@ -43,6 +42,7 @@ import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.athena.connector.lambda.serde.ObjectMapperUtil;
@@ -50,6 +50,9 @@ import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.lambda.invoke.LambdaFunctionException;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.google.common.collect.ImmutableList;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
+
 import org.apache.arrow.vector.types.Types;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Schema;
@@ -269,9 +272,10 @@ public class ExampleMetadataHandlerTest
     /**
      * The goal of this test is to test happy case for getting splits and also to exercise the continuation token
      * logic specifically.
+     * @throws InvalidProtocolBufferException
      */
     @Test
-    public void doGetSplits()
+    public void doGetSplits() throws InvalidProtocolBufferException
     {
         logger.info("doGetSplits: enter");
 
@@ -313,6 +317,7 @@ public class ExampleMetadataHandlerTest
 
         String continuationToken = null;
         int numContinuations = 0;
+        boolean hasContinuationToken = false;
         do {
             // TODO - figure out right way to copy a Message
 
@@ -350,37 +355,39 @@ public class ExampleMetadataHandlerTest
             metadataHandler.setEncryption(numContinuations % 2 == 0);
             logger.info("doGetSplits: Toggle encryption " + (numContinuations % 2 == 0));
 
-            MetadataResponse rawResponse = metadataHandler.doGetSplits(allocator, req);
-            ObjectMapperUtil.assertSerialization(rawResponse);
-
-            assertEquals(MetadataRequestType.GET_SPLITS, rawResponse.getRequestType());
-
-            GetSplitsResponse response = (GetSplitsResponse) rawResponse;
+            GetSplitsResponse response = metadataHandler.doGetSplits(allocator, req);
+            // assertEquals(MetadataRequestType.GET_SPLITS, rawResponse.getRequestType());
             continuationToken = response.getContinuationToken();
 
             logger.info("doGetSplits: continuationToken[{}] - numSplits[{}] - maxSplits[{}]",
-                    new Object[] {continuationToken, response.getSplits().size(), MAX_SPLITS_PER_REQUEST});
+                    new Object[] {continuationToken, response.getSplitsList().size(), MAX_SPLITS_PER_REQUEST});
 
-            for (Split nextSplit : response.getSplits()) {
+            for (com.amazonaws.athena.connector.lambda.proto.domain.Split nextSplit : response.getSplitsList()) {
                 if (numContinuations % 2 == 0) {
                     assertNotNull(nextSplit.getEncryptionKey());
                 }
                 else {
-                    assertNull(nextSplit.getEncryptionKey());
+                    assertEquals(com.google.protobuf.ByteString.EMPTY, nextSplit.getEncryptionKey().getKey());
+                    assertEquals(com.google.protobuf.ByteString.EMPTY, nextSplit.getEncryptionKey().getNonce());
                 }
-                assertNotNull(nextSplit.getProperty(SplitProperties.LOCATION.getId()));
-                assertNotNull(nextSplit.getProperty(SplitProperties.SERDE.getId()));
-                assertNotNull(nextSplit.getProperty(SplitProperties.SPLIT_PART.getId()));
+                assertNotNull(nextSplit.getPropertiesMap().get(SplitProperties.LOCATION.getId()));
+                assertNotNull(nextSplit.getPropertiesMap().get(SplitProperties.SERDE.getId()));
+                assertNotNull(nextSplit.getPropertiesMap().get(SplitProperties.SPLIT_PART.getId()));
             }
 
-            assertTrue("Continuation criteria violated", (response.getSplits().size() == MAX_SPLITS_PER_REQUEST &&
-                    response.getContinuationToken() != null) || response.getSplits().size() < MAX_SPLITS_PER_REQUEST);
+            assertTrue("Continuation criteria violated", (response.getSplitsList().size() == MAX_SPLITS_PER_REQUEST &&
+                    response.hasContinuationToken()) || response.getSplitsList().size() < MAX_SPLITS_PER_REQUEST);
 
-            if (continuationToken != null) {
+            if (response.hasContinuationToken()) {
                 numContinuations++;
             }
+
+            hasContinuationToken = response.hasContinuationToken();
+
+            logger.info("Logging response from protobuf. {}", JsonFormat.printer().print(response));
+            logger.info("done logging response");
         }
-        while (continuationToken != null);
+        while (hasContinuationToken);
 
         assertTrue(numContinuations > 0);
 

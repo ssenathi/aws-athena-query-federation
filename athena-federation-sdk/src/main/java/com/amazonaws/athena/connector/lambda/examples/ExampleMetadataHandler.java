@@ -31,7 +31,6 @@ import com.amazonaws.athena.connector.lambda.domain.Split;
 import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.exceptions.FederationThrottleException;
 import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
@@ -40,6 +39,7 @@ import com.amazonaws.athena.connector.lambda.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.request.FederationRequest;
 import com.amazonaws.athena.connector.lambda.request.PingRequest;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
@@ -392,9 +392,24 @@ public class ExampleMetadataHandler
                 if (splits.size() >= MAX_SPLITS_PER_REQUEST) {
                     //We exceeded the number of split we want to return in a single request, return and provide
                     //a continuation token.
-                    return new GetSplitsResponse(request.getCatalogName(),
-                            splits,
-                            ContinuationToken.encode(curPartition, curPart));
+                    return GetSplitsResponse.newBuilder()
+                        .setCatalogName(request.getCatalogName())
+                        .addAllSplits(
+                            splits.stream()
+                                .map(s -> { 
+                                    com.amazonaws.athena.connector.lambda.proto.domain.Split.Builder protoSplitBuilder = com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder()
+                                        .putAllProperties(s.getProperties());
+                                    if (s.getEncryptionKey() != null) {
+                                        protoSplitBuilder.setEncryptionKey(com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey.newBuilder()
+                                            .setKey(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getKey()))
+                                            .setNonce(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getNonce()))
+                                            .build());
+                                    }
+                                    return protoSplitBuilder.build();
+                                }).collect(Collectors.toList())
+                        )
+                        .setContinuationToken(ContinuationToken.encode(curPartition, curPart))
+                        .build();
                 }
 
                 //We use makeSpillLocation(...) from our parent class to get a unique SpillLocation for each split
@@ -434,8 +449,23 @@ public class ExampleMetadataHandler
             //to the next one.
             partContd = 0;
         }
-
-        return new GetSplitsResponse(request.getCatalogName(), splits, null);
+        return GetSplitsResponse.newBuilder()
+            .setCatalogName(request.getCatalogName())
+            .addAllSplits(
+                splits.stream()
+                    .map(s -> { 
+                        com.amazonaws.athena.connector.lambda.proto.domain.Split.Builder protoSplitBuilder = com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder()
+                            .putAllProperties(s.getProperties());
+                        if (s.getEncryptionKey() != null) {
+                            protoSplitBuilder.setEncryptionKey(com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey.newBuilder()
+                                .setKey(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getKey()))
+                                .setNonce(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getNonce()))
+                                .build());
+                        }
+                        return protoSplitBuilder.build();
+                    }).collect(Collectors.toList())
+            )
+            .build();
     }
 
     /**

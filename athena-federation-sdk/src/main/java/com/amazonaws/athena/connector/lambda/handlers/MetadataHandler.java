@@ -34,7 +34,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.ConstraintEvaluato
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocationVerifier;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
@@ -46,6 +45,8 @@ import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequest;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
 import com.amazonaws.athena.connector.lambda.request.FederationRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationResponse;
 import com.amazonaws.athena.connector.lambda.request.PingRequest;
@@ -270,10 +271,15 @@ public abstract class MetadataHandler
             OutputStream outputStream)
             throws Exception
     {
-        // TODO: add logic to figure out which method to call
-        // for now, just blindly call get splits
-        try (var response = doGetSplits(allocator, (GetSplitsRequest) message)) {
-            // todo: write once GetSplitsResponse is protobuf'd
+        // we maintain an invariant that every request type can be coerced into a TypeHeader.
+        TypeHeader typeHeader = (TypeHeader) message;
+
+        switch(typeHeader.getType()) {
+            case "GetSplitsRequest":
+                GetSplitsResponse response = doGetSplits(allocator, (GetSplitsRequest) message);
+                response.writeTo(outputStream);
+            default:
+              logger.error("Input type {} is not yet supported.", typeHeader.getType()); 
         }
     }
 

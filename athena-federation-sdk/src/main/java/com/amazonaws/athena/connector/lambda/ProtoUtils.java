@@ -28,6 +28,7 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.Marker;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
+import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.serde.v3.BlockSerDeV3;
 import com.google.protobuf.ByteString;
 import org.apache.arrow.vector.ipc.ReadChannel;
@@ -267,5 +268,14 @@ public class ProtoUtils
         }
 
         return block;
+    }
+
+    public static com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation toSpillLocation(S3SpillLocation s3SpillLocation)
+    {
+        return com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation.newBuilder()
+            .setBucket(s3SpillLocation.getBucket())
+            .setKey(s3SpillLocation.getKey())
+            .setDirectory(s3SpillLocation.isDirectory())
+            .build();
     }
 }

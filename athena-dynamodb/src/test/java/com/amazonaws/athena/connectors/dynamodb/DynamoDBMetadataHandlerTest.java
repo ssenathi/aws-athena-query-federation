@@ -31,7 +31,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.EquatableValueSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
@@ -43,6 +42,7 @@ import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.services.athena.AmazonAthena;
@@ -521,18 +521,16 @@ public class DynamoDBMetadataHandlerTest
 
         logger.info("doGetSplits: req[{}]", req);
 
-        MetadataResponse rawResponse = handler.doGetSplits(allocator, req);
-        assertThat(rawResponse.getRequestType(), equalTo(MetadataRequestType.GET_SPLITS));
-
-        GetSplitsResponse response = (GetSplitsResponse) rawResponse;
+        GetSplitsResponse response = handler.doGetSplits(allocator, req);
+        assertThat(response.getType(), equalTo("GetSplitsResponse"));
         String continuationToken = response.getContinuationToken();
 
-        logger.info("doGetSplits: continuationToken[{}] - numSplits[{}]", continuationToken, response.getSplits().size());
+        logger.info("doGetSplits: continuationToken[{}] - numSplits[{}]", continuationToken, response.getSplitsList().size());
 
-        assertThat(continuationToken == null, is(true));
+        assertThat(response.hasContinuationToken(), is(false));
 
-        Split split = Iterables.getOnlyElement(response.getSplits());
-        assertThat(split.getProperty(SEGMENT_ID_PROPERTY), equalTo("0"));
+        com.amazonaws.athena.connector.lambda.proto.domain.Split split = Iterables.getOnlyElement(response.getSplitsList());
+        assertThat(split.getPropertiesMap().get(SEGMENT_ID_PROPERTY), equalTo("0"));
 
         logger.info("doGetSplitsScan: exit");
     }
@@ -575,15 +573,15 @@ public class DynamoDBMetadataHandlerTest
         logger.info("doGetSplits: req[{}]", req);
 
         GetSplitsResponse response = handler.doGetSplits(allocator, req);
-        assertThat(response.getRequestType(), equalTo(MetadataRequestType.GET_SPLITS));
+        assertThat(response.getType(), equalTo("GetSplitsResponse"));
 
         String continuationToken = response.getContinuationToken();
 
-        logger.info("doGetSplits: continuationToken[{}] - numSplits[{}]", continuationToken, response.getSplits().size());
+        logger.info("doGetSplits: continuationToken[{}] - numSplits[{}]", continuationToken, response.getSplitsList().size());
 
         assertThat(continuationToken, equalTo(String.valueOf(MAX_SPLITS_PER_REQUEST - 1)));
-        assertThat(response.getSplits().size(), equalTo(MAX_SPLITS_PER_REQUEST));
-        assertThat(response.getSplits().stream().map(split -> split.getProperty("col_0")).distinct().count(), equalTo((long) MAX_SPLITS_PER_REQUEST));
+        assertThat(response.getSplitsList().size(), equalTo(MAX_SPLITS_PER_REQUEST));
+        assertThat(response.getSplitsList().stream().map(split -> split.getPropertiesMap().get("col_0")).distinct().count(), equalTo((long) MAX_SPLITS_PER_REQUEST));
 
         GetSplitsRequest nextReq = GetSplitsRequest.newBuilder()
         .setIdentity(FederatedIdentity.newBuilder()
@@ -604,11 +602,11 @@ public class DynamoDBMetadataHandlerTest
 
         response = handler.doGetSplits(allocator, nextReq);
 
-        logger.info("doGetSplits: continuationToken[{}] - numSplits[{}]", continuationToken, response.getSplits().size());
+        logger.info("doGetSplits: continuationToken[{}] - numSplits[{}]", continuationToken, response.getSplitsList().size());
 
-        assertThat(response.getContinuationToken(), equalTo(null));
-        assertThat(response.getSplits().size(), equalTo(MAX_SPLITS_PER_REQUEST));
-        assertThat(response.getSplits().stream().map(split -> split.getProperty("col_0")).distinct().count(), equalTo((long) MAX_SPLITS_PER_REQUEST));
+        assertThat(response.hasContinuationToken(), equalTo(false));
+        assertThat(response.getSplitsList().size(), equalTo(MAX_SPLITS_PER_REQUEST));
+        assertThat(response.getSplitsList().stream().map(split -> split.getPropertiesMap().get("col_0")).distinct().count(), equalTo((long) MAX_SPLITS_PER_REQUEST));
     }
 
     @Test

@@ -29,7 +29,6 @@ import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocationVerifier;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
@@ -40,6 +39,7 @@ import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
 import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.records.ReadRecordsResponse;
@@ -120,7 +120,7 @@ public class CompositeHandlerTest
                 .thenReturn(new ListSchemasResponse("catalog", Collections.singleton("schema1")));
 
         when(mockMetadataHandler.doGetSplits(nullable(BlockAllocatorImpl.class), nullable(GetSplitsRequest.class)))
-                .thenReturn(new GetSplitsResponse("catalog", Split.newBuilder(null, null).build()));
+                .thenReturn(GetSplitsResponse.newBuilder().setCatalogName("catalog").addSplits(com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder().build()).build());
 
         when(mockMetadataHandler.doPing(nullable(PingRequest.class)))
                 .thenReturn(new PingResponse("catalog", "queryId", "type", 23, 2));

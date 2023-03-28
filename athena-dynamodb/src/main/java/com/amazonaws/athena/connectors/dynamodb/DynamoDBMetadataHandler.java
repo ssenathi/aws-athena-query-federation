@@ -30,9 +30,9 @@ import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
 import com.amazonaws.athena.connector.lambda.domain.Split;
 import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
+import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
@@ -42,6 +42,7 @@ import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.glue.GlueFieldLexer;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connectors.dynamodb.constants.DynamoDBConstants;
 import com.amazonaws.athena.connectors.dynamodb.model.DynamoDBIndex;
@@ -437,12 +438,41 @@ public class DynamoDBMetadataHandler
                 if (splits.size() == MAX_SPLITS_PER_REQUEST && curPartition != partitions.getRowCount() - 1) {
                     // We've reached max page size and this is not the last partition
                     // so send the page back
-                    return new GetSplitsResponse(request.getCatalogName(),
-                            splits,
-                            encodeContinuationToken(curPartition));
+                    return GetSplitsResponse.newBuilder()
+                        .setType("GetSplitsResponse")
+                        .setCatalogName(request.getCatalogName())
+                        .addAllSplits(splits.stream()
+                            .map(s -> com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder()
+                                .setEncryptionKey(
+                                    com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey.newBuilder()
+                                        .setKey(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getKey()))
+                                        .setNonce(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getNonce()))
+                                    .build()
+                                ).setSpillLocation(ProtoUtils.toSpillLocation((S3SpillLocation) s.getSpillLocation()))
+                                .putAllProperties(s.getProperties())
+                                .build()
+                            ).collect(Collectors.toList())
+                        )
+                        .setContinuationToken(encodeContinuationToken(curPartition))
+                        .build();
                 }
             }
-            return new GetSplitsResponse(request.getCatalogName(), splits, null);
+            return GetSplitsResponse.newBuilder()
+                .setType("GetSplitsResponse")
+                .setCatalogName(request.getCatalogName())
+                .addAllSplits(splits.stream()
+                    .map(s -> com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder()
+                        .setEncryptionKey(
+                            com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey.newBuilder()
+                                .setKey(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getKey()))
+                                .setNonce(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getNonce()))
+                            .build()
+                        ).setSpillLocation(ProtoUtils.toSpillLocation((S3SpillLocation) s.getSpillLocation()))
+                        .putAllProperties(s.getProperties())
+                        .build()
+                    ).collect(Collectors.toList())
+                )
+                .build();
         }
         else if (SCAN_PARTITION_TYPE.equals(partitionType)) {
             FieldReader segmentCountReader = partitions.getFieldReader(SEGMENT_COUNT_METADATA);
@@ -462,12 +492,41 @@ public class DynamoDBMetadataHandler
                 if (splits.size() == MAX_SPLITS_PER_REQUEST && curPartition != segmentCount - 1) {
                     // We've reached max page size and this is not the last partition
                     // so send the page back
-                    return new GetSplitsResponse(request.getCatalogName(),
-                            splits,
-                            encodeContinuationToken(curPartition));
+                    return GetSplitsResponse.newBuilder()
+                        .setType("GetSplitsResponse")
+                        .setCatalogName(request.getCatalogName())
+                        .addAllSplits(splits.stream()
+                            .map(s -> com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder()
+                                .setEncryptionKey(
+                                    com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey.newBuilder()
+                                        .setKey(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getKey()))
+                                        .setNonce(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getNonce()))
+                                    .build()
+                                ).setSpillLocation(ProtoUtils.toSpillLocation((S3SpillLocation) s.getSpillLocation()))
+                                .putAllProperties(s.getProperties())
+                                .build()
+                            ).collect(Collectors.toList())
+                        )
+                        .setContinuationToken(encodeContinuationToken(curPartition))
+                        .build();
                 }
             }
-            return new GetSplitsResponse(request.getCatalogName(), splits, null);
+            return GetSplitsResponse.newBuilder()
+                        .setType("GetSplitsResponse")
+                        .setCatalogName(request.getCatalogName())
+                        .addAllSplits(splits.stream()
+                            .map(s -> com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder()
+                                .setEncryptionKey(
+                                    com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey.newBuilder()
+                                        .setKey(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getKey()))
+                                        .setNonce(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getNonce()))
+                                    .build()
+                                ).setSpillLocation(ProtoUtils.toSpillLocation((S3SpillLocation) s.getSpillLocation()))
+                                .putAllProperties(s.getProperties())
+                                .build()
+                            ).collect(Collectors.toList())
+                        )
+                        .build();
         }
         else {
             throw new IllegalStateException("Unexpected partition type " + partitionType);
