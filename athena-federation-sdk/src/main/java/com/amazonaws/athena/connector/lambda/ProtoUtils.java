@@ -273,6 +273,7 @@ public class ProtoUtils
     public static com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation toSpillLocation(S3SpillLocation s3SpillLocation)
     {
         return com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation.newBuilder()
+            .setType("S3SpillLocation")
             .setBucket(s3SpillLocation.getBucket())
             .setKey(s3SpillLocation.getKey())
             .setDirectory(s3SpillLocation.isDirectory())

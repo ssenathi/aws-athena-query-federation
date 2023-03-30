@@ -40,14 +40,16 @@ import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.request.PingRequest;
+import com.amazonaws.athena.connector.lambda.proto.request.PingResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
 import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.records.ReadRecordsResponse;
-import com.amazonaws.athena.connector.lambda.request.PingRequest;
-import com.amazonaws.athena.connector.lambda.request.PingResponse;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.serde.ObjectMapperFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.protobuf.util.JsonFormat;
+
 import org.apache.arrow.vector.types.Types;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Schema;
@@ -61,6 +63,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
@@ -123,7 +126,7 @@ public class CompositeHandlerTest
                 .thenReturn(GetSplitsResponse.newBuilder().setCatalogName("catalog").addSplits(com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder().build()).build());
 
         when(mockMetadataHandler.doPing(nullable(PingRequest.class)))
-                .thenReturn(new PingResponse("catalog", "queryId", "type", 23, 2));
+                .thenReturn(PingResponse.newBuilder().setCatalogName("catalog").setQueryId("queryId").setSourceType("type").setCapabilities(23).setSerDeVersion(2).build());
 
         when(mockRecordHandler.doReadRecords(nullable(BlockAllocatorImpl.class), nullable(ReadRecordsRequest.class)))
                 .thenReturn(new ReadRecordsResponse("catalog",
@@ -208,20 +211,19 @@ public class CompositeHandlerTest
     public void doGetSplits()
             throws Exception
     {
-        GetSplitsRequest req = GetSplitsRequest.newBuilder().build();
         SpillLocationVerifier mockVerifier = mock(SpillLocationVerifier.class);
         doNothing().when(mockVerifier).checkBucketAuthZ(nullable(String.class));
         Whitebox.setInternalState(mockMetadataHandler, "verifier", mockVerifier);
         
         TypeHeader typeHeader = TypeHeader.newBuilder()
-            .setType("@GetSplitsRequest")
+            .setType("GetSplitsRequest")
             .build();
         GetSplitsRequest request = GetSplitsRequest.newBuilder()
-            .setType("@GetSplitsRequest")
+            .setType("GetSplitsRequest")
             .build();
-        byte[] inputBytes = request.toByteArray(); // equivalent to serializing and loading into byte array
+        String inputJson = JsonFormat.printer().includingDefaultValueFields().print(request);
 
-        compositeHandler.handleRequest(allocator, typeHeader, inputBytes, new ByteArrayOutputStream());
+        compositeHandler.handleRequest(allocator, typeHeader, inputJson, new ByteArrayOutputStream());
         verify(mockMetadataHandler, times(1)).doGetSplits(nullable(BlockAllocatorImpl.class), nullable(GetSplitsRequest.class));
     }
 
@@ -229,10 +231,16 @@ public class CompositeHandlerTest
     public void doPing()
             throws Exception
     {
-        PingRequest req = mock(PingRequest.class);
-        when(req.getCatalogName()).thenReturn("catalog");
-        when(req.getQueryId()).thenReturn("queryId");
-        compositeHandler.handleRequest(allocator, req, new ByteArrayOutputStream(), objectMapper);
+        TypeHeader typeHeader = TypeHeader.newBuilder()
+            .setType("PingRequest")
+            .build();
+        PingRequest req = PingRequest.newBuilder()
+            .setCatalogName("catalog")
+            .setQueryId("queryId")
+            .setType("PingRequest")
+            .build();
+        String inputJson = JsonFormat.printer().includingDefaultValueFields().print(req);
+        compositeHandler.handleRequest(allocator, typeHeader, inputJson, new ByteArrayOutputStream());
         verify(mockMetadataHandler, times(1)).doPing(nullable(PingRequest.class));
     }
 }

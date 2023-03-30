@@ -23,29 +23,25 @@ package com.amazonaws.athena.connector.lambda.handlers;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequest;
-import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
+import com.amazonaws.athena.connector.lambda.proto.request.PingRequest;
+import com.amazonaws.athena.connector.lambda.proto.request.PingResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
 import com.amazonaws.athena.connector.lambda.records.RecordRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationResponse;
-import com.amazonaws.athena.connector.lambda.request.PingRequest;
-import com.amazonaws.athena.connector.lambda.request.PingResponse;
 import com.amazonaws.athena.connector.lambda.serde.VersionedObjectMapperFactory;
 import com.amazonaws.athena.connector.lambda.udf.UserDefinedFunctionRequest;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.AbstractMessage;
-import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Map;
-import java.util.concurrent.Callable;
-import java.util.function.Function;
+import java.nio.charset.StandardCharsets;
 
 /**
  * This class allows you to have a single Lambda function be responsible for both metadata and data operations by
@@ -105,15 +101,18 @@ public class CompositeHandler
             // TODO: if inputStream can be processed as a protobuf message, call the protobuf handleRequest method instead.
             byte[] allInputBytes = inputStream.readAllBytes();
             try {
-                TypeHeader typeHeader = TypeHeader.parseFrom(allInputBytes);
-                handleRequest(allocator, typeHeader, allInputBytes, outputStream);
+                String inputJson = new String(allInputBytes, StandardCharsets.UTF_8);
+                logger.warn("Incoming bytes, converted to string: {}", inputJson);
+                TypeHeader.Builder typeHeaderBuilder = TypeHeader.newBuilder();
+                JsonFormat.parser().ignoringUnknownFields().merge(inputJson, typeHeaderBuilder);
+                TypeHeader typeHeader = typeHeaderBuilder.build();
+                handleRequest(allocator, typeHeader, inputJson, outputStream);
                 return; // if protobuf was successful, stop
             } 
-            catch (InvalidProtocolBufferException e) {
+            catch (Exception e) {
                 // could not parse as a protobuf message
-                logger.warn("Could not parse input as a protobuf message (this is not abnormal yet)");
+                logger.error("Encounted problem reading in json as a protobuf message. Exception is {}. Will try with fallback jackson serde", e);
             }
-            
 
             ObjectMapper objectMapper = VersionedObjectMapperFactory.create(allocator);
             try (FederationRequest rawReq = objectMapper.readValue(allInputBytes, FederationRequest.class)) {
@@ -130,38 +129,43 @@ public class CompositeHandler
     }
 
     // Needed to handle the checked exceptions from the protobuf parseFrom method
-    private AbstractMessage uncheckedWrapper(Callable<AbstractMessage> callable)
-    {
-        try {
-            return callable.call();
-        }
-        catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
+    // private AbstractMessage uncheckedWrapper(Callable<AbstractMessage> callable)
+    // {
+    //     try {
+    //         return callable.call();
+    //     }
+    //     catch (Exception ex) {
+    //         throw new RuntimeException(ex);
+    //     }
+    // }
 
     /**
      * For protobuf
      */
-    public final void handleRequest(BlockAllocator allocator, TypeHeader typeHeader, byte[] inputBytes, OutputStream outputStream)
+    public final void handleRequest(BlockAllocator allocator, TypeHeader typeHeader, String inputJson, OutputStream outputStream)
             throws Exception
     {
-        // TODO: add logic to figure out which handler to pass this to
         String type = typeHeader.getType();
-        Map<String, Function<byte[], AbstractMessage>> parserMap = Map.of(
-            "@GetSplitsRequest", (byte[] in) -> uncheckedWrapper(() -> GetSplitsRequest.parseFrom(in)) 
-        );
-        AbstractMessage msg = parserMap.get(type).apply(inputBytes);
-
-        // TODO: once we add ping / records /other requests, uncomment below and remove this.
-        metadataHandler.doHandleRequest(allocator, msg, outputStream); 
-//        if (msg instanceof PingRequest) {
-//
-//        } else if (msg instanceof ReadRecordsRequest) {
-//
-//        } else {
-//            metadataHandler.doHandleRequest(allocator, msg, outputStream); 
-//        }
+        switch(type) {
+            case "PingRequest":
+                PingRequest.Builder pingBuilder = PingRequest.newBuilder();
+                JsonFormat.parser().ignoringUnknownFields().merge(inputJson, pingBuilder);
+                PingResponse response = metadataHandler.doPing(pingBuilder.build());
+                String outputJson = JsonFormat.printer().print(response);
+                outputStream.write(outputJson.getBytes());
+                logger.info("PingResponse - {}", outputJson);
+                return;
+            case "ReadRecordsRequest":
+                // TODO: Add support
+                throw new UnsupportedOperationException("ReadRecordsRequest not supported yet for protobuf handler.");
+            default:
+                metadataHandler.doHandleRequest(allocator, typeHeader, inputJson, outputStream);
+                return;
+        }
+        // Map<String, Function<byte[], AbstractMessage>> parserMap = Map.of(
+        //     "@GetSplitsRequest", (byte[] in) -> uncheckedWrapper(() -> GetSplitsRequest.parseFrom(in)) 
+        // );
+        // AbstractMessage msg = parserMap.get(type).apply(inputBytes);
     }
 
     /**
@@ -178,14 +182,6 @@ public class CompositeHandler
     public final void handleRequest(BlockAllocator allocator, FederationRequest rawReq, OutputStream outputStream, ObjectMapper objectMapper)
             throws Exception
     {
-        if (rawReq instanceof PingRequest) {
-            try (PingResponse response = metadataHandler.doPing((PingRequest) rawReq)) {
-                assertNotNull(response);
-                objectMapper.writeValue(outputStream, response);
-            }
-            return;
-        }
-
         if (rawReq instanceof MetadataRequest) {
             metadataHandler.doHandleRequest(allocator, objectMapper, (MetadataRequest) rawReq, outputStream);
         }

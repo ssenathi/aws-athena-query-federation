@@ -46,11 +46,11 @@ import com.amazonaws.athena.connector.lambda.metadata.MetadataRequest;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.request.PingRequest;
+import com.amazonaws.athena.connector.lambda.proto.request.PingResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
 import com.amazonaws.athena.connector.lambda.request.FederationRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationResponse;
-import com.amazonaws.athena.connector.lambda.request.PingRequest;
-import com.amazonaws.athena.connector.lambda.request.PingResponse;
 import com.amazonaws.athena.connector.lambda.security.CachableSecretsManager;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
@@ -66,7 +66,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.amazonaws.services.secretsmanager.AWSSecretsManagerClientBuilder;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.protobuf.AbstractMessage;
+import com.google.protobuf.util.JsonFormat;
 import org.apache.arrow.vector.types.Types;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.Schema;
@@ -233,24 +233,16 @@ public abstract class MetadataHandler
     {
         try (BlockAllocator allocator = new BlockAllocatorImpl()) {
             byte[] allInputBytes = inputStream.readAllBytes();
-            // protobuf behavior
-            try {
-                var getSplitsRequest = GetSplitsRequest.parseFrom(allInputBytes);
-            }
-            catch (Exception e) {
-                //whatever
-            }
-
           // behavior before protobuf
             ObjectMapper objectMapper = VersionedObjectMapperFactory.create(allocator);
             try (FederationRequest rawReq = objectMapper.readValue(allInputBytes, FederationRequest.class)) {
-                if (rawReq instanceof PingRequest) {
-                    try (PingResponse response = doPing((PingRequest) rawReq)) {
-                        assertNotNull(response);
-                        objectMapper.writeValue(outputStream, response);
-                    }
-                    return;
-                }
+                // if (rawReq instanceof PingRequest) {
+                //     try (PingResponse response = doPing((PingRequest) rawReq)) {
+                //         assertNotNull(response);
+                //         objectMapper.writeValue(outputStream, response);
+                //     }
+                //     return;
+                // }
 
                 if (!(rawReq instanceof MetadataRequest)) {
                     throw new RuntimeException("Expected a MetadataRequest but found " + rawReq.getClass());
@@ -267,19 +259,32 @@ public abstract class MetadataHandler
 
     // for protobuf
     protected final void doHandleRequest(BlockAllocator allocator,
-            AbstractMessage message,
+            TypeHeader typeHeader,
+            String inputJson,
             OutputStream outputStream)
             throws Exception
     {
-        // we maintain an invariant that every request type can be coerced into a TypeHeader.
-        TypeHeader typeHeader = (TypeHeader) message;
-
         switch(typeHeader.getType()) {
             case "GetSplitsRequest":
-                GetSplitsResponse response = doGetSplits(allocator, (GetSplitsRequest) message);
-                response.writeTo(outputStream);
+                GetSplitsRequest.Builder getSplitsBuilder = GetSplitsRequest.newBuilder();
+                JsonFormat.parser().ignoringUnknownFields().merge(inputJson, getSplitsBuilder);
+                GetSplitsResponse response = doGetSplits(allocator, getSplitsBuilder.build());
+
+                // primitive fields are omitted by default - set continuation token to empty string first, becuase we can't set it to null.
+                if (!response.hasContinuationToken()) {
+                    response = response.toBuilder().setContinuationToken("").build();
+                }
+
+                // after converting to a json string, replace the empty string for continuation token with explicit null.
+                // right now, we are not using the includingDefaultValueFields() option becuase we assume all non-primitives are set.
+                String responseJson = JsonFormat.printer().print(response);
+                responseJson = responseJson.replace("\"continuationToken\": \"\"", "\"continuationToken\": null");
+                logger.info("GetSplitsResponse json - {}", responseJson);
+                outputStream.write(responseJson.getBytes());
+                return;
             default:
               logger.error("Input type {} is not yet supported.", typeHeader.getType()); 
+              throw new UnsupportedOperationException("Input type is not yet supported - " + typeHeader.getType());
         }
     }
 
@@ -492,7 +497,14 @@ public abstract class MetadataHandler
      */
     public PingResponse doPing(PingRequest request)
     {
-        PingResponse response = new PingResponse(request.getCatalogName(), request.getQueryId(), sourceType, CAPABILITIES, SERDE_VERSION);
+        PingResponse response = PingResponse.newBuilder()
+            .setType("PingResponse")
+            .setCatalogName(request.getCatalogName())
+            .setQueryId(request.getQueryId())
+            .setSourceType(sourceType)
+            .setCapabilities(CAPABILITIES)
+            .setSerDeVersion(SERDE_VERSION)
+            .build();
         try {
             onPing(request);
         }
