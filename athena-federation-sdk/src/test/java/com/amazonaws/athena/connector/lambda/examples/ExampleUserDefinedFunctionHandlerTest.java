@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -196,7 +197,7 @@ public class ExampleUserDefinedFunctionHandlerTest
                                                                   Schema outputSchema,
                                                                   String methodName) throws IOException
     {
-        UserDefinedFunctionRequest request = new UserDefinedFunctionRequest(IdentityUtil.fakeIdentity(),
+        UserDefinedFunctionRequest request = new UserDefinedFunctionRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()),
                 inputRecords,
                 outputSchema,
                 methodName,

@@ -37,6 +37,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -80,7 +81,7 @@ public class ConstraintSerializationTest
                         Range.equal(allocator, Types.MinorType.VARCHAR.getType(), "9")), false));
 
         try (
-                GetTableLayoutRequest req = new GetTableLayoutRequest(IdentityUtil.fakeIdentity(),
+                GetTableLayoutRequest req = new GetTableLayoutRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()),
                         "queryId",
                         "default",
                         new TableName("schema1", "table1"),

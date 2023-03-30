@@ -34,12 +34,12 @@ import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
-import com.amazonaws.athena.connector.lambda.metadata.ListSchemasRequest;
-import com.amazonaws.athena.connector.lambda.metadata.ListSchemasResponse;
-import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
-import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.request.FederationRequest;
 import com.amazonaws.athena.connector.lambda.request.PingRequest;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
@@ -190,7 +190,10 @@ public class ExampleMetadataHandler
         logCaller(request);
         List<String> schemas = new ArrayList<>();
         schemas.add(ExampleTable.schemaName);
-        return new ListSchemasResponse(request.getCatalogName(), schemas);
+        return ListSchemasResponse.newBuilder()
+            .setCatalogName(request.getCatalogName())
+            .addAllSchemas(schemas)
+            .build();
     }
 
     /**
@@ -220,6 +223,7 @@ public class ExampleMetadataHandler
                 .add(new TableName("schema", "table2"))
                 .build();
 
+        logger.error("IN LIST TABLES EXAMPLE. RECEIVED PAGE SIZE IN REQUEST OF {}", pageSize);
         // Check if request has unlimited page size. If not, then list of tables will be paginated.
         if (pageSize != UNLIMITED_PAGE_SIZE_VALUE) {
             // Get the stating table for this page (if null, then this is the first page).
@@ -249,10 +253,17 @@ public class ExampleMetadataHandler
 
         //The below filter for null schema is not typical, we do this to generate a specific semantic error
         //that is exercised in our unit test suite.
-        return new ListTablesResponse(request.getCatalogName(),
-                tables.stream()
-                        .filter(table -> request.getSchemaName() == null || request.getSchemaName().equals(table.getSchemaName()))
-                        .collect(Collectors.toList()), nextToken);
+        ListTablesResponse.Builder listTablesResponseBuilder = ListTablesResponse.newBuilder()
+            .setCatalogName(request.getCatalogName())
+            .addAllTables(tables.stream()
+                .filter(table -> request.getSchemaName() == null || request.getSchemaName().equals(table.getSchemaName()))
+                .map(ProtoUtils::toTableName)
+                .collect(Collectors.toList())
+            );
+        if (nextToken != null) {
+            listTablesResponseBuilder.setNextToken(nextToken);
+        }
+        return listTablesResponseBuilder.build();
     }
 
     /**

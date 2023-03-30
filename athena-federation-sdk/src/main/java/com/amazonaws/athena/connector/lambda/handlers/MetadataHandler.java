@@ -38,14 +38,14 @@ import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
-import com.amazonaws.athena.connector.lambda.metadata.ListSchemasRequest;
-import com.amazonaws.athena.connector.lambda.metadata.ListSchemasResponse;
-import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
-import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequest;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.PingRequest;
 import com.amazonaws.athena.connector.lambda.proto.request.PingResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
@@ -117,6 +117,7 @@ public abstract class MetadataHandler
     protected static final String SPILL_PREFIX_ENV = "spill_prefix";
     protected static final String KMS_KEY_ID_ENV = "kms_key_id";
     protected static final String DISABLE_SPILL_ENCRYPTION = "disable_spill_encryption";
+    protected static final String FUNCTION_ARN_CONFIG_KEY = "FUNCTION_ARN";
     private final CachableSecretsManager secretsManager;
     private final AmazonAthena athena;
     private final ThrottlingInvoker athenaInvoker;
@@ -264,7 +265,37 @@ public abstract class MetadataHandler
             OutputStream outputStream)
             throws Exception
     {
+        logger.info("doHandleRequest: request[{}]", inputJson);
         switch(typeHeader.getType()) {
+            case "ListSchemas":
+                ListSchemasRequest.Builder listSchemasBuilder = ListSchemasRequest.newBuilder();
+                JsonFormat.parser().ignoringUnknownFields().merge(inputJson, listSchemasBuilder);
+                ListSchemasResponse listSchemasResponse = doListSchemaNames(allocator, listSchemasBuilder.build());
+                String listSchemasResponseJson = JsonFormat.printer().print(listSchemasResponse);
+                logger.debug("ListSchemasResponse json - {}", listSchemasResponseJson);
+                outputStream.write(listSchemasResponseJson.getBytes());
+                return;
+            case "ListTables":
+                ListTablesRequest.Builder listTablesBuilder = ListTablesRequest.newBuilder();
+                JsonFormat.parser().ignoringUnknownFields().merge(inputJson, listTablesBuilder);
+                ListTablesResponse listTablesResponse = doListTables(allocator, listTablesBuilder.build());
+
+                // primitive fields are omitted by default - set next token to empty string first, because we can't set it to null.
+                if (!listTablesResponse.hasNextToken()) {
+                    listTablesResponse = listTablesResponse.toBuilder().setNextToken("").build();
+                }
+
+                // after converting to a json string, replace the empty string for next token with an explicit null.
+                // right now, we are not using the includingDefaultValueFields() option because we assume all non-primitives are set.
+                String listTablesResponseJson = JsonFormat.printer().print(listTablesResponse);
+                listTablesResponseJson = listTablesResponseJson.replace("\"nextToken\": \"\"", "\"nextToken\": null");
+                logger.debug("ListTablesResponse json - {}", listTablesResponseJson);
+                outputStream.write(listTablesResponseJson.getBytes());
+                return;
+            case "GetTable":
+                return;
+            case "GetTableLayout":
+                return;
             case "GetSplitsRequest":
                 GetSplitsRequest.Builder getSplitsBuilder = GetSplitsRequest.newBuilder();
                 JsonFormat.parser().ignoringUnknownFields().merge(inputJson, getSplitsBuilder);
@@ -297,20 +328,20 @@ public abstract class MetadataHandler
         logger.info("doHandleRequest: request[{}]", req);
         MetadataRequestType type = req.getRequestType();
         switch (type) {
-            case LIST_SCHEMAS:
-                try (ListSchemasResponse response = doListSchemaNames(allocator, (ListSchemasRequest) req)) {
-                    logger.info("doHandleRequest: response[{}]", response);
-                    assertNotNull(response);
-                    objectMapper.writeValue(outputStream, response);
-                }
-                return;
-            case LIST_TABLES:
-                try (ListTablesResponse response = doListTables(allocator, (ListTablesRequest) req)) {
-                    logger.info("doHandleRequest: response[{}]", response);
-                    assertNotNull(response);
-                    objectMapper.writeValue(outputStream, response);
-                }
-                return;
+            // case LIST_SCHEMAS:
+            //     try (ListSchemasResponse response = doListSchemaNames(allocator, (ListSchemasRequest) req)) {
+            //         logger.info("doHandleRequest: response[{}]", response);
+            //         assertNotNull(response);
+            //         objectMapper.writeValue(outputStream, response);
+            //     }
+            //     return;
+            // case LIST_TABLES:
+            //     try (ListTablesResponse response = doListTables(allocator, (ListTablesRequest) req)) {
+            //         logger.info("doHandleRequest: response[{}]", response);
+            //         assertNotNull(response);
+            //         objectMapper.writeValue(outputStream, response);
+            //     }
+            //     return;
             case GET_TABLE:
                 try (GetTableResponse response = doGetTable(allocator, (GetTableRequest) req)) {
                     logger.info("doHandleRequest: response[{}]", response);
@@ -326,14 +357,6 @@ public abstract class MetadataHandler
                     objectMapper.writeValue(outputStream, response);
                 }
                 return;
-//            case GET_SPLITS:
-//                verifier.checkBucketAuthZ(spillBucket);
-//                try (GetSplitsResponse response = doGetSplits(allocator, (GetSplitsRequest) req)) {
-//                    logger.info("doHandleRequest: response[{}]", response);
-//                    assertNotNull(response);
-//                    objectMapper.writeValue(outputStream, response);
-//                }
-//                return;
             default:
                 throw new IllegalArgumentException("Unknown request type " + type);
         }

@@ -106,6 +106,11 @@ public class CompositeHandler
                 TypeHeader.Builder typeHeaderBuilder = TypeHeader.newBuilder();
                 JsonFormat.parser().ignoringUnknownFields().merge(inputJson, typeHeaderBuilder);
                 TypeHeader typeHeader = typeHeaderBuilder.build();
+
+                // in the existing logic, we were attching the Lambda Context variable to the metadata request, which is messy.
+                // For now, I'll stick it in the config options with the fields we care about only.
+                metadataHandler.configOptions.put(MetadataHandler.FUNCTION_ARN_CONFIG_KEY, context.getInvokedFunctionArn());
+
                 handleRequest(allocator, typeHeader, inputJson, outputStream);
                 return; // if protobuf was successful, stop
             } 

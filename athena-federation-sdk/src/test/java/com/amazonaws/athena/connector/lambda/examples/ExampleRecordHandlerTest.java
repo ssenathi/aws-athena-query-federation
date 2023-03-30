@@ -72,6 +72,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -204,7 +205,7 @@ public class ExampleRecordHandlerTest
             constraintsMap.put("col3", SortedRangeSet.copyOf(Types.MinorType.FLOAT8.getType(),
                     ImmutableList.of(Range.equal(allocator, Types.MinorType.FLOAT8.getType(), 22.0D)), false));
 
-            ReadRecordsRequest request = new ReadRecordsRequest(IdentityUtil.fakeIdentity(),
+            ReadRecordsRequest request = new ReadRecordsRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()),
                     "catalog",
                     "queryId-" + System.currentTimeMillis(),
                     new TableName("schema", "table"),
@@ -245,7 +246,7 @@ public class ExampleRecordHandlerTest
             constraintsMap.put("unknown", EquatableValueSet.newBuilder(allocator, Types.MinorType.FLOAT8.getType(), false, true).add(1.1D).build());
             constraintsMap.put("unknown2", new AllOrNoneValueSet(Types.MinorType.FLOAT8.getType(), false, true));
 
-            ReadRecordsRequest request = new ReadRecordsRequest(IdentityUtil.fakeIdentity(),
+            ReadRecordsRequest request = new ReadRecordsRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()),
                     "catalog",
                     "queryId-" + System.currentTimeMillis(),
                     new TableName("schema", "table"),

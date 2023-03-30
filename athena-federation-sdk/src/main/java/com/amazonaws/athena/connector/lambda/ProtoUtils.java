@@ -21,6 +21,7 @@ package com.amazonaws.athena.connector.lambda;
 
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
+import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.AllOrNoneValueSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.EquatableValueSet;
@@ -277,6 +278,14 @@ public class ProtoUtils
             .setBucket(s3SpillLocation.getBucket())
             .setKey(s3SpillLocation.getKey())
             .setDirectory(s3SpillLocation.isDirectory())
+            .build();
+    }
+
+    public static com.amazonaws.athena.connector.lambda.proto.domain.TableName toTableName(TableName tableName)
+    {
+        return com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
+            .setSchemaName(tableName.getSchemaName())
+            .setTableName(tableName.getTableName())
             .build();
     }
 }
