@@ -28,7 +28,6 @@ import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockWriter;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
 import com.amazonaws.athena.connector.lambda.domain.Split;
-import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
@@ -36,13 +35,13 @@ import com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
-import com.amazonaws.athena.connector.lambda.metadata.ListSchemasRequest;
-import com.amazonaws.athena.connector.lambda.metadata.ListSchemasResponse;
-import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
-import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.glue.GlueFieldLexer;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connectors.dynamodb.constants.DynamoDBConstants;
 import com.amazonaws.athena.connectors.dynamodb.model.DynamoDBIndex;
@@ -177,7 +176,7 @@ public class DynamoDBMetadataHandler
         Set<String> combinedSchemas = new LinkedHashSet<>();
         if (glueClient != null) {
             try {
-                combinedSchemas.addAll(super.doListSchemaNames(allocator, request, DB_FILTER).getSchemas());
+                combinedSchemas.addAll(super.doListSchemaNames(allocator, request, DB_FILTER).getSchemasList());
             }
             catch (RuntimeException e) {
                 logger.warn("doListSchemaNames: Unable to retrieve schemas from AWSGlue.", e);
@@ -185,7 +184,7 @@ public class DynamoDBMetadataHandler
         }
 
         combinedSchemas.add(DEFAULT_SCHEMA);
-        return new ListSchemasResponse(request.getCatalogName(), combinedSchemas);
+        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(request.getCatalogName()).addAllSchemas(combinedSchemas).build();
     }
 
     /**
@@ -204,14 +203,23 @@ public class DynamoDBMetadataHandler
             throws Exception
     {
         // LinkedHashSet for consistent ordering
-        Set<TableName> combinedTables = new LinkedHashSet<>();
+        Set<com.amazonaws.athena.connector.lambda.proto.domain.TableName> combinedTables = new LinkedHashSet<>();
         if (glueClient != null) {
             try {
                 // does not validate that the tables are actually DDB tables
-                combinedTables.addAll(super.doListTables(allocator,
-                        new ListTablesRequest(request.getIdentity(), request.getQueryId(), request.getCatalogName(),
-                                request.getSchemaName(), null, UNLIMITED_PAGE_SIZE_VALUE),
-                        TABLE_FILTER).getTables());
+                combinedTables.addAll(
+                    super.doListTables(
+                        allocator,
+                        ListTablesRequest.newBuilder()
+                            .setIdentity(request.getIdentity())
+                            .setQueryId(request.getQueryId())
+                            .setCatalogName(request.getCatalogName())
+                            .setSchemaName(request.getSchemaName())
+                            .setPageSize(UNLIMITED_PAGE_SIZE_VALUE)
+                            .build(),
+                        TABLE_FILTER
+                    ).getTablesList()
+                );
             }
             catch (RuntimeException e) {
                 logger.warn("doListTables: Unable to retrieve tables from AWSGlue in database/schema {}", request.getSchemaName(), e);
@@ -220,9 +228,18 @@ public class DynamoDBMetadataHandler
 
         // add tables that may not be in Glue (if listing the default schema)
         if (DynamoDBConstants.DEFAULT_SCHEMA.equals(request.getSchemaName())) {
-            combinedTables.addAll(tableResolver.listTables());
+            combinedTables.addAll(
+                tableResolver.listTables()
+                    .stream()
+                    .map(ProtoUtils::toTableName)
+                    .collect(Collectors.toList())
+            );
         }
-        return new ListTablesResponse(request.getCatalogName(), new ArrayList<>(combinedTables), null);
+        return ListTablesResponse.newBuilder()
+            .setType("ListTablesResponse")
+            .setCatalogName(request.getCatalogName())
+            .addAllTables(combinedTables)
+            .build();
     }
 
     /**

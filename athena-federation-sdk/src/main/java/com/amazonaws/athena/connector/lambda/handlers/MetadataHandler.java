@@ -267,7 +267,7 @@ public abstract class MetadataHandler
     {
         logger.info("doHandleRequest: request[{}]", inputJson);
         switch(typeHeader.getType()) {
-            case "ListSchemas":
+            case "ListSchemasRequest":
                 ListSchemasRequest.Builder listSchemasBuilder = ListSchemasRequest.newBuilder();
                 JsonFormat.parser().ignoringUnknownFields().merge(inputJson, listSchemasBuilder);
                 ListSchemasResponse listSchemasResponse = doListSchemaNames(allocator, listSchemasBuilder.build());
@@ -275,7 +275,7 @@ public abstract class MetadataHandler
                 logger.debug("ListSchemasResponse json - {}", listSchemasResponseJson);
                 outputStream.write(listSchemasResponseJson.getBytes());
                 return;
-            case "ListTables":
+            case "ListTablesRequest":
                 ListTablesRequest.Builder listTablesBuilder = ListTablesRequest.newBuilder();
                 JsonFormat.parser().ignoringUnknownFields().merge(inputJson, listTablesBuilder);
                 ListTablesResponse listTablesResponse = doListTables(allocator, listTablesBuilder.build());
@@ -292,9 +292,9 @@ public abstract class MetadataHandler
                 logger.debug("ListTablesResponse json - {}", listTablesResponseJson);
                 outputStream.write(listTablesResponseJson.getBytes());
                 return;
-            case "GetTable":
+            case "GetTableRequest":
                 return;
-            case "GetTableLayout":
+            case "GetTableLayoutRequest":
                 return;
             case "GetSplitsRequest":
                 GetSplitsRequest.Builder getSplitsBuilder = GetSplitsRequest.newBuilder();
@@ -328,20 +328,6 @@ public abstract class MetadataHandler
         logger.info("doHandleRequest: request[{}]", req);
         MetadataRequestType type = req.getRequestType();
         switch (type) {
-            // case LIST_SCHEMAS:
-            //     try (ListSchemasResponse response = doListSchemaNames(allocator, (ListSchemasRequest) req)) {
-            //         logger.info("doHandleRequest: response[{}]", response);
-            //         assertNotNull(response);
-            //         objectMapper.writeValue(outputStream, response);
-            //     }
-            //     return;
-            // case LIST_TABLES:
-            //     try (ListTablesResponse response = doListTables(allocator, (ListTablesRequest) req)) {
-            //         logger.info("doHandleRequest: response[{}]", response);
-            //         assertNotNull(response);
-            //         objectMapper.writeValue(outputStream, response);
-            //     }
-            //     return;
             case GET_TABLE:
                 try (GetTableResponse response = doGetTable(allocator, (GetTableRequest) req)) {
                     logger.info("doHandleRequest: response[{}]", response);

@@ -296,6 +296,7 @@ public abstract class GlueMetadataHandler
         while (nextToken != null);
 
         return ListSchemasResponse.newBuilder()
+            .setType("ListSchemasResponse")
             .setCatalogName(request.getCatalogName())
             .addAllSchemas(schemas)
             .build();
@@ -358,6 +359,7 @@ public abstract class GlueMetadataHandler
         while (nextToken != null && (pageSize == UNLIMITED_PAGE_SIZE_VALUE || pageSize > 0));
 
         ListTablesResponse.Builder listTablesResponseBuilder = ListTablesResponse.newBuilder()
+            .setType("ListTablesResponse")
             .setCatalogName(request.getCatalogName())
             .addAllTables(tables.stream().map(ProtoUtils::toTableName).collect(Collectors.toList()));
         if (nextToken != null) {

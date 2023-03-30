@@ -35,14 +35,14 @@ import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
-import com.amazonaws.athena.connector.lambda.metadata.ListSchemasRequest;
-import com.amazonaws.athena.connector.lambda.metadata.ListSchemasResponse;
-import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
-import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.services.athena.AmazonAthena;
@@ -162,12 +162,16 @@ public class DynamoDBMetadataHandlerTest
     {
         when(glueClient.getDatabases(any())).thenThrow(new AmazonServiceException(""));
 
-        ListSchemasRequest req = new ListSchemasRequest(TEST_IDENTITY, TEST_QUERY_ID, TEST_CATALOG_NAME);
+        ListSchemasRequest req = ListSchemasRequest.newBuilder()
+            .setIdentity(PROTO_TEST_IDENTITY)
+            .setQueryId(TEST_QUERY_ID)
+            .setCatalogName(TEST_CATALOG_NAME)
+            .build();
         ListSchemasResponse res = handler.doListSchemaNames(allocator, req);
 
-        logger.info("doListSchemas - {}", res.getSchemas());
+        logger.info("doListSchemas - {}", res.getSchemasList());
 
-        assertThat(new ArrayList<>(res.getSchemas()), equalTo(Collections.singletonList(DEFAULT_SCHEMA)));
+        assertThat(new ArrayList<>(res.getSchemasList()), equalTo(Collections.singletonList(DEFAULT_SCHEMA)));
     }
 
     @Test
@@ -181,14 +185,18 @@ public class DynamoDBMetadataHandlerTest
 
         when(glueClient.getDatabases(any())).thenReturn(result);
 
-        ListSchemasRequest req = new ListSchemasRequest(TEST_IDENTITY, TEST_QUERY_ID, TEST_CATALOG_NAME);
+        ListSchemasRequest req = ListSchemasRequest.newBuilder()
+            .setIdentity(PROTO_TEST_IDENTITY)
+            .setQueryId(TEST_QUERY_ID)
+            .setCatalogName(TEST_CATALOG_NAME)
+            .build();
         ListSchemasResponse res = handler.doListSchemaNames(allocator, req);
 
-        logger.info("doListSchemas - {}", res.getSchemas());
+        logger.info("doListSchemas - {}", res.getSchemasList());
 
-        assertThat(res.getSchemas().size(), equalTo(2));
-        assertThat(res.getSchemas().contains("default"), is(true));
-        assertThat(res.getSchemas().contains("ddb"), is(true));
+        assertThat(res.getSchemasList().size(), equalTo(2));
+        assertThat(res.getSchemasList().contains("default"), is(true));
+        assertThat(res.getSchemasList().contains("ddb"), is(true));
     }
 
     @Test
@@ -220,24 +228,33 @@ public class DynamoDBMetadataHandlerTest
         mockResult.setTableList(tableList);
         when(glueClient.getTables(any())).thenReturn(mockResult);
 
-        ListTablesRequest req = new ListTablesRequest(TEST_IDENTITY, TEST_QUERY_ID, TEST_CATALOG_NAME, DEFAULT_SCHEMA,
-                null, UNLIMITED_PAGE_SIZE_VALUE);
+        ListTablesRequest req = ListTablesRequest.newBuilder()
+            .setIdentity(PROTO_TEST_IDENTITY)
+            .setQueryId(TEST_QUERY_ID)
+            .setCatalogName(TEST_CATALOG_NAME)
+            .setSchemaName(DEFAULT_SCHEMA)
+            .setPageSize(UNLIMITED_PAGE_SIZE_VALUE)
+            .build();
         ListTablesResponse res = handler.doListTables(allocator, req);
 
-        logger.info("doListTables - {}", res.getTables());
+        logger.info("doListTables - {}", res.getTablesList());
 
-        List<TableName> expectedTables = tableNames.stream().map(table -> new TableName(DEFAULT_SCHEMA, table)).collect(Collectors.toList());
-        expectedTables.add(TEST_TABLE_NAME);
-        expectedTables.add(new TableName(DEFAULT_SCHEMA, "test_table2"));
-        expectedTables.add(new TableName(DEFAULT_SCHEMA, "test_table3"));
-        expectedTables.add(new TableName(DEFAULT_SCHEMA, "test_table4"));
-        expectedTables.add(new TableName(DEFAULT_SCHEMA, "test_table5"));
-        expectedTables.add(new TableName(DEFAULT_SCHEMA, "test_table6"));
-        expectedTables.add(new TableName(DEFAULT_SCHEMA, "test_table7"));
-        expectedTables.add(new TableName(DEFAULT_SCHEMA, "test_table8"));
+        List<com.amazonaws.athena.connector.lambda.proto.domain.TableName> expectedTables = 
+            tableNames.stream().map(table -> new TableName(DEFAULT_SCHEMA, table)).map(ProtoUtils::toTableName).collect(Collectors.toList());
+        expectedTables.add(ProtoUtils.toTableName(TEST_TABLE_NAME));
+        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table2")));
+        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table3")));
+        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table4")));
+        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table5")));
+        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table6")));
+        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table7")));
+        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table8")));
 
-
-        assertThat(new HashSet<>(res.getTables()), equalTo(new HashSet<>(expectedTables)));
+        // there was a bug in these tests before - the ExampleMetadataHandler doesn't actually sort the tables if it has no pagination,
+        // but the tests implied they were supposed to by comparing the objects. However, the equals method defined in the old Response class
+        // just checked if the two lists had all the same values (unordered). Because the equals method is now more refined for the generated
+        // protobuf class, we have to manually do the same checks.
+        assertThat(new HashSet<>(res.getTablesList()), equalTo(new HashSet<>(expectedTables)));
     }
 
     @Test
