@@ -19,7 +19,7 @@ package com.amazonaws.athena.connector.lambda.handlers;
  * limitations under the License.
  * #L%
  */
-
+import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.ThrottlingInvoker;
 import com.amazonaws.athena.connector.lambda.data.Block;
@@ -34,14 +34,14 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.ConstraintEvaluato
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocationVerifier;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequest;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
@@ -293,8 +293,21 @@ public abstract class MetadataHandler
                 outputStream.write(listTablesResponseJson.getBytes());
                 return;
             case "GetTableRequest":
+                GetTableRequest.Builder getTableBuilder = GetTableRequest.newBuilder();
+                JsonFormat.parser().ignoringUnknownFields().merge(inputJson, getTableBuilder);
+                GetTableResponse getTableResponse = doGetTable(allocator, getTableBuilder.build());
+                assertTypes(ProtoUtils.fromProtoSchema(allocator, getTableResponse.getSchema()));
+                String getTableResponseJson = JsonFormat.printer().includingDefaultValueFields().print(getTableResponse);
+                logger.debug("GetTableResponse json - {}", getTableResponseJson);
+                outputStream.write(getTableResponseJson.getBytes());
                 return;
             case "GetTableLayoutRequest":
+                GetTableLayoutRequest.Builder getTableLayoutRequestBuilder = GetTableLayoutRequest.newBuilder();
+                JsonFormat.parser().ignoringUnknownFields().merge(inputJson, getTableLayoutRequestBuilder);
+                GetTableLayoutResponse getTableLayoutResponse = doGetTableLayout(allocator, getTableLayoutRequestBuilder.build());
+                String getTableLayoutResponseJson = JsonFormat.printer().includingDefaultValueFields().print(getTableLayoutResponse);
+                logger.debug("GetTableLayoutResopnse json - {}", getTableLayoutResponseJson);
+                outputStream.write(getTableLayoutResponseJson.getBytes());
                 return;
             case "GetSplitsRequest":
                 GetSplitsRequest.Builder getSplitsBuilder = GetSplitsRequest.newBuilder();
@@ -328,21 +341,6 @@ public abstract class MetadataHandler
         logger.info("doHandleRequest: request[{}]", req);
         MetadataRequestType type = req.getRequestType();
         switch (type) {
-            case GET_TABLE:
-                try (GetTableResponse response = doGetTable(allocator, (GetTableRequest) req)) {
-                    logger.info("doHandleRequest: response[{}]", response);
-                    assertNotNull(response);
-                    assertTypes(response);
-                    objectMapper.writeValue(outputStream, response);
-                }
-                return;
-            case GET_TABLE_LAYOUT:
-                try (GetTableLayoutResponse response = doGetTableLayout(allocator, (GetTableLayoutRequest) req)) {
-                    logger.info("doHandleRequest: response[{}]", response);
-                    assertNotNull(response);
-                    objectMapper.writeValue(outputStream, response);
-                }
-                return;
             default:
                 throw new IllegalArgumentException("Unknown request type " + type);
         }
@@ -407,20 +405,26 @@ public abstract class MetadataHandler
          * Add our partition columns to the response schema so the engine knows how to interpret the list of
          * partitions we are going to return.
          */
-        for (String nextPartCol : request.getPartitionCols()) {
-            Field partitionCol = request.getSchema().findField(nextPartCol);
+        Schema requestSchema = ProtoUtils.fromProtoSchema(allocator, request.getSchema());
+        for (String nextPartCol : request.getPartitionColsList()) {
+            Field partitionCol = requestSchema.findField(nextPartCol);
             partitionSchemaBuilder.addField(nextPartCol, partitionCol.getType());
             constraintSchema.addField(nextPartCol, partitionCol.getType());
         }
 
-        enhancePartitionSchema(partitionSchemaBuilder, request);
+        enhancePartitionSchema(allocator, partitionSchemaBuilder, request);
         Schema partitionSchema = partitionSchemaBuilder.build();
 
         if (partitionSchema.getFields().isEmpty() && partitionSchema.getCustomMetadata().isEmpty()) {
             //Even though our table doesn't support complex layouts, partitioning or metadata, we need to convey that there is at least
             //1 partition to read as part of the query or Athena will assume partition pruning found no candidate layouts to read.
             Block partitions = BlockUtils.newBlock(allocator, PARTITION_ID_COL, Types.MinorType.INT.getType(), 1);
-            return new GetTableLayoutResponse(request.getCatalogName(), request.getTableName(), partitions);
+            return GetTableLayoutResponse.newBuilder()
+                .setType("GetTableLayoutResponse")
+                .setCatalogName(request.getCatalogName())
+                .setTableName(request.getTableName())
+                .setPartitions(ProtoUtils.toProtoBlock(partitions))
+                .build();
         }
 
         /**
@@ -430,14 +434,19 @@ public abstract class MetadataHandler
          */
         try (ConstraintEvaluator constraintEvaluator = new ConstraintEvaluator(allocator,
                 constraintSchema.build(),
-                request.getConstraints());
+                ProtoUtils.fromProtoConstraints(allocator, request.getConstraints()));
                 QueryStatusChecker queryStatusChecker = new QueryStatusChecker(athena, athenaInvoker, request.getQueryId())
         ) {
             Block partitions = allocator.createBlock(partitionSchemaBuilder.build());
             partitions.constrain(constraintEvaluator);
             SimpleBlockWriter blockWriter = new SimpleBlockWriter(partitions);
-            getPartitions(blockWriter, request, queryStatusChecker);
-            return new GetTableLayoutResponse(request.getCatalogName(), request.getTableName(), partitions);
+            getPartitions(allocator, blockWriter, request, queryStatusChecker);
+            return GetTableLayoutResponse.newBuilder()
+                .setType("GetTableLayoutResponse")
+                .setCatalogName(request.getCatalogName())
+                .setTableName(request.getTableName())
+                .setPartitions(ProtoUtils.toProtoBlock(partitions))
+                .build();
         }
     }
 
@@ -447,11 +456,12 @@ public abstract class MetadataHandler
      * You can choose to add additional columns to that response which Athena will ignore but will pass
      * on to you when it call GetSplits(...) for each partition.
      *
+     * @param allocator Tool for creating and managing Apache Arrow Blocks.
      * @param partitionSchemaBuilder The SchemaBuilder you can use to add additional columns and metadata to the
      * partitions response.
      * @param request The GetTableLayoutResquest that triggered this call.
      */
-    public void enhancePartitionSchema(SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request)
+    public void enhancePartitionSchema(BlockAllocator allocator, SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request)
     {
         //You can add additional fields to the partition schema which are ignored by Athena
         //but will be passed on to called to GetSplits(...). This can be handy when you
@@ -466,6 +476,7 @@ public abstract class MetadataHandler
     /**
      * Used to get the partitions that must be read from the request table in order to satisfy the requested predicate.
      *
+     * @param allocator Tool for creating and managing Apache Arrow Blocks.
      * @param blockWriter Used to write rows (partitions) into the Apache Arrow response.
      * @param request Provides details of the catalog, database, and table being queried as well as any filter predicate.
      * @param queryStatusChecker A QueryStatusChecker that you can use to stop doing work for a query that has already terminated
@@ -477,7 +488,7 @@ public abstract class MetadataHandler
      * your own need to apply filtering in Lambda. Otherwise you can get the actual preducate from the request object
      * for pushing down into the source you are querying.
      */
-    public abstract void getPartitions(final BlockWriter blockWriter,
+    public abstract void getPartitions(final BlockAllocator allocator, final BlockWriter blockWriter,
             final GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
             throws Exception;
 
@@ -553,9 +564,9 @@ public abstract class MetadataHandler
      * discover valid (supported) schemas, then it follows that it would be difficult to develop a connector
      * which unknowingly returns unsupported types.
      */
-    private void assertTypes(GetTableResponse response)
+    private void assertTypes(Schema schema)
     {
-        for (Field next : response.getSchema().getFields()) {
+        for (Field next : schema.getFields()) {
             SupportedTypes.assertSupported(next);
         }
     }

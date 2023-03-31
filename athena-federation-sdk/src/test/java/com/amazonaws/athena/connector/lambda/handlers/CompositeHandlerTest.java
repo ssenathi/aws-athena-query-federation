@@ -1,5 +1,7 @@
 package com.amazonaws.athena.connector.lambda.handlers;
 
+import com.amazonaws.athena.connector.lambda.ProtoUtils;
+
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
@@ -29,11 +31,11 @@ import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocationVerifier;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequestType;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
@@ -106,9 +108,15 @@ public class CompositeHandlerTest
                 .build();
 
         when(mockMetadataHandler.doGetTableLayout(nullable(BlockAllocatorImpl.class), nullable(GetTableLayoutRequest.class)))
-                .thenReturn(new GetTableLayoutResponse("catalog",
-                        new TableName("schema", "table"),
-                        BlockUtils.newBlock(allocator, "col1", Types.MinorType.BIGINT.getType(), 1L)));
+                .thenReturn(GetTableLayoutResponse.newBuilder()
+                    .setType("GetTableLayoutResponse")
+                    .setCatalogName("catalog")
+                    .setTableName(com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
+                        .setSchemaName("schema")
+                        .setTableName("table")
+                        .build()
+                    ).setPartitions(ProtoUtils.toProtoBlock(BlockUtils.newBlock(allocator, "col1", Types.MinorType.BIGINT.getType(), 1L)))
+                    .build());
 
         when(mockMetadataHandler.doListTables(nullable(BlockAllocatorImpl.class), nullable(ListTablesRequest.class)))
                 .thenReturn(ListTablesResponse.newBuilder()
@@ -122,9 +130,18 @@ public class CompositeHandlerTest
                     .build());
 
         when(mockMetadataHandler.doGetTable(nullable(BlockAllocatorImpl.class), nullable(GetTableRequest.class)))
-                .thenReturn(new GetTableResponse("catalog",
-                        new TableName("schema", "table"),
-                        SchemaBuilder.newBuilder().addStringField("col1").build()));
+                .thenReturn(GetTableResponse.newBuilder()
+                    .setCatalogName("catalog")
+                    .setTableName(
+                        com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
+                            .setSchemaName("schema")
+                            .setTableName("table")
+                            .build()
+                    ).setSchema(
+                        ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().addStringField("col1").build())
+                    )
+                    .build()
+                );
 
         when(mockMetadataHandler.doListSchemaNames(nullable(BlockAllocatorImpl.class), nullable(ListSchemasRequest.class)))
                 .thenReturn(ListSchemasResponse.newBuilder()
@@ -182,8 +199,8 @@ public class CompositeHandlerTest
     public void doListSchemaNames()
             throws Exception
     {
-        ListSchemasRequest req = ListSchemasRequest.newBuilder().setType("ListSchemas").build();
-        TypeHeader typeHeader = TypeHeader.newBuilder().setType("ListSchemas").build();
+        ListSchemasRequest req = ListSchemasRequest.newBuilder().setType("ListSchemasRequest").build();
+        TypeHeader typeHeader = TypeHeader.newBuilder().setType("ListSchemasRequest").build();
         String inputJson = JsonFormat.printer().includingDefaultValueFields().print(req);
         compositeHandler.handleRequest(allocator, typeHeader, inputJson, new ByteArrayOutputStream());
         verify(mockMetadataHandler, times(1)).doListSchemaNames(nullable(BlockAllocatorImpl.class), nullable(ListSchemasRequest.class));
@@ -193,8 +210,8 @@ public class CompositeHandlerTest
     public void doListTables()
             throws Exception
     {
-        ListTablesRequest req = ListTablesRequest.newBuilder().setType("ListTables").build();
-        TypeHeader typeHeader = TypeHeader.newBuilder().setType("ListTables").build();
+        ListTablesRequest req = ListTablesRequest.newBuilder().setType("ListTablesRequest").build();
+        TypeHeader typeHeader = TypeHeader.newBuilder().setType("ListTablesRequest").build();
         String inputJson = JsonFormat.printer().includingDefaultValueFields().print(req);
         compositeHandler.handleRequest(allocator, typeHeader, inputJson, new ByteArrayOutputStream());
         verify(mockMetadataHandler, times(1)).doListTables(nullable(BlockAllocatorImpl.class), nullable(ListTablesRequest.class));
@@ -204,9 +221,10 @@ public class CompositeHandlerTest
     public void doGetTable()
             throws Exception
     {
-        GetTableRequest req = mock(GetTableRequest.class);
-        when(req.getRequestType()).thenReturn(MetadataRequestType.GET_TABLE);
-        compositeHandler.handleRequest(allocator, req, new ByteArrayOutputStream(), objectMapper);
+        GetTableRequest req = GetTableRequest.newBuilder().setType("GetTableRequest").build();
+        TypeHeader typeHeader = TypeHeader.newBuilder().setType("GetTableRequest").build();
+        String inputJson = JsonFormat.printer().includingDefaultValueFields().print(req);
+        compositeHandler.handleRequest(allocator, typeHeader, inputJson, new ByteArrayOutputStream());
         verify(mockMetadataHandler, times(1)).doGetTable(nullable(BlockAllocatorImpl.class), nullable(GetTableRequest.class));
     }
 
@@ -214,9 +232,15 @@ public class CompositeHandlerTest
     public void doGetTableLayout()
             throws Exception
     {
-        GetTableLayoutRequest req = mock(GetTableLayoutRequest.class);
-        when(req.getRequestType()).thenReturn(MetadataRequestType.GET_TABLE_LAYOUT);
-        compositeHandler.handleRequest(allocator, req, new ByteArrayOutputStream(), objectMapper);
+        TypeHeader typeHeader = TypeHeader.newBuilder()
+            .setType("GetTableLayoutRequest")
+            .build();
+        GetTableLayoutRequest request = GetTableLayoutRequest.newBuilder()
+            .setType("GetTableLayoutRequest")
+            .build();
+        String inputJson = JsonFormat.printer().includingDefaultValueFields().print(request);
+
+        compositeHandler.handleRequest(allocator, typeHeader, inputJson, new ByteArrayOutputStream());
         verify(mockMetadataHandler, times(1)).doGetTableLayout(nullable(BlockAllocatorImpl.class), nullable(GetTableLayoutRequest.class));
     }
 

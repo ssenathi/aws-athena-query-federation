@@ -1,8 +1,5 @@
 package com.amazonaws.athena.connector.lambda.handlers;
 
-import com.amazonaws.athena.connector.lambda.CollectionsUtils;
-import com.amazonaws.athena.connector.lambda.ProtoUtils;
-
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
@@ -22,20 +19,20 @@ import com.amazonaws.athena.connector.lambda.ProtoUtils;
  * limitations under the License.
  * #L%
  */
-
+import com.amazonaws.athena.connector.lambda.CollectionsUtils;
+import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.data.BlockWriter;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
 import com.amazonaws.athena.connector.lambda.domain.TableName;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
-import com.amazonaws.athena.connector.lambda.metadata.MetadataRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
@@ -162,7 +159,7 @@ public class GlueMetadataHandlerTest
                 "glue-test",
                 "spill-bucket",
                 "spill-prefix",
-                com.google.common.collect.ImmutableMap.of())
+                new HashMap<>())
         {
             @Override
             public GetTableLayoutResponse doGetTableLayout(BlockAllocator blockAllocator, GetTableLayoutRequest request)
@@ -171,7 +168,7 @@ public class GlueMetadataHandlerTest
             }
 
             @Override
-            public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
+            public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
                     throws Exception
             {
                 throw new UnsupportedOperationException();
@@ -425,36 +422,48 @@ public class GlueMetadataHandlerTest
                     return mockResult;
                 });
 
-        GetTableRequest req = new GetTableRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()), queryId, catalog, new TableName(schema, table));
+        GetTableRequest req = GetTableRequest.newBuilder()
+            .setIdentity(IdentityUtil.fakeIdentity())
+            .setQueryId(queryId)
+            .setCatalogName(catalog)
+            .setTableName(
+                com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
+                    .setTableName(table)
+                    .setSchemaName(schema)
+                    .build()
+            ).build();
+        
         GetTableResponse res = handler.doGetTable(allocator, req);
 
         logger.info("doGetTable - {}", res);
 
-        assertTrue(res.getSchema().getFields().size() == 8);
-        assertTrue(res.getSchema().getCustomMetadata().size() > 0);
-        assertTrue(res.getSchema().getCustomMetadata().containsKey(DATETIME_FORMAT_MAPPING_PROPERTY));
-        assertEquals(res.getSchema().getCustomMetadata().get(DATETIME_FORMAT_MAPPING_PROPERTY_NORMALIZED), "Col2=someformat2,col1=someformat1");
-        assertEquals(sourceTable, getSourceTableName(res.getSchema()));
+        Schema arrowSchema = ProtoUtils.fromProtoSchema(allocator, res.getSchema());
+
+        assertTrue(arrowSchema.getFields().size() == 8);
+        assertTrue(arrowSchema.getCustomMetadata().size() > 0);
+        assertTrue(arrowSchema.getCustomMetadata().containsKey(DATETIME_FORMAT_MAPPING_PROPERTY));
+        assertEquals(arrowSchema.getCustomMetadata().get(DATETIME_FORMAT_MAPPING_PROPERTY_NORMALIZED), "Col2=someformat2,col1=someformat1");
+        assertEquals(sourceTable, getSourceTableName(arrowSchema));
 
         //Verify column name mapping works
-        assertNotNull(res.getSchema().findField("partition_col1"));
-        assertNotNull(res.getSchema().findField("col1"));
-        assertNotNull(res.getSchema().findField("Col2"));
-        assertNotNull(res.getSchema().findField("Col3"));
-        assertNotNull(res.getSchema().findField("Col4"));
-        assertNotNull(res.getSchema().findField("col5"));
-        assertNotNull(res.getSchema().findField("col6"));
-        assertNotNull(res.getSchema().findField("col7"));
+        assertNotNull(arrowSchema.findField("partition_col1"));
+        assertNotNull(arrowSchema.findField("col1"));
+        assertNotNull(arrowSchema.findField("Col2"));
+        assertNotNull(arrowSchema.findField("Col3"));
+        assertNotNull(arrowSchema.findField("Col4"));
+        assertNotNull(arrowSchema.findField("col5"));
+        assertNotNull(arrowSchema.findField("col6"));
+        assertNotNull(arrowSchema.findField("col7"));
 
         //Verify types
-        assertTrue(Types.getMinorTypeForArrowType(res.getSchema().findField("partition_col1").getType()).equals(Types.MinorType.INT));
-        assertTrue(Types.getMinorTypeForArrowType(res.getSchema().findField("col1").getType()).equals(Types.MinorType.INT));
-        assertTrue(Types.getMinorTypeForArrowType(res.getSchema().findField("Col2").getType()).equals(Types.MinorType.BIGINT));
-        assertTrue(Types.getMinorTypeForArrowType(res.getSchema().findField("Col3").getType()).equals(Types.MinorType.VARCHAR));
-        assertTrue(Types.getMinorTypeForArrowType(res.getSchema().findField("Col4").getType()).equals(Types.MinorType.DATEMILLI));
-        assertTrue(Types.getMinorTypeForArrowType(res.getSchema().findField("col5").getType()).equals(Types.MinorType.DATEDAY));
-        assertTrue(Types.getMinorTypeForArrowType(res.getSchema().findField("col6").getType()).equals(Types.MinorType.TIMESTAMPMILLITZ));
-        assertTrue(Types.getMinorTypeForArrowType(res.getSchema().findField("col7").getType()).equals(Types.MinorType.TIMESTAMPMILLITZ));
+        assertTrue(Types.getMinorTypeForArrowType(arrowSchema.findField("partition_col1").getType()).equals(Types.MinorType.INT));
+        assertTrue(Types.getMinorTypeForArrowType(arrowSchema.findField("col1").getType()).equals(Types.MinorType.INT));
+        assertTrue(Types.getMinorTypeForArrowType(arrowSchema.findField("Col2").getType()).equals(Types.MinorType.BIGINT));
+        assertTrue(Types.getMinorTypeForArrowType(arrowSchema.findField("Col3").getType()).equals(Types.MinorType.VARCHAR));
+        assertTrue(Types.getMinorTypeForArrowType(arrowSchema.findField("Col4").getType()).equals(Types.MinorType.DATEMILLI));
+        assertTrue(Types.getMinorTypeForArrowType(arrowSchema.findField("col5").getType()).equals(Types.MinorType.DATEDAY));
+        assertTrue(Types.getMinorTypeForArrowType(arrowSchema.findField("col6").getType()).equals(Types.MinorType.TIMESTAMPMILLITZ));
+        assertTrue(Types.getMinorTypeForArrowType(arrowSchema.findField("col7").getType()).equals(Types.MinorType.TIMESTAMPMILLITZ));
     }
 
     @Test
@@ -508,44 +517,50 @@ public class GlueMetadataHandlerTest
                     return mockResult;
                 });
 
-        GetTableRequest req = new GetTableRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()), queryId, catalog, new TableName(schema, table));
+        GetTableRequest req = GetTableRequest.newBuilder()
+            .setIdentity(IdentityUtil.fakeIdentity())
+            .setQueryId(queryId)
+            .setCatalogName(catalog)
+            .setTableName(
+                com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
+                    .setTableName(table)
+                    .setSchemaName(schema)
+                    .build()
+            ).build();
         GetTableResponse res = handler.doGetTable(allocator, req);
 
         logger.info("doGetTable - {}", res);
 
+        Schema arrowSchema = ProtoUtils.fromProtoSchema(allocator, res.getSchema());
+
         //Verify column name mapping works
-        assertNotNull(res.getSchema().findField("col1"));
+        assertNotNull(arrowSchema.findField("col1"));
 
         //Verify types
-        assertTrue(Types.getMinorTypeForArrowType(res.getSchema().findField("col1").getType()).equals(Types.MinorType.INT));
+        assertTrue(Types.getMinorTypeForArrowType(arrowSchema.findField("col1").getType()).equals(Types.MinorType.INT));
     }
 
     @Test
     public void testGetCatalog() {
         // Catalog should be the account from the request
-        MetadataRequest req = new GetTableRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()), queryId, catalog, new TableName(schema, table));
-        String catalog = handler.getCatalog(req);
+        com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity identity = IdentityUtil.fakeIdentity();
+        //MetadataRequest req = new GetTableRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()), queryId, catalog, new TableName(schema, table));
+        String catalog = handler.getCatalog(identity);
         assertEquals(IdentityUtil.fakeIdentity().getAccount(), catalog);
 
         // Catalog should be the account from the lambda context's function arn
-        when(mockContext.getInvokedFunctionArn())
-                .thenReturn("arn:aws:lambda:us-east-1:012345678912:function:athena-123");
-        req.setContext(mockContext);
-        catalog = handler.getCatalog(req);
+        handler.configOptions.put(MetadataHandler.FUNCTION_ARN_CONFIG_KEY, "arn:aws:lambda:us-east-1:012345678912:function:athena-123");
+        catalog = handler.getCatalog(identity);
         assertEquals("012345678912", catalog);
 
         // Catalog should be the account from the request since function arn is invalid
-        when(mockContext.getInvokedFunctionArn())
-                .thenReturn("arn:aws:lambda:us-east-1:012345678912:function:");
-        req.setContext(mockContext);
-        catalog = handler.getCatalog(req);
+        handler.configOptions.put(MetadataHandler.FUNCTION_ARN_CONFIG_KEY, "arn:aws:lambda:us-east-1:012345678912:function:");
+        catalog = handler.getCatalog(identity);
         assertEquals(IdentityUtil.fakeIdentity().getAccount(), catalog);
 
         // Catalog should be the account from the request since function arn is null
-        when(mockContext.getInvokedFunctionArn())
-                .thenReturn(null);
-        req.setContext(mockContext);
-        catalog = handler.getCatalog(req);
+        handler.configOptions.put(MetadataHandler.FUNCTION_ARN_CONFIG_KEY, null);
+        catalog = handler.getCatalog(identity);
         assertEquals(IdentityUtil.fakeIdentity().getAccount(), catalog);
     }
 }

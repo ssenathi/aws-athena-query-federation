@@ -11,5 +11,5 @@ message GetTableResponse {
   optional string catalogName = 2;
   optional com.amazonaws.athena.connector.lambda.proto.domain.TableName tableName = 3;
   optional bytes schema = 4;
-  repeated string partitionCols = 5;
+  repeated string partitionColumns = 5;
 }

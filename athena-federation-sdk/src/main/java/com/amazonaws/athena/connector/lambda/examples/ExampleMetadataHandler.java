@@ -31,11 +31,11 @@ import com.amazonaws.athena.connector.lambda.domain.Split;
 import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.exceptions.FederationThrottleException;
 import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
@@ -287,7 +287,12 @@ public class ExampleMetadataHandler
         partitionCols.add("month");
         partitionCols.add("year");
         partitionCols.add("day");
-        return new GetTableResponse(request.getCatalogName(), request.getTableName(), ExampleTable.schema, partitionCols);
+        return GetTableResponse.newBuilder()
+            .setCatalogName(request.getCatalogName())
+            .setTableName(request.getTableName())
+            .setSchema(ProtoUtils.toProtoSchemaBytes(ExampleTable.schema))
+            .addAllPartitionColumns(partitionCols)
+            .build();
     }
 
     /**
@@ -300,7 +305,7 @@ public class ExampleMetadataHandler
      * @param request The GetTableLayoutResquest that triggered this call.
      */
     @Override
-    public void enhancePartitionSchema(SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request)
+    public void enhancePartitionSchema(BlockAllocator allocator, SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request)
     {
         /**
          * Add any additional fields we might need to our partition response schema.
@@ -315,12 +320,13 @@ public class ExampleMetadataHandler
      * Our example table is partitions on year, month, day so we loop over a range of years, months, and days to generate
      * our example partitions. A connector for a real data source would likely query that source's metadata
      * to create a real list of partitions.
+     * @param allocator Tool for creating and managing Apache Arrow Blocks.
      *  @param writer Used to write rows (partitions) into the Apache Arrow response. The writes are automatically constrained.
      * @param request Provides details of the catalog, database, and table being queried as well as any filter predicate.
      * @param queryStatusChecker
      */
     @Override
-    public void getPartitions(BlockWriter writer, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
+    public void getPartitions(BlockAllocator allocator, BlockWriter writer, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
     {
         logCaller(request);
 
@@ -343,7 +349,7 @@ public class ExampleMetadataHandler
                         matched &= block.setValue("year", rowNum, yearVal);
 
                         //these are additional field we added by overriding enhancePartitionSchema(...)
-                        matched &= block.setValue(PARTITION_LOCATION, rowNum, "s3://" + request.getPartitionCols());
+                        matched &= block.setValue(PARTITION_LOCATION, rowNum, "s3://" + request.getPartitionColsList());
                         matched &= block.setValue(SERDE, rowNum, "TextInputFormat");
 
                         //if all fields passed then we wrote 1 row

@@ -25,10 +25,10 @@ import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
 import com.amazonaws.athena.connector.lambda.domain.TableName;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.metadata.MetadataRequest;
 import com.amazonaws.athena.connector.lambda.metadata.glue.GlueFieldLexer;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
@@ -414,9 +414,9 @@ public abstract class GlueMetadataHandler
     protected GetTableResponse doGetTable(BlockAllocator blockAllocator, GetTableRequest request, TableFilter filter)
             throws Exception
     {
-        TableName tableName = request.getTableName();
+        com.amazonaws.athena.connector.lambda.proto.domain.TableName tableName = request.getTableName();
         com.amazonaws.services.glue.model.GetTableRequest getTableRequest = new com.amazonaws.services.glue.model.GetTableRequest();
-        getTableRequest.setCatalogId(getCatalog(request));
+        getTableRequest.setCatalogId(getCatalog(request.getIdentity()));
         getTableRequest.setDatabaseName(tableName.getSchemaName());
         getTableRequest.setName(tableName.getTableName());
 
@@ -483,10 +483,13 @@ public abstract class GlueMetadataHandler
 
         schemaBuilder.addMetadata(GLUE_TABLE_CONTAINS_PREVIOUSLY_UNSUPPORTED_TYPE, String.valueOf(glueTableContainsPreviouslyUnsupportedType));
 
-        return new GetTableResponse(request.getCatalogName(),
-                request.getTableName(),
-                schemaBuilder.build(),
-                partitionCols);
+        return GetTableResponse.newBuilder()
+            .setType("GetTableResponse")
+            .setCatalogName(request.getCatalogName())
+            .setTableName(request.getTableName())
+            .addAllPartitionColumns(partitionCols)
+            .setSchema(ProtoUtils.toProtoSchemaBytes(schemaBuilder.build()))
+            .build();
     }
 
     /**

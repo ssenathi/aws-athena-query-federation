@@ -19,6 +19,7 @@
  */
 package com.amazonaws.athena.connectors.dynamodb;
 
+import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
@@ -29,9 +30,9 @@ import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.metadata.glue.GlueFieldLexer;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.records.ReadRecordsResponse;
 import com.amazonaws.athena.connector.lambda.records.RecordResponse;
@@ -313,12 +314,18 @@ public class DynamoDBRecordHandlerTest
         when(glueClient.getTable(any())).thenReturn(mockResult);
 
         TableName tableName = new TableName(DEFAULT_SCHEMA, TEST_TABLE3);
-        GetTableRequest getTableRequest = new GetTableRequest(TEST_IDENTITY, TEST_QUERY_ID, TEST_CATALOG_NAME, tableName);
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder()
+            .setIdentity(PROTO_TEST_IDENTITY)
+            .setQueryId(TEST_QUERY_ID)
+            .setCatalogName(TEST_CATALOG_NAME)
+            .setTableName(ProtoUtils.toTableName(tableName))
+            .build();
+
         GetTableResponse getTableResponse = metadataHandler.doGetTable(allocator, getTableRequest);
         logger.info("testDateTimeSupportFromGlueTable: GetTableResponse[{}]", getTableResponse);
         logger.info("testDateTimeSupportFromGlueTable: GetTableResponse Schema[{}]", getTableResponse.getSchema());
 
-        Schema schema3 = getTableResponse.getSchema();
+        Schema schema3 = ProtoUtils.fromProtoSchema(allocator, getTableResponse.getSchema());
 
         Split split = Split.newBuilder(SPILL_LOCATION, keyFactory.create())
                 .add(TABLE_METADATA, TEST_TABLE3)
@@ -370,12 +377,17 @@ public class DynamoDBRecordHandlerTest
         when(glueClient.getTable(any())).thenReturn(mockResult);
 
         TableName tableName = new TableName(DEFAULT_SCHEMA, TEST_TABLE4);
-        GetTableRequest getTableRequest = new GetTableRequest(TEST_IDENTITY, TEST_QUERY_ID, TEST_CATALOG_NAME, tableName);
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder()
+            .setIdentity(PROTO_TEST_IDENTITY)
+            .setQueryId(TEST_QUERY_ID)
+            .setCatalogName(TEST_CATALOG_NAME)
+            .setTableName(ProtoUtils.toTableName(tableName))
+            .build();
         GetTableResponse getTableResponse = metadataHandler.doGetTable(allocator, getTableRequest);
         logger.info("testStructWithNullFromGlueTable: GetTableResponse[{}]", getTableResponse);
         logger.info("testStructWithNullFromGlueTable: GetTableResponse Schema[{}]", getTableResponse.getSchema());
 
-        Schema schema4 = getTableResponse.getSchema();
+        Schema schema4 = ProtoUtils.fromProtoSchema(allocator, getTableResponse.getSchema());
 
         for (Field f : schema4.getFields()) {
             if (f.getName().equals("Col2")) {
@@ -417,12 +429,17 @@ public class DynamoDBRecordHandlerTest
         when(glueClient.getTable(any())).thenThrow(new EntityNotFoundException(""));
 
         TableName tableName = new TableName(DEFAULT_SCHEMA, TEST_TABLE4);
-        GetTableRequest getTableRequest = new GetTableRequest(TEST_IDENTITY, TEST_QUERY_ID, TEST_CATALOG_NAME, tableName);
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder()
+            .setIdentity(PROTO_TEST_IDENTITY)
+            .setQueryId(TEST_QUERY_ID)
+            .setCatalogName(TEST_CATALOG_NAME)
+            .setTableName(ProtoUtils.toTableName(tableName))
+            .build();
         GetTableResponse getTableResponse = metadataHandler.doGetTable(allocator, getTableRequest);
         logger.info("testStructWithNullFromGlueTable: GetTableResponse[{}]", getTableResponse);
         logger.info("testStructWithNullFromGlueTable: GetTableResponse Schema[{}]", getTableResponse.getSchema());
 
-        Schema schema4 = getTableResponse.getSchema();
+        Schema schema4 = ProtoUtils.fromProtoSchema(allocator, getTableResponse.getSchema());
         for (Field f : schema4.getFields()) {
             if (f.getName().equals("Col2")) {
                 assertEquals(1, f.getChildren().size());
@@ -480,12 +497,17 @@ public class DynamoDBRecordHandlerTest
         when(glueClient.getTable(any())).thenReturn(mockResult);
 
         TableName tableName = new TableName(DEFAULT_SCHEMA, TEST_TABLE5);
-        GetTableRequest getTableRequest = new GetTableRequest(TEST_IDENTITY, TEST_QUERY_ID, TEST_CATALOG_NAME, tableName);
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder()
+            .setIdentity(PROTO_TEST_IDENTITY)
+            .setQueryId(TEST_QUERY_ID)
+            .setCatalogName(TEST_CATALOG_NAME)
+            .setTableName(ProtoUtils.toTableName(tableName))
+            .build();
         GetTableResponse getTableResponse = metadataHandler.doGetTable(allocator, getTableRequest);
         logger.info("testMapWithSchemaFromGlueTable: GetTableResponse[{}]", getTableResponse);
         logger.info("testMapWithSchemaFromGlueTable: GetTableResponse Schema[{}]", getTableResponse.getSchema());
 
-        Schema schema5 = getTableResponse.getSchema();
+        Schema schema5 = ProtoUtils.fromProtoSchema(allocator, getTableResponse.getSchema());
 
         Split split = Split.newBuilder(SPILL_LOCATION, keyFactory.create())
                 .add(TABLE_METADATA, TEST_TABLE5)
@@ -533,12 +555,17 @@ public class DynamoDBRecordHandlerTest
         when(glueClient.getTable(any())).thenReturn(mockResult);
 
         TableName tableName = new TableName(DEFAULT_SCHEMA, TEST_TABLE6);
-        GetTableRequest getTableRequest = new GetTableRequest(TEST_IDENTITY, TEST_QUERY_ID, TEST_CATALOG_NAME, tableName);
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder()
+            .setIdentity(PROTO_TEST_IDENTITY)
+            .setQueryId(TEST_QUERY_ID)
+            .setCatalogName(TEST_CATALOG_NAME)
+            .setTableName(ProtoUtils.toTableName(tableName))
+            .build();
         GetTableResponse getTableResponse = metadataHandler.doGetTable(allocator, getTableRequest);
         logger.info("testStructWithSchemaFromGlueTable: GetTableResponse[{}]", getTableResponse);
         logger.info("testStructWithSchemaFromGlueTable: GetTableResponse Schema[{}]", getTableResponse.getSchema());
 
-        Schema schema = getTableResponse.getSchema();
+        Schema schema = ProtoUtils.fromProtoSchema(allocator, getTableResponse.getSchema());
 
         Split split = Split.newBuilder(SPILL_LOCATION, keyFactory.create())
                 .add(TABLE_METADATA, TEST_TABLE6)
@@ -588,12 +615,17 @@ public class DynamoDBRecordHandlerTest
         when(glueClient.getTable(any())).thenReturn(mockResult);
 
         TableName tableName = new TableName(DEFAULT_SCHEMA, TEST_TABLE7);
-        GetTableRequest getTableRequest = new GetTableRequest(TEST_IDENTITY, TEST_QUERY_ID, TEST_CATALOG_NAME, tableName);
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder()
+            .setIdentity(PROTO_TEST_IDENTITY)
+            .setQueryId(TEST_QUERY_ID)
+            .setCatalogName(TEST_CATALOG_NAME)
+            .setTableName(ProtoUtils.toTableName(tableName))
+            .build();
         GetTableResponse getTableResponse = metadataHandler.doGetTable(allocator, getTableRequest);
         logger.info("testListWithSchemaFromGlueTable: GetTableResponse[{}]", getTableResponse);
         logger.info("testListWithSchemaFromGlueTable: GetTableResponse Schema[{}]", getTableResponse.getSchema());
 
-        Schema schema = getTableResponse.getSchema();
+        Schema schema = ProtoUtils.fromProtoSchema(allocator, getTableResponse.getSchema());
 
         Split split = Split.newBuilder(SPILL_LOCATION, keyFactory.create())
                 .add(TABLE_METADATA, TEST_TABLE7)
@@ -668,12 +700,17 @@ public class DynamoDBRecordHandlerTest
         when(glueClient.getTable(any())).thenReturn(mockResult);
 
         TableName tableName = new TableName(DEFAULT_SCHEMA, TEST_TABLE8);
-        GetTableRequest getTableRequest = new GetTableRequest(TEST_IDENTITY, TEST_QUERY_ID, TEST_CATALOG_NAME, tableName);
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder()
+            .setIdentity(PROTO_TEST_IDENTITY)
+            .setQueryId(TEST_QUERY_ID)
+            .setCatalogName(TEST_CATALOG_NAME)
+            .setTableName(ProtoUtils.toTableName(tableName))
+            .build();
         GetTableResponse getTableResponse = metadataHandler.doGetTable(allocator, getTableRequest);
         logger.info("testNumMapWithSchemaFromGlueTable: GetTableResponse[{}]", getTableResponse);
         logger.info("testNumMapWithSchemaFromGlueTable: GetTableResponse Schema[{}]", getTableResponse.getSchema());
 
-        Schema schema = getTableResponse.getSchema();
+        Schema schema = ProtoUtils.fromProtoSchema(allocator, getTableResponse.getSchema());
 
         Split split = Split.newBuilder(SPILL_LOCATION, keyFactory.create())
                 .add(TABLE_METADATA, TEST_TABLE8)
@@ -732,12 +769,17 @@ public class DynamoDBRecordHandlerTest
         when(glueClient.getTable(any())).thenReturn(mockResult);
 
         TableName tableName = new TableName(DEFAULT_SCHEMA, TEST_TABLE8);
-        GetTableRequest getTableRequest = new GetTableRequest(TEST_IDENTITY, TEST_QUERY_ID, TEST_CATALOG_NAME, tableName);
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder()
+            .setIdentity(PROTO_TEST_IDENTITY)
+            .setQueryId(TEST_QUERY_ID)
+            .setCatalogName(TEST_CATALOG_NAME)
+            .setTableName(ProtoUtils.toTableName(tableName))
+            .build();
         GetTableResponse getTableResponse = metadataHandler.doGetTable(allocator, getTableRequest);
         logger.info("testNumStructWithSchemaFromGlueTable: GetTableResponse[{}]", getTableResponse);
         logger.info("testNumStructWithSchemaFromGlueTable: GetTableResponse Schema[{}]", getTableResponse.getSchema());
 
-        Schema schema = getTableResponse.getSchema();
+        Schema schema = ProtoUtils.fromProtoSchema(allocator, getTableResponse.getSchema());
 
         Split split = Split.newBuilder(SPILL_LOCATION, keyFactory.create())
                 .add(TABLE_METADATA, TEST_TABLE8)

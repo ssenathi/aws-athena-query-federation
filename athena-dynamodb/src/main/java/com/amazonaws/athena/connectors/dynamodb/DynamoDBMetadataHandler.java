@@ -32,12 +32,12 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.metadata.glue.GlueFieldLexer;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
@@ -267,7 +267,12 @@ public class DynamoDBMetadataHandler
 
         // ignore database/schema name since there are no databases/schemas in DDB
         Schema schema = tableResolver.getTableSchema(request.getTableName().getTableName());
-        return new GetTableResponse(request.getCatalogName(), request.getTableName(), schema);
+        return GetTableResponse.newBuilder()
+            .setType("GetTableResponse")
+            .setCatalogName(request.getCatalogName())
+            .setTableName(request.getTableName())
+            .setSchema(ProtoUtils.toProtoSchemaBytes(schema))
+            .build();
     }
 
     /**
@@ -278,10 +283,11 @@ public class DynamoDBMetadataHandler
      * @see GlueMetadataHandler
      */
     @Override
-    public void enhancePartitionSchema(SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request)
+    public void enhancePartitionSchema(BlockAllocator allocator, SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request)
     {
         // use the source table name from the schema if available (in case Glue table name != actual table name)
-        String tableName = getSourceTableName(request.getSchema());
+        Schema requestSchema = ProtoUtils.fromProtoSchema(allocator, request.getSchema());
+        String tableName = getSourceTableName(requestSchema);
         if (tableName == null) {
             tableName = request.getTableName().getTableName();
         }
@@ -294,15 +300,15 @@ public class DynamoDBMetadataHandler
         }
         // add table name so we don't have to do case insensitive resolution again
         partitionSchemaBuilder.addMetadata(TABLE_METADATA, table.getName());
-        Map<String, ValueSet> summary = request.getConstraints().getSummary();
-        List<String> requestedCols = request.getSchema().getFields().stream().map(Field::getName).collect(Collectors.toList());
+        Map<String, ValueSet> summary = ProtoUtils.fromProtoConstraints(allocator, request.getConstraints()).getSummary();
+        List<String> requestedCols = requestSchema.getFields().stream().map(Field::getName).collect(Collectors.toList());
         DynamoDBIndex index = DDBPredicateUtils.getBestIndexForPredicates(table, requestedCols, summary);
         logger.info("using index: {}", index.getName());
         String hashKeyName = index.getHashKey();
         ValueSet hashKeyValueSet = summary.get(hashKeyName);
         List<Object> hashKeyValues = (hashKeyValueSet != null) ? DDBPredicateUtils.getHashKeyAttributeValues(hashKeyValueSet) : Collections.emptyList();
 
-        DDBRecordMetadata recordMetadata = new DDBRecordMetadata(request.getSchema());
+        DDBRecordMetadata recordMetadata = new DDBRecordMetadata(requestSchema);
 
         Set<String> columnsToIgnore = new HashSet<>();
         List<AttributeValue> valueAccumulator = new ArrayList<>();
@@ -350,18 +356,19 @@ public class DynamoDBMetadataHandler
      * @see GlueMetadataHandler
      */
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
+    public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
             throws Exception
     {
         // TODO consider caching this repeated work in #enhancePartitionSchema
         // use the source table name from the schema if available (in case Glue table name != actual table name)
-        String tableName = getSourceTableName(request.getSchema());
+        Schema requestSchema = ProtoUtils.fromProtoSchema(allocator, request.getSchema());
+        String tableName = getSourceTableName(requestSchema);
         if (tableName == null) {
             tableName = request.getTableName().getTableName();
         }
         DynamoDBTable table = tableResolver.getTableMetadata(tableName);
-        Map<String, ValueSet> summary = request.getConstraints().getSummary();
-        List<String> requestedCols = request.getSchema().getFields().stream().map(Field::getName).collect(Collectors.toList());
+        Map<String, ValueSet> summary = ProtoUtils.fromProtoConstraints(allocator, request.getConstraints()).getSummary();
+        List<String> requestedCols = requestSchema.getFields().stream().map(Field::getName).collect(Collectors.toList());
         DynamoDBIndex index = DDBPredicateUtils.getBestIndexForPredicates(table, requestedCols, summary);
         logger.info("using index: {}", index.getName());
         String hashKeyName = index.getHashKey();

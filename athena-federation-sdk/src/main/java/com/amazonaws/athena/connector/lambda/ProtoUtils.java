@@ -30,12 +30,18 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
-import com.amazonaws.athena.connector.lambda.serde.v3.BlockSerDeV3;
+import com.amazonaws.athena.connector.lambda.serde.v2.BlockSerDe;
 import com.google.protobuf.ByteString;
 import org.apache.arrow.vector.ipc.ReadChannel;
 import org.apache.arrow.vector.ipc.WriteChannel;
+import org.apache.arrow.vector.ipc.message.IpcOption;
 import org.apache.arrow.vector.ipc.message.MessageSerializer;
+import org.apache.arrow.vector.types.DateUnit;
 import org.apache.arrow.vector.types.FloatingPointPrecision;
+import org.apache.arrow.vector.types.IntervalUnit;
+import org.apache.arrow.vector.types.MetadataVersion;
+import org.apache.arrow.vector.types.TimeUnit;
+import org.apache.arrow.vector.types.UnionMode;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Schema;
 
@@ -43,6 +49,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.channels.Channels;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -59,7 +66,6 @@ public class ProtoUtils
         // do nothing
     }
 
-    // TODO: Add all supported types
     public static com.amazonaws.athena.connector.lambda.proto.arrowtype.ArrowTypeMessage toProtoArrowType(ArrowType arrowType)
     {
         com.amazonaws.athena.connector.lambda.proto.arrowtype.ArrowTypeMessage.Builder arrowTypeMessageBuilder = com.amazonaws.athena.connector.lambda.proto.arrowtype.ArrowTypeMessage.newBuilder();
@@ -69,9 +75,50 @@ public class ProtoUtils
 
         //now, we have to write whatever fields the ArrowType constructor would take in based on the subtype.
         // Refer to ArrowTypeSerDe and the subclasses' doTypedSerialize implementation
+        // all no-arg constructors have nothing to do here, so we omit them
         if (arrowType instanceof ArrowType.FloatingPoint) {
             var fp = (ArrowType.FloatingPoint) arrowType;
-            arrowTypeMessageBuilder.setPrecision(com.amazonaws.athena.connector.lambda.proto.arrowtype.Precision.valueOf(fp.getPrecision().name()));
+            arrowTypeMessageBuilder.setPrecision(fp.getPrecision().name());
+        }
+        else if (arrowType instanceof ArrowType.Int) {
+            ArrowType.Int intObj = (ArrowType.Int) arrowType;
+            arrowTypeMessageBuilder.setBitWidth(intObj.getBitWidth()).setIsSigned(intObj.getIsSigned());
+        }
+        else if (arrowType instanceof ArrowType.FixedSizeList) {
+            ArrowType.FixedSizeList fixedSizeList = (ArrowType.FixedSizeList) arrowType;
+            arrowTypeMessageBuilder.setListSize(fixedSizeList.getListSize());
+        }
+        else if (arrowType instanceof ArrowType.FixedSizeBinary) {
+            ArrowType.FixedSizeBinary fixedSizeBinary = (ArrowType.FixedSizeBinary) arrowType;
+            arrowTypeMessageBuilder.setByteWidth(fixedSizeBinary.getByteWidth());
+        }
+        else if (arrowType instanceof ArrowType.Union) {
+            ArrowType.Union union = (ArrowType.Union) arrowType;
+            arrowTypeMessageBuilder.setMode(com.amazonaws.athena.connector.lambda.proto.arrowtype.UnionMode.valueOf(union.getMode().name()));
+            arrowTypeMessageBuilder.addAllTypeIds(Arrays.stream(union.getTypeIds()).boxed().collect(Collectors.toList()));
+        }
+        else if (arrowType instanceof ArrowType.Decimal) {
+            ArrowType.Decimal decimal = (ArrowType.Decimal) arrowType;
+            arrowTypeMessageBuilder.setPrecision("" + decimal.getPrecision());
+            arrowTypeMessageBuilder.setScale(decimal.getScale());
+        }
+        else if (arrowType instanceof ArrowType.Date) {
+            ArrowType.Date arrowDate = (ArrowType.Date) arrowType;
+            arrowTypeMessageBuilder.setUnit(arrowDate.getUnit().name());
+        }
+        else if (arrowType instanceof ArrowType.Time) {
+            ArrowType.Time arrowTime = (ArrowType.Time) arrowType;
+            arrowTypeMessageBuilder.setUnit(arrowTime.getUnit().name());
+            arrowTypeMessageBuilder.setBitWidth(arrowTime.getBitWidth());
+        }
+        else if (arrowType instanceof ArrowType.Timestamp) {
+            ArrowType.Timestamp arrowTimestamp = (ArrowType.Timestamp) arrowType;
+            arrowTypeMessageBuilder.setUnit(arrowTimestamp.getUnit().name());
+            arrowTypeMessageBuilder.setTimezone(arrowTimestamp.getTimezone());
+        }
+        else if (arrowType instanceof ArrowType.Interval) {
+            ArrowType.Interval interval = (ArrowType.Interval) arrowType;
+            arrowTypeMessageBuilder.setUnit(interval.getUnit().name());
         }
 
         return arrowTypeMessageBuilder.build();
@@ -85,8 +132,57 @@ public class ProtoUtils
         // we can use reflection for the classes that have no-arg constructors, but 
         // there's not a good way to do it for classes with arg constructors.
         if (className.equals("FloatingPoint")) {
-            return new ArrowType.FloatingPoint(FloatingPointPrecision.valueOf(arrowTypeMessage.getPrecision().name()));
+            return new ArrowType.FloatingPoint(FloatingPointPrecision.valueOf(arrowTypeMessage.getPrecision()));
         }
+        else if (className.equals("Int")) {
+            return new ArrowType.Int(arrowTypeMessage.getBitWidth(), arrowTypeMessage.getIsSigned());
+        }
+        else if (className.equals("Utf8")) {
+            return new ArrowType.Utf8();
+        }
+        else if (className.equals("Null")) {
+            return new ArrowType.Null();
+        }
+        else if (className.equals("Struct")) {
+            return new ArrowType.Struct();
+        }
+        else if (className.equals("List")) {
+            return new ArrowType.List();
+        }
+        else if (className.equals("Map")) {
+            return new ArrowType.Map(false); // this is hard-coded in the existing SerDe to always be false.
+        }
+        else if (className.equals("Binary")) {
+            return new ArrowType.Binary();
+        }
+        else if (className.equals("Bool")) {
+            return new ArrowType.Bool();
+        }
+        else if (className.equals("FixedSizeList")) {
+            return new ArrowType.FixedSizeList(arrowTypeMessage.getListSize());
+        }
+        else if (className.equals("FixedSizeBinary")) {
+            return new ArrowType.FixedSizeBinary(arrowTypeMessage.getByteWidth());
+        }
+        else if (className.equals("Union")) {
+            return new ArrowType.Union(UnionMode.valueOf(arrowTypeMessage.getMode().name()), arrowTypeMessage.getTypeIdsList().stream().mapToInt(Integer::intValue).toArray());
+        }
+        else if (className.equals("Decimal")) {
+            return new ArrowType.Decimal(Integer.valueOf(arrowTypeMessage.getPrecision()), arrowTypeMessage.getScale());
+        }
+        else if (className.equals("Date")) {
+            return new ArrowType.Date(DateUnit.valueOf(arrowTypeMessage.getUnit()));
+        }
+        else if (className.equals("Time")) {
+            return new ArrowType.Time(TimeUnit.valueOf(arrowTypeMessage.getUnit()), arrowTypeMessage.getBitWidth());
+        }
+        else if (className.equals("Timestamp")) {
+            return new ArrowType.Timestamp(TimeUnit.valueOf(arrowTypeMessage.getUnit()), arrowTypeMessage.getTimezone());
+        }
+        else if (className.equals("Interval")) {
+            return new ArrowType.Interval(IntervalUnit.valueOf(arrowTypeMessage.getUnit()));
+        }
+
         return null;
     }
 
@@ -224,19 +320,32 @@ public class ProtoUtils
     {
         return new Constraints(fromProtoSummary(blockAllocator, protoConstraints.getSummaryMap()));
     }
+
+    // WARNING - This logic is compliant with the existing ObjectMapperV2 implementation. In ObjectMapperV3, the logic changed.
+    // Therefore, to maintain compliance, we MUST either 1) return this (and the corresopnding From method) conditionally based on the version, or
+    // 2) wait until we officially swap versions so we can just use the latest.
+    public static ByteString toProtoSchemaBytes(Schema schema)
+    {
+        ByteArrayOutputStream outSchema = new ByteArrayOutputStream();
+        // TODO: Rebase and pull in the static ipc option added recently to master
+        IpcOption option = new IpcOption(true, MetadataVersion.V4);
+        try {
+            MessageSerializer.serialize(new WriteChannel(Channels.newChannel(outSchema)), schema, option);
+        }
+        catch (IOException ie) {
+            // for now, ignore
+        }
+        return ByteString.copyFrom(outSchema.toByteArray());
+    }
     
     public static com.amazonaws.athena.connector.lambda.proto.data.Block toProtoBlock(Block block)
     {
-        ByteArrayOutputStream outSchema = new ByteArrayOutputStream();
         ByteArrayOutputStream outRecords = new ByteArrayOutputStream();
-        try {
-            // need to convert schema to byte array. Taken from SchemaSerDeV3.java
-            MessageSerializer.serialize(new WriteChannel(Channels.newChannel(outSchema)), block.getSchema());
-
-            try (var batch = block.getRecordBatch()) {
-                if (batch.getLength() > 0) { // if we don't do this conditionally, it writes a non-empty string, which breaks our current serde
-                    MessageSerializer.serialize(new WriteChannel(Channels.newChannel(outRecords)), batch);
-                }
+        try (var batch = block.getRecordBatch()) {
+            if (batch.getLength() > 0) { // if we don't do this conditionally, it writes a non-empty string, which breaks our current serde
+                // WARNING - this is also conditional on the serde version.
+                IpcOption option = new IpcOption(true, MetadataVersion.V4);
+                MessageSerializer.serialize(new WriteChannel(Channels.newChannel(outRecords)), batch, option);
             }
         }
         catch (IOException ie) {
@@ -244,14 +353,27 @@ public class ProtoUtils
         }
         return com.amazonaws.athena.connector.lambda.proto.data.Block.newBuilder()
             .setAId(block.getAllocatorId())
-            .setSchema(ByteString.copyFrom(outSchema.toByteArray()))
+            .setSchema(toProtoSchemaBytes(block.getSchema()))
             .setRecords(ByteString.copyFrom(outRecords.toByteArray()))
             .build();
     }
 
-    public static Block fromProtoBlock(BlockAllocator allocator, com.amazonaws.athena.connector.lambda.proto.data.Block protoBlock)
+    public static Schema fromProtoSchema(BlockAllocator allocator, ByteString protoSchemaBytes)
     {
-        ByteArrayInputStream in = new ByteArrayInputStream(protoBlock.getSchema().toByteArray());
+        // JsonFactory jsonFactory = new JsonFactory();
+        // ByteArrayInputStream schemaBytesInputStream = new ByteArrayInputStream(protoSchemaBytes.toByteArray());
+        // byte[] decodedSchemaBytes;
+        // try (JsonParser jsonParser = jsonFactory.createParser(schemaBytesInputStream)) {
+        //     decodedSchemaBytes = jsonParser.getBinaryValue();
+        //     ByteArrayInputStream decodedSchemaBytesInputStream = new ByteArrayInputStream(decodedSchemaBytes);
+        //     return MessageSerializer.deserializeSchema(new ReadChannel(Channels.newChannel(decodedSchemaBytesInputStream)));
+        // } catch (IOException e) {
+        //     // TODO Auto-generated catch block
+        //     e.printStackTrace();
+        //     throw new RuntimeException(e);
+        // }
+        
+        ByteArrayInputStream in = new ByteArrayInputStream(protoSchemaBytes.toByteArray());
         Schema schema = null;
         try {
             schema = MessageSerializer.deserializeSchema(new ReadChannel(Channels.newChannel(in)));
@@ -259,12 +381,18 @@ public class ProtoUtils
         catch (IOException ie) {
             // ignore for now
         }
+        return schema;
+    }
 
+    public static Block fromProtoBlock(BlockAllocator allocator, com.amazonaws.athena.connector.lambda.proto.data.Block protoBlock)
+    {
+        Schema schema = fromProtoSchema(allocator, protoBlock.getSchema());
         var block = allocator.createBlock(schema);
 
         var protoRecords = protoBlock.getRecords().toByteArray();
         if (protoRecords.length > 0) {
-            var arrowBatch = BlockSerDeV3.Deserializer.deserializeRecordBatch(allocator, protoRecords);
+            // WARNING - this too is dependent on what serde version we are doing. Needs to be made dynamic based on the serde version!
+            var arrowBatch = BlockSerDe.Deserializer.deserializeRecordBatch(allocator, protoRecords);
             block.loadRecordBatch(arrowBatch);
         }
 

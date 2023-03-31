@@ -32,12 +32,12 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
@@ -236,13 +236,22 @@ public class ExampleMetadataHandlerTest
     public void doGetTable()
     {
         logger.info("doGetTable - enter");
-        GetTableRequest req = new GetTableRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()), "queryId", "default",
-                new TableName("custom_source", "fake_table"));
+        GetTableRequest req = GetTableRequest.newBuilder()
+            .setIdentity(IdentityUtil.fakeIdentity())
+            .setQueryId("queryId")
+            .setCatalogName("default")
+            .setTableName(
+                com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
+                    .setSchemaName("custom_source")
+                    .setTableName("fake_table")
+                    .build()
+            ).build();
         // ObjectMapperUtil.assertSerialization(req);
         GetTableResponse res = metadataHandler.doGetTable(allocator, req);
         // ObjectMapperUtil.assertSerialization(res);
-        assertTrue(res.getSchema().getFields().size() > 0);
-        assertTrue(res.getSchema().getCustomMetadata().size() > 0);
+        Schema arrowSchema = ProtoUtils.fromProtoSchema(allocator, res.getSchema());
+        assertTrue(arrowSchema.getFields().size() > 0);
+        assertTrue(arrowSchema.getCustomMetadata().size() > 0);
         logger.info("doGetTable - {}", res);
         logger.info("doGetTable - exit");
     }
@@ -252,8 +261,17 @@ public class ExampleMetadataHandlerTest
     {
         try {
             logger.info("doGetTableFail - enter");
-            GetTableRequest req = new GetTableRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()), "queryId", "default",
-                    new TableName("lambda", "fake"));
+            GetTableRequest req = GetTableRequest.newBuilder()
+                .setIdentity(IdentityUtil.fakeIdentity())
+                .setQueryId("queryId")
+                .setCatalogName("default")
+                .setTableName(
+                    com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
+                        .setSchemaName("lambda")
+                        .setTableName("fake")
+                        .build()
+                ).build();
+
             metadataHandler.doGetTable(allocator, req);
         }
         catch (Exception ex) {
@@ -298,19 +316,23 @@ public class ExampleMetadataHandlerTest
         GetTableLayoutRequest req = null;
         GetTableLayoutResponse res = null;
         try {
+            req = GetTableLayoutRequest.newBuilder()
+                .setIdentity(IdentityUtil.fakeIdentity())
+                .setQueryId("queryId")
+                .setCatalogName("default")
+                .setTableName(ProtoUtils.toTableName(new TableName("schema1", "table1")))
+                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtoUtils.toProtoSchemaBytes(tableSchema))
+                .addAllPartitionCols(partitionCols)
+                .build();
 
-            req = new GetTableLayoutRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()), "queryId", "default",
-                    new TableName("schema1", "table1"),
-                    new Constraints(constraintsMap),
-                    tableSchema,
-                    partitionCols);
             // ObjectMapperUtil.assertSerialization(req);
 
             res = metadataHandler.doGetTableLayout(allocator, req);
             // ObjectMapperUtil.assertSerialization(res);
 
             logger.info("doGetTableLayout - {}", res);
-            Block partitions = res.getPartitions();
+            Block partitions = ProtoUtils.fromProtoBlock(allocator, res.getPartitions());
             for (int row = 0; row < partitions.getRowCount() && row < 10; row++) {
                 logger.info("doGetTableLayout:{} {}", row, BlockUtils.rowToString(partitions, row));
             }
@@ -319,8 +341,8 @@ public class ExampleMetadataHandlerTest
         }
         finally {
             try {
-                req.close();
-                res.close();
+                ProtoUtils.fromProtoConstraints(allocator, req.getConstraints()).close();
+                ProtoUtils.fromProtoBlock(allocator, res.getPartitions()).close();
             }
             catch (Exception ex) {
                 logger.error("doGetTableLayout: ", ex);
