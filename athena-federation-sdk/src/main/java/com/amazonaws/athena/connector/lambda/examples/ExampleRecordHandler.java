@@ -1,5 +1,4 @@
 package com.amazonaws.athena.connector.lambda.examples;
-
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
@@ -19,9 +18,10 @@ package com.amazonaws.athena.connector.lambda.examples;
  * limitations under the License.
  * #L%
  */
-
+import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.Block;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
 import com.amazonaws.athena.connector.lambda.data.writers.GeneratedRowWriter;
 import com.amazonaws.athena.connector.lambda.data.writers.extractors.BigIntExtractor;
@@ -45,10 +45,9 @@ import com.amazonaws.athena.connector.lambda.data.writers.holders.NullableVarCha
 import com.amazonaws.athena.connector.lambda.domain.predicate.ConstraintProjector;
 import com.amazonaws.athena.connector.lambda.exceptions.FederationThrottleException;
 import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
-import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
-import com.amazonaws.athena.connector.lambda.request.FederationRequest;
-import com.amazonaws.athena.connector.lambda.request.PingRequest;
-import com.amazonaws.athena.connector.lambda.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.proto.request.PingRequest;
+import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.athena.AmazonAthenaClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
@@ -157,9 +156,8 @@ public class ExampleRecordHandler
      *
      * @param request
      */
-    private void logCaller(FederationRequest request)
+    private void logCaller(FederatedIdentity identity)
     {
-        FederatedIdentity identity = request.getIdentity();
         logger.info("logCaller: account[" + identity.getAccount() + "] arn[" + identity.getArn() + "]");
     }
 
@@ -170,7 +168,7 @@ public class ExampleRecordHandler
      */
     protected void onPing(PingRequest request)
     {
-        logCaller(request);
+        logCaller(request.getIdentity());
     }
 
     /**
@@ -183,7 +181,7 @@ public class ExampleRecordHandler
      * @param queryStatusChecker A QueryStatusChecker that you can use to stop doing work for a query that has already terminated
      */
     @Override
-    protected void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest request, QueryStatusChecker queryStatusChecker)
+    protected void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest request, QueryStatusChecker queryStatusChecker)
     {
         long startTime = System.currentTimeMillis();
 
@@ -196,22 +194,22 @@ public class ExampleRecordHandler
             throw new FederationThrottleException("Please slow down for this simulated throttling event");
         }
 
-        logCaller(request);
+        logCaller(request.getIdentity());
 
         Set<String> partitionCols = new HashSet<>();
-        String partitionColsMetadata = request.getSchema().getCustomMetadata().get("partitionCols");
+        String partitionColsMetadata = ProtoUtils.fromProtoSchema(allocator, request.getSchema()).getCustomMetadata().get("partitionCols");
         if (partitionColsMetadata != null) {
             partitionCols.addAll(Arrays.asList(partitionColsMetadata.split(",")));
         }
 
-        int year = Integer.valueOf(request.getSplit().getProperty("year"));
-        int month = Integer.valueOf(request.getSplit().getProperty("month"));
-        int day = Integer.valueOf(request.getSplit().getProperty("day"));
+        int year = Integer.valueOf(ProtoUtils.fromProtoSplit(request.getSplit()).getProperty("year"));
+        int month = Integer.valueOf(ProtoUtils.fromProtoSplit(request.getSplit()).getProperty("month"));
+        int day = Integer.valueOf(ProtoUtils.fromProtoSplit(request.getSplit()).getProperty("day"));
 
         final RowContext rowContext = new RowContext(year, month, day);
 
-        GeneratedRowWriter.RowWriterBuilder builder = GeneratedRowWriter.newBuilder(request.getConstraints());
-        for (Field next : request.getSchema().getFields()) {
+        GeneratedRowWriter.RowWriterBuilder builder = GeneratedRowWriter.newBuilder(ProtoUtils.fromProtoConstraints(allocator, request.getConstraints()));
+        for (Field next : ProtoUtils.fromProtoSchema(allocator, request.getSchema()).getFields()) {
             Extractor extractor = makeExtractor(next, rowContext);
             if (extractor != null) {
                 builder.withExtractor(next.getName(), extractor);

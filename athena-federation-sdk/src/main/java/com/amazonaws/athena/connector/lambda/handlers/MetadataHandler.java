@@ -332,6 +332,7 @@ public abstract class MetadataHandler
         }
     }
 
+    @Deprecated
     protected final void doHandleRequest(BlockAllocator allocator,
             ObjectMapper objectMapper,
             MetadataRequest req,

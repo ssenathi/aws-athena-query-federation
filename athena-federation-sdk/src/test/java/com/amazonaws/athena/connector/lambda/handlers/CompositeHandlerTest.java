@@ -42,11 +42,12 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
+import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.PingRequest;
 import com.amazonaws.athena.connector.lambda.proto.request.PingResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
-import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
-import com.amazonaws.athena.connector.lambda.records.ReadRecordsResponse;
+import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.serde.ObjectMapperFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -157,8 +158,10 @@ public class CompositeHandlerTest
                 .thenReturn(PingResponse.newBuilder().setCatalogName("catalog").setQueryId("queryId").setSourceType("type").setCapabilities(23).setSerDeVersion(2).build());
 
         when(mockRecordHandler.doReadRecords(nullable(BlockAllocatorImpl.class), nullable(ReadRecordsRequest.class)))
-                .thenReturn(new ReadRecordsResponse("catalog",
-                        BlockUtils.newEmptyBlock(allocator, "col", new ArrowType.Int(32, true))));
+                .thenReturn(ReadRecordsResponse.newBuilder()
+                    .setCatalogName("catalog")
+                    .setRecords(ProtoUtils.toProtoBlock(BlockUtils.newEmptyBlock(allocator, "col", new ArrowType.Int(32, true))))
+                    .build());
 
         compositeHandler = new CompositeHandler(mockMetadataHandler, mockRecordHandler);
     }
@@ -174,23 +177,35 @@ public class CompositeHandlerTest
     public void doReadRecords()
             throws Exception
     {
-        ReadRecordsRequest req = new ReadRecordsRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()),
-                "catalog",
-                "queryId-" + System.currentTimeMillis(),
-                new TableName("schema", "table"),
-                schemaForRead,
-                Split.newBuilder(S3SpillLocation.newBuilder()
-                        .withBucket("athena-virtuoso-test")
-                        .withPrefix("lambda-spill")
-                        .withQueryId(UUID.randomUUID().toString())
-                        .withSplitId(UUID.randomUUID().toString())
-                        .withIsDirectory(true)
-                        .build(), null).build(),
-                new Constraints(new HashMap<>()),
-                100_000_000_000L, //100GB don't expect this to spill
-                100_000_000_000L
-        );
-        compositeHandler.handleRequest(allocator, req, new ByteArrayOutputStream(), objectMapper);
+
+        ReadRecordsRequest req = ReadRecordsRequest.newBuilder()
+            .setIdentity(FederatedIdentity.newBuilder()
+                .setArn("arn")
+                .setAccount("account")
+                .build())
+            .setCatalogName("catalog")
+            .setQueryId("queryId-" + System.currentTimeMillis())
+            .setSchema(ProtoUtils.toProtoSchemaBytes(schemaForRead))
+            .setSplit(
+                com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder()
+                .setSpillLocation(
+                    com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation.newBuilder()
+                    .setBucket("athena-virtuoso-test")
+                    .setKey("lambda-spill/" + UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString()) // String key = prefix + SEPARATOR + queryId + SEPARATOR + splitId;
+                    .setDirectory(true)
+                    .build())
+                // TODO - does null encryption key serialize properly?
+                .build()
+            ).setConstraints(
+                com.amazonaws.athena.connector.lambda.proto.domain.predicate.Constraints.newBuilder()
+                    .putAllSummary(new HashMap<>())
+                    .build()
+            ).setMaxBlockSize(100_000_000_000L) // 100GB don't expect this to spill
+            .setMaxInlineBlockSize(100_000_000_000L)
+            .build();
+        TypeHeader typeHeader = TypeHeader.newBuilder().setType("ReadRecordsRequest").build();
+        String inputJson = JsonFormat.printer().includingDefaultValueFields().print(req);
+        compositeHandler.handleRequest(allocator, typeHeader, inputJson, new ByteArrayOutputStream());
         verify(mockRecordHandler, times(1))
                 .doReadRecords(nullable(BlockAllocator.class), nullable(ReadRecordsRequest.class));
     }

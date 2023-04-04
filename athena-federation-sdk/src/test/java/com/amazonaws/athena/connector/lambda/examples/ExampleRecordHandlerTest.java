@@ -1,5 +1,7 @@
 package com.amazonaws.athena.connector.lambda.examples;
 
+import com.amazonaws.athena.connector.lambda.ProtoUtils;
+
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
@@ -35,12 +37,14 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
-import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
-import com.amazonaws.athena.connector.lambda.records.ReadRecordsResponse;
+import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsResponse;
+import com.amazonaws.athena.connector.lambda.proto.records.RemoteReadRecordsResponse;
+import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
+import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.records.RecordRequest;
 import com.amazonaws.athena.connector.lambda.records.RecordResponse;
 import com.amazonaws.athena.connector.lambda.records.RecordService;
-import com.amazonaws.athena.connector.lambda.records.RemoteReadRecordsResponse;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
@@ -56,6 +60,8 @@ import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
+import com.google.protobuf.AbstractMessage;
+
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.Types;
 import org.apache.arrow.vector.types.pojo.ArrowType;
@@ -77,6 +83,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -205,28 +212,32 @@ public class ExampleRecordHandlerTest
             constraintsMap.put("col3", SortedRangeSet.copyOf(Types.MinorType.FLOAT8.getType(),
                     ImmutableList.of(Range.equal(allocator, Types.MinorType.FLOAT8.getType(), 22.0D)), false));
 
-            ReadRecordsRequest request = new ReadRecordsRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()),
-                    "catalog",
-                    "queryId-" + System.currentTimeMillis(),
-                    new TableName("schema", "table"),
-                    schemaForRead,
-                    Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build(),
-                    new Constraints(constraintsMap),
-                    100_000_000_000L, //100GB don't expect this to spill
-                    100_000_000_000L
-            );
-            ObjectMapperUtil.assertSerialization(request);
+            ReadRecordsRequest request = ReadRecordsRequest.newBuilder()
+                .setIdentity(FederatedIdentity.newBuilder()
+                    .setArn("arn")
+                    .setAccount("account")
+                    .build())
+                .setCatalogName("catalog")
+                .setQueryId("queryId-" + System.currentTimeMillis())
+                .setTableName(ProtoUtils.toTableName(new TableName("schema", "table")))
+                .setSchema(ProtoUtils.toProtoSchemaBytes(schemaForRead))
+                .setSplit(
+                    ProtoUtils.toProtoSplit(Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build())
+                ).setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
+                .setMaxBlockSize(100_000_000_000L) // 100GB don't expect this to spill
+                .setMaxInlineBlockSize(100_000_000_000L)
+                .build();
 
-            RecordResponse rawResponse = recordService.readRecords(request);
-            ObjectMapperUtil.assertSerialization(rawResponse);
+            // ObjectMapperUtil.assertSerialization(request);
 
-            assertTrue(rawResponse instanceof ReadRecordsResponse);
-
+            AbstractMessage rawResponse = recordService.readRecords(request);
+            // should not spill, so cast to non-spilled response
             ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-            logger.info("doReadRecordsNoSpill: rows[{}]", response.getRecordCount());
+            // ObjectMapperUtil.assertSerialization(rawResponse);
+            logger.info("doReadRecordsNoSpill: rows[{}]", ProtoUtils.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
-            assertTrue(response.getRecords().getRowCount() == 1);
-            logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(response.getRecords(), 0));
+            assertTrue(ProtoUtils.fromProtoBlock(allocator, response.getRecords()).getRowCount() == 1);
+            logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(ProtoUtils.fromProtoBlock(allocator, response.getRecords()), 0));
         }
         logger.info("doReadRecordsNoSpill: exit");
     }
@@ -246,39 +257,43 @@ public class ExampleRecordHandlerTest
             constraintsMap.put("unknown", EquatableValueSet.newBuilder(allocator, Types.MinorType.FLOAT8.getType(), false, true).add(1.1D).build());
             constraintsMap.put("unknown2", new AllOrNoneValueSet(Types.MinorType.FLOAT8.getType(), false, true));
 
-            ReadRecordsRequest request = new ReadRecordsRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()),
-                    "catalog",
-                    "queryId-" + System.currentTimeMillis(),
-                    new TableName("schema", "table"),
-                    schemaForRead,
-                    Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build(),
-                    new Constraints(constraintsMap),
-                    1_600_000L, //~1.5MB so we should see some spill
-                    1000L
-            );
-            ObjectMapperUtil.assertSerialization(request);
+            ReadRecordsRequest request = ReadRecordsRequest.newBuilder()
+                .setIdentity(FederatedIdentity.newBuilder()
+                    .setArn("arn")
+                    .setAccount("account")
+                    .build())
+                .setCatalogName("catalog")
+                .setQueryId("queryId-" + System.currentTimeMillis())
+                .setTableName(ProtoUtils.toTableName(new TableName("schema", "table")))
+                .setSchema(ProtoUtils.toProtoSchemaBytes(schemaForRead))
+                .setSplit(
+                    ProtoUtils.toProtoSplit(Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build())
+                ).setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
+                .setMaxBlockSize(1_600_000L) // ~1.5MB so we should see some spill
+                .setMaxInlineBlockSize(1000L)
+                .build();
 
-            RecordResponse rawResponse = recordService.readRecords(request);
-            ObjectMapperUtil.assertSerialization(rawResponse);
+            // ObjectMapperUtil.assertSerialization(request);
 
-            assertTrue(rawResponse instanceof RemoteReadRecordsResponse);
+            AbstractMessage rawResponse = recordService.readRecords(request);
+            // should have spilled, so cast to remote response
+            RemoteReadRecordsResponse response = (RemoteReadRecordsResponse) rawResponse;
+            // ObjectMapperUtil.assertSerialization(rawResponse);
 
-            try (RemoteReadRecordsResponse response = (RemoteReadRecordsResponse) rawResponse) {
-                logger.info("doReadRecordsSpill: remoteBlocks[{}]", response.getRemoteBlocks().size());
+            logger.info("doReadRecordsSpill: remoteBlocks[{}]", response.getRemoteBlocksList().size());
 
-                assertTrue(response.getNumberBlocks() > 1);
+            assertTrue(response.getRemoteBlocksList().size() > 1);
 
-                int blockNum = 0;
-                for (SpillLocation next : response.getRemoteBlocks()) {
-                    S3SpillLocation spillLocation = (S3SpillLocation) next;
-                    try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), response.getSchema())) {
+            int blockNum = 0;
+            for (SpillLocation next : response.getRemoteBlocksList().stream().map(ProtoUtils::fromProtoSpillLocation).collect(Collectors.toList())) {
+                S3SpillLocation spillLocation = (S3SpillLocation) next;
+                try (Block block = spillReader.read(spillLocation, ProtoUtils.fromProtoEncryptionKey(response.getEncryptionKey()), ProtoUtils.fromProtoSchema(allocator, response.getSchema()))) {
 
-                        logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
-                        // assertTrue(++blockNum < response.getRemoteBlocks().size() && block.getRowCount() > 10_000);
+                    logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
+                    // assertTrue(++blockNum < response.getRemoteBlocks().size() && block.getRowCount() > 10_000);
 
-                        logger.info("doReadRecordsSpill: {}", BlockUtils.rowToString(block, 0));
-                        assertNotNull(BlockUtils.rowToString(block, 0));
-                    }
+                    logger.info("doReadRecordsSpill: {}", BlockUtils.rowToString(block, 0));
+                    assertNotNull(BlockUtils.rowToString(block, 0));
                 }
             }
         }
@@ -299,22 +314,15 @@ public class ExampleRecordHandlerTest
         }
 
         @Override
-        public RecordResponse readRecords(RecordRequest request)
+        public AbstractMessage readRecords(ReadRecordsRequest request)
         {
-
             try {
-                switch (request.getRequestType()) {
-                    case READ_RECORDS:
-                        ReadRecordsRequest req = (ReadRecordsRequest) request;
-                        RecordResponse response = handler.doReadRecords(allocator, req);
-                        return response;
-                    default:
-                        throw new RuntimeException("Unknown request type " + request.getRequestType());
-                }
+                return handler.doReadRecords(allocator, request);
             }
             catch (Exception ex) {
                 throw new RuntimeException(ex);
             }
+            
         }
     }
 

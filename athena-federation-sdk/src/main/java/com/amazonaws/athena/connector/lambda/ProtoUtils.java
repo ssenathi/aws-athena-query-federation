@@ -21,6 +21,7 @@ package com.amazonaws.athena.connector.lambda;
 
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
+import com.amazonaws.athena.connector.lambda.domain.Split;
 import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.AllOrNoneValueSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
@@ -30,6 +31,8 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
+import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
+import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.serde.v2.BlockSerDe;
 import com.google.protobuf.ByteString;
 import org.apache.arrow.vector.ipc.ReadChannel;
@@ -399,8 +402,9 @@ public class ProtoUtils
         return block;
     }
 
-    public static com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation toSpillLocation(S3SpillLocation s3SpillLocation)
+    public static com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation toProtoSpillLocation(SpillLocation spillLocation)
     {
+        S3SpillLocation s3SpillLocation = (S3SpillLocation) spillLocation;
         return com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation.newBuilder()
             .setType("S3SpillLocation")
             .setBucket(s3SpillLocation.getBucket())
@@ -408,12 +412,49 @@ public class ProtoUtils
             .setDirectory(s3SpillLocation.isDirectory())
             .build();
     }
+    public static S3SpillLocation fromProtoSpillLocation(com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation s3SpillLocation)
+    {
+        return new S3SpillLocation(s3SpillLocation.getBucket(), s3SpillLocation.getKey(), s3SpillLocation.getDirectory());
+    }
 
     public static com.amazonaws.athena.connector.lambda.proto.domain.TableName toTableName(TableName tableName)
     {
         return com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
             .setSchemaName(tableName.getSchemaName())
             .setTableName(tableName.getTableName())
+            .build();
+    }
+
+    public static Split fromProtoSplit(com.amazonaws.athena.connector.lambda.proto.domain.Split split)
+    {
+        return new Split(fromProtoSpillLocation(split.getSpillLocation()), fromProtoEncryptionKey(split.getEncryptionKey()), split.getPropertiesMap());
+    }
+
+    public static com.amazonaws.athena.connector.lambda.proto.domain.Split toProtoSplit(Split split)
+    {
+        com.amazonaws.athena.connector.lambda.proto.domain.Split.Builder splitBuilder = com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder();
+            if (split.getEncryptionKey() != null) {
+                splitBuilder.setEncryptionKey(ProtoUtils.toProtoEncryptionKey(split.getEncryptionKey()));
+            }
+            if (split.getSpillLocation() != null) {
+                splitBuilder.setSpillLocation(ProtoUtils.toProtoSpillLocation(split.getSpillLocation()));
+            }
+            if (split.getProperties() != null) {
+                splitBuilder.putAllProperties(split.getProperties());
+            }
+            
+            return splitBuilder.build();
+    }
+
+    public static EncryptionKey fromProtoEncryptionKey(com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey encryptionKey)
+    {
+        return new EncryptionKey(encryptionKey.getKey().toByteArray(), encryptionKey.getNonce().toByteArray());
+    }
+    public static com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey toProtoEncryptionKey(EncryptionKey encryptionKey)
+    {
+        return com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey.newBuilder()
+            .setKey(ByteString.copyFrom(encryptionKey.getKey()))
+            .setNonce(ByteString.copyFrom(encryptionKey.getNonce()))
             .build();
     }
 }
