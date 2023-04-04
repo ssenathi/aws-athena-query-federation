@@ -27,10 +27,10 @@ import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.proto.request.PingRequest;
 import com.amazonaws.athena.connector.lambda.proto.request.PingResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
+import com.amazonaws.athena.connector.lambda.proto.udf.UserDefinedFunctionRequest;
 import com.amazonaws.athena.connector.lambda.records.RecordRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationRequest;
 import com.amazonaws.athena.connector.lambda.serde.VersionedObjectMapperFactory;
-import com.amazonaws.athena.connector.lambda.udf.UserDefinedFunctionRequest;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -165,6 +165,11 @@ public class CompositeHandler
                 JsonFormat.parser().ignoringUnknownFields().merge(inputJson, readRecordsRequestBuilder);
                 recordHandler.doHandleRequest(allocator, readRecordsRequestBuilder.build(), outputStream);
                 return;
+            case "UserDefinedFunctionRequest":
+                UserDefinedFunctionRequest.Builder  userDefinedFunctionRequestBuilder = UserDefinedFunctionRequest.newBuilder();
+                JsonFormat.parser().ignoringUnknownFields().merge(inputJson, userDefinedFunctionRequestBuilder);
+                udfhandler.doHandleRequest(allocator, userDefinedFunctionRequestBuilder.build(), outputStream);
+                return;
             default:
                 metadataHandler.doHandleRequest(allocator, typeHeader, inputJson, outputStream);
                 return;
@@ -195,8 +200,8 @@ public class CompositeHandler
         else if (rawReq instanceof RecordRequest) {
             recordHandler.doHandleRequest(allocator, objectMapper, (RecordRequest) rawReq, outputStream);
         }
-        else if (udfhandler != null && rawReq instanceof UserDefinedFunctionRequest) {
-            udfhandler.doHandleRequest(allocator, objectMapper, (UserDefinedFunctionRequest) rawReq, outputStream);
+        else if (udfhandler != null && rawReq instanceof com.amazonaws.athena.connector.lambda.udf.UserDefinedFunctionRequest) {
+            // udfhandler.doHandleRequest(allocator, objectMapper, (com.amazonaws.athena.connector.lambda.udf.UserDefinedFunctionRequest) rawReq, outputStream);
         }
         else {
             throw new IllegalArgumentException("Unknown request class " + rawReq.getClass());

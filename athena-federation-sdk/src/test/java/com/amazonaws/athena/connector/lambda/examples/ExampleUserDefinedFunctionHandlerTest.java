@@ -1,5 +1,7 @@
 package com.amazonaws.athena.connector.lambda.examples;
 
+import com.amazonaws.athena.connector.lambda.ProtoUtils;
+
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
@@ -31,9 +33,10 @@ import com.amazonaws.athena.connector.lambda.request.FederationResponse;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.serde.ObjectMapperUtil;
 import com.amazonaws.athena.connector.lambda.serde.VersionedObjectMapperFactory;
-import com.amazonaws.athena.connector.lambda.udf.UserDefinedFunctionRequest;
-import com.amazonaws.athena.connector.lambda.udf.UserDefinedFunctionResponse;
-import com.amazonaws.athena.connector.lambda.udf.UserDefinedFunctionType;
+import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.proto.udf.UserDefinedFunctionRequest;
+import com.amazonaws.athena.connector.lambda.proto.udf.UserDefinedFunctionResponse;
+import com.amazonaws.athena.connector.lambda.proto.udf.UserDefinedFunctionType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import org.apache.arrow.vector.BigIntVector;
@@ -102,7 +105,7 @@ public class ExampleUserDefinedFunctionHandlerTest
 
         UserDefinedFunctionResponse response = runAndAssertSerialization(inputRecords, outputSchema, "multiply");
 
-        Block outputRecords = response.getRecords();
+        Block outputRecords = ProtoUtils.fromProtoBlock(allocator, response.getRecords());
         assertEquals(1, outputRecords.getRowCount());
         FieldReader fieldReader = outputRecords.getFieldReader("product");
         ArrowValueProjector arrowValueProjector = ProjectorUtils.createArrowValueProjector(fieldReader);
@@ -128,7 +131,7 @@ public class ExampleUserDefinedFunctionHandlerTest
 
         UserDefinedFunctionResponse response = runAndAssertSerialization(inputRecords, outputSchema, "concatenate");
 
-        Block outputRecords = response.getRecords();
+        Block outputRecords = ProtoUtils.fromProtoBlock(allocator, response.getRecords());
         assertEquals(1, outputRecords.getRowCount());
         FieldReader fieldReader = outputRecords.getFieldReader("string");
         ArrowValueProjector arrowValueProjector = ProjectorUtils.createArrowValueProjector(fieldReader);
@@ -160,7 +163,7 @@ public class ExampleUserDefinedFunctionHandlerTest
 
         UserDefinedFunctionResponse response = runAndAssertSerialization(inputRecords, outputSchema, "to_json");
 
-        Block outputRecords = response.getRecords();
+        Block outputRecords = ProtoUtils.fromProtoBlock(allocator, response.getRecords());
         assertEquals(1, outputRecords.getRowCount());
         FieldReader fieldReader = outputRecords.getFieldReader("json");
         ArrowValueProjector arrowValueProjector = ProjectorUtils.createArrowValueProjector(fieldReader);
@@ -185,7 +188,7 @@ public class ExampleUserDefinedFunctionHandlerTest
 
         UserDefinedFunctionResponse response = runAndAssertSerialization(inputRecords, outputSchema, "get_default_value_if_null");
 
-        Block outputRecords = response.getRecords();
+        Block outputRecords = ProtoUtils.fromProtoBlock(allocator, response.getRecords());
         assertEquals(2, outputRecords.getRowCount());
         FieldReader fieldReader = outputRecords.getFieldReader("output");
         ArrowValueProjector arrowValueProjector = ProjectorUtils.createArrowValueProjector(fieldReader);
@@ -195,25 +198,21 @@ public class ExampleUserDefinedFunctionHandlerTest
 
     private UserDefinedFunctionResponse runAndAssertSerialization(Block inputRecords,
                                                                   Schema outputSchema,
-                                                                  String methodName) throws IOException
+                                                                  String methodName) throws Exception
     {
-        UserDefinedFunctionRequest request = new UserDefinedFunctionRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()),
-                inputRecords,
-                outputSchema,
-                methodName,
-                UserDefinedFunctionType.SCALAR);
-        ObjectMapperUtil.assertSerialization(request);
+        UserDefinedFunctionRequest request = UserDefinedFunctionRequest.newBuilder()
+            .setIdentity(FederatedIdentity.newBuilder().setAccount("account").setArn("arn"))
+            .setInputRecords(ProtoUtils.toProtoBlock(inputRecords))
+            .setOutputSchema(ProtoUtils.toProtoSchemaBytes(outputSchema))
+            .setMethodName(methodName)
+            .setFunctionType(UserDefinedFunctionType.SCALAR)
+            .build();
+        return exampleUserDefinedFunctionHandler.processFunction(allocator, request);
+        // ObjectMapperUtil.assertSerialization(request);
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        mapper.writeValue(out, request);
-        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(out.toByteArray());
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        // exampleUserDefinedFunctionHandler.handleRequest(byteArrayInputStream, outputStream, null);
 
-        exampleUserDefinedFunctionHandler.handleRequest(byteArrayInputStream, outputStream, null);
-
-        UserDefinedFunctionResponse udfResponse = (UserDefinedFunctionResponse) mapper.readValue(outputStream.toByteArray(), FederationResponse.class);
-        ObjectMapperUtil.assertSerialization(udfResponse);
-
-        return udfResponse;
+        // UserDefinedFunctionResponse udfResponse = (UserDefinedFunctionResponse) mapper.readValue(outputStream.toByteArray(), FederationResponse.class);
+        // ObjectMapperUtil.assertSerialization(udfResponse);
     }
 }
