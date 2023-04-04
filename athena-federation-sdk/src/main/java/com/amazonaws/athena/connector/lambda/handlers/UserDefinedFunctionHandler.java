@@ -50,9 +50,6 @@ import com.amazonaws.athena.connector.lambda.request.FederationResponse;
 import com.amazonaws.athena.connector.lambda.request.PingRequest;
 import com.amazonaws.athena.connector.lambda.request.PingResponse;
 import com.amazonaws.athena.connector.lambda.udf.UserDefinedFunctionType;
-import com.amazonaws.services.lambda.runtime.Context;
-import com.amazonaws.services.lambda.runtime.RequestStreamHandler;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.protobuf.util.JsonFormat;
@@ -73,8 +70,6 @@ import org.apache.arrow.vector.types.pojo.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -94,7 +89,6 @@ import static com.google.common.base.Preconditions.checkState;
  * Athena UDF users are expected to extend this class to create UDFs.
  */
 public abstract class UserDefinedFunctionHandler
-        implements RequestStreamHandler
 {
     private static final Logger logger = LoggerFactory.getLogger(UserDefinedFunctionHandler.class);
 
@@ -107,12 +101,6 @@ public abstract class UserDefinedFunctionHandler
         this.sourceType = sourceType;
     }
 
-    @Deprecated
-    public void handleRequest(InputStream input, OutputStream output, Context context) throws IOException 
-    {
-        // do nothing
-    }
-
     // protobuf
     public final void doHandleRequest(BlockAllocator allocator,
             UserDefinedFunctionRequest req,
@@ -123,21 +111,6 @@ public abstract class UserDefinedFunctionHandler
         UserDefinedFunctionResponse response = processFunction(allocator, req);
         String jsonOut = JsonFormat.printer().print(response);
         outputStream.write(jsonOut.getBytes());
-    }
-
-    @Deprecated
-    protected final void doHandleRequest(BlockAllocator allocator,
-            ObjectMapper objectMapper,
-            UserDefinedFunctionRequest req,
-            OutputStream outputStream)
-            throws Exception
-    {
-        // logger.info("doHandleRequest: request[{}]", req);
-        // try (UserDefinedFunctionResponse response = processFunction(allocator, req)) {
-        //     logger.info("doHandleRequest: response[{}]", response);
-        //     assertNotNull(response);
-        //     objectMapper.writeValue(outputStream, response);
-        // }
     }
 
     @VisibleForTesting
