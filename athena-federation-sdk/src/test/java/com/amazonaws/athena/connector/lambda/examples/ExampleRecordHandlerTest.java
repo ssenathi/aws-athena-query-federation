@@ -48,7 +48,6 @@ import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.athena.connector.lambda.domain.Split;
-import com.amazonaws.athena.connector.lambda.serde.ObjectMapperUtil;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.s3.AmazonS3;
@@ -228,12 +227,9 @@ public class ExampleRecordHandlerTest
                 .setMaxInlineBlockSize(100_000_000_000L)
                 .build();
 
-            // ObjectMapperUtil.assertSerialization(request);
-
             Message rawResponse = recordService.readRecords(request);
             // should not spill, so cast to non-spilled response
             ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-            // ObjectMapperUtil.assertSerialization(rawResponse);
             logger.info("doReadRecordsNoSpill: rows[{}]", ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
             assertTrue(ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() == 1);
@@ -272,14 +268,9 @@ public class ExampleRecordHandlerTest
                 .setMaxBlockSize(1_600_000L) // ~1.5MB so we should see some spill
                 .setMaxInlineBlockSize(1000L)
                 .build();
-
-            // ObjectMapperUtil.assertSerialization(request);
-
             Message rawResponse = recordService.readRecords(request);
             // should have spilled, so cast to remote response
             RemoteReadRecordsResponse response = (RemoteReadRecordsResponse) rawResponse;
-            // ObjectMapperUtil.assertSerialization(rawResponse);
-
             logger.info("doReadRecordsSpill: remoteBlocks[{}]", response.getRemoteBlocksList().size());
 
             assertTrue(response.getRemoteBlocksList().size() > 1);

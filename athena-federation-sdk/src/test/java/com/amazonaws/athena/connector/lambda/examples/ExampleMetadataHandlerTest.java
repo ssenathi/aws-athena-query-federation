@@ -41,7 +41,6 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
-import com.amazonaws.athena.connector.lambda.serde.ObjectMapperUtil;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe;
 import com.amazonaws.services.athena.AmazonAthena;
@@ -110,9 +109,7 @@ public class ExampleMetadataHandlerTest
             .setIdentity(IdentityUtil.fakeIdentity())
             .build();
         
-        // ObjectMapperUtil.assertSerialization(req);
         ListSchemasResponse res = metadataHandler.doListSchemaNames(allocator, req);
-        // ObjectMapperUtil.assertSerialization(res);
         logger.info("doListSchemas - {}", res.getSchemasList());
         assertFalse(res.getSchemasList().isEmpty());
         logger.info("doListSchemas - exit");
@@ -149,9 +146,7 @@ public class ExampleMetadataHandlerTest
             )
             .build();
         
-        // ObjectMapperUtil.assertSerialization(req);
         ListTablesResponse res = metadataHandler.doListTables(allocator, req);
-        // ObjectMapperUtil.assertSerialization(res);
         logger.info("doListTables - {}", res);
         assertEqualsListTablesResponse(expectedResponse, res);
 
@@ -180,9 +175,7 @@ public class ExampleMetadataHandlerTest
             .setNextToken("table4")
             .build();
 
-        // ObjectMapperUtil.assertSerialization(req);
         res = metadataHandler.doListTables(allocator, req);
-        // ObjectMapperUtil.assertSerialization(res);
         logger.info("doListTables - {}", res);
         assertEqualsListTablesResponse(expectedResponse, res);
 
@@ -210,9 +203,7 @@ public class ExampleMetadataHandlerTest
         )
         .build();
 
-        // ObjectMapperUtil.assertSerialization(req);
         res = metadataHandler.doListTables(allocator, req);
-        // ObjectMapperUtil.assertSerialization(res);
         logger.info("doListTables - {}", res);
         assertEqualsListTablesResponse(expectedResponse, res);
 
@@ -244,9 +235,7 @@ public class ExampleMetadataHandlerTest
                     .setTableName("fake_table")
                     .build()
             ).build();
-        // ObjectMapperUtil.assertSerialization(req);
         GetTableResponse res = metadataHandler.doGetTable(allocator, req);
-        // ObjectMapperUtil.assertSerialization(res);
         Schema arrowSchema = ProtobufMessageConverter.fromProtoSchema(allocator, res.getSchema());
         assertTrue(arrowSchema.getFields().size() > 0);
         assertTrue(arrowSchema.getCustomMetadata().size() > 0);
@@ -324,11 +313,7 @@ public class ExampleMetadataHandlerTest
                 .addAllPartitionCols(partitionCols)
                 .build();
 
-            // ObjectMapperUtil.assertSerialization(req);
-
             res = metadataHandler.doGetTableLayout(allocator, req);
-            // ObjectMapperUtil.assertSerialization(res);
-
             logger.info("doGetTableLayout - {}", res);
             Block partitions = ProtobufMessageConverter.fromProtoBlock(allocator, res.getPartitions());
             for (int row = 0; row < partitions.getRowCount() && row < 10; row++) {

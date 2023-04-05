@@ -29,8 +29,6 @@ import com.amazonaws.athena.connector.lambda.data.projectors.ArrowValueProjector
 import com.amazonaws.athena.connector.lambda.data.projectors.ProjectorUtils;
 import com.amazonaws.athena.connector.lambda.request.FederationResponse;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
-import com.amazonaws.athena.connector.lambda.serde.ObjectMapperUtil;
-import com.amazonaws.athena.connector.lambda.serde.VersionedObjectMapperFactory;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.proto.udf.UserDefinedFunctionRequest;
@@ -66,7 +64,6 @@ public class ExampleUserDefinedFunctionHandlerTest
 
     private BlockAllocatorImpl allocator;
     private ExampleUserDefinedFunctionHandler exampleUserDefinedFunctionHandler;
-    private ObjectMapper mapper;
 
     @Before
     public void setUp()
@@ -75,7 +72,6 @@ public class ExampleUserDefinedFunctionHandlerTest
 
         this.exampleUserDefinedFunctionHandler = new ExampleUserDefinedFunctionHandler();
         this.allocator = new BlockAllocatorImpl();
-        this.mapper = VersionedObjectMapperFactory.create(allocator);
     }
 
     @After
@@ -207,11 +203,5 @@ public class ExampleUserDefinedFunctionHandlerTest
             .setFunctionType(UserDefinedFunctionType.SCALAR)
             .build();
         return exampleUserDefinedFunctionHandler.processFunction(allocator, request);
-        // ObjectMapperUtil.assertSerialization(request);
-
-        // exampleUserDefinedFunctionHandler.handleRequest(byteArrayInputStream, outputStream, null);
-
-        // UserDefinedFunctionResponse udfResponse = (UserDefinedFunctionResponse) mapper.readValue(outputStream.toByteArray(), FederationResponse.class);
-        // ObjectMapperUtil.assertSerialization(udfResponse);
     }
 }
