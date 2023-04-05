@@ -68,7 +68,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.amazonaws.athena.connector.lambda.examples.ExampleMetadataHandler.MAX_SPLITS_PER_REQUEST;
-import static com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest.UNLIMITED_PAGE_SIZE_VALUE;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
@@ -126,7 +125,7 @@ public class ExampleMetadataHandlerTest
             .setCatalogName("default")
             .setSchemaName("schema")
             .setQueryId("queryId")
-            .setPageSize(UNLIMITED_PAGE_SIZE_VALUE)
+            .setPageSize(ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE)
             .setIdentity(IdentityUtil.fakeIdentity())
             .build();
         

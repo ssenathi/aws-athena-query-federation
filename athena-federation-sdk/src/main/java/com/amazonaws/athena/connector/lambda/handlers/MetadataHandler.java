@@ -32,7 +32,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.ConstraintEvaluato
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocationVerifier;
-import com.amazonaws.athena.connector.lambda.metadata.MetadataRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
@@ -46,7 +45,6 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.PingRequest;
 import com.amazonaws.athena.connector.lambda.proto.request.PingResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
-import com.amazonaws.athena.connector.lambda.request.FederationResponse;
 import com.amazonaws.athena.connector.lambda.security.CachableSecretsManager;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
@@ -194,6 +192,12 @@ public abstract class MetadataHandler
         return (encryptionKeyFactory != null) ? encryptionKeyFactory.create() : null;
     }
 
+        /**
+     * Used to make a spill location for a split. Each split should have a unique spill location, so be sure
+     * to call this method once per split!
+     * @param queryId 
+     * @return A unique spill location.
+     */
     protected SpillLocation makeSpillLocation(String queryId)
     {
         return S3SpillLocation.newBuilder()
@@ -204,23 +208,6 @@ public abstract class MetadataHandler
                 .build();
     }
 
-    /**
-     * Used to make a spill location for a split. Each split should have a unique spill location, so be sure
-     * to call this method once per split!
-     * @param request 
-     * @return A unique spill location.
-     */
-    protected SpillLocation makeSpillLocation(MetadataRequest request)
-    {
-        return S3SpillLocation.newBuilder()
-                .withBucket(spillBucket)
-                .withPrefix(spillPrefix)
-                .withQueryId(request.getQueryId())
-                .withSplitId(UUID.randomUUID().toString())
-                .build();
-    }
-
-    // for protobuf
     protected final void doHandleRequest(BlockAllocator allocator,
             TypeHeader typeHeader,
             String inputJson,
@@ -459,18 +446,6 @@ public abstract class MetadataHandler
     public void onPing(PingRequest request)
     {
         //NoOp
-    }
-
-    /**
-     * Helper function that is used to ensure we always have a non-null response.
-     *
-     * @param response The response to assert is not null.
-     */
-    private void assertNotNull(FederationResponse response)
-    {
-        if (response == null) {
-            throw new RuntimeException("Response was null");
-        }
     }
 
     /**

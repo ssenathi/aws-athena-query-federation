@@ -39,6 +39,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.Column;
@@ -85,7 +86,6 @@ import static com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler
 import static com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler.SOURCE_TABLE_PROPERTY;
 import static com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler.getSourceTableName;
 import static com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler.populateSourceTableNameIfAvailable;
-import static com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest.UNLIMITED_PAGE_SIZE_VALUE;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
@@ -188,11 +188,11 @@ public class GlueMetadataHandlerTest
                 {
                     GetTablesRequest request = (GetTablesRequest) invocationOnMock.getArguments()[0];
                     String nextToken = request.getNextToken();
-                    int pageSize = request.getMaxResults() == null ? UNLIMITED_PAGE_SIZE_VALUE : request.getMaxResults();
+                    int pageSize = request.getMaxResults() == null ? ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE : request.getMaxResults();
                     assertEquals(accountId, request.getCatalogId());
                     assertEquals(schema, request.getDatabaseName());
                     GetTablesResult mockResult = mock(GetTablesResult.class);
-                    if (pageSize == UNLIMITED_PAGE_SIZE_VALUE) {
+                    if (pageSize == ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE) {
                         // Simulate full list of tables returned from Glue.
                         when(mockResult.getTableList()).thenReturn(unPaginatedTables);
                         when(mockResult.getNextToken()).thenReturn(null);
@@ -275,7 +275,7 @@ public class GlueMetadataHandlerTest
             .setQueryId(queryId)
             .setCatalogName(catalog)
             .setSchemaName(schema)
-            .setPageSize(UNLIMITED_PAGE_SIZE_VALUE)
+            .setPageSize(ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE)
             .setIdentity(IdentityUtil.fakeIdentity())
             .build();
         

@@ -38,16 +38,15 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
-import com.amazonaws.athena.connector.lambda.request.FederationRequest;
-import com.amazonaws.athena.connector.lambda.request.PingRequest;
+import com.amazonaws.athena.connector.lambda.proto.request.PingRequest;
+import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
-import com.amazonaws.athena.connector.lambda.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.google.common.collect.ImmutableList;
-import com.google.protobuf.AbstractMessage;
 import org.apache.arrow.util.VisibleForTesting;
 import org.apache.arrow.vector.complex.reader.FieldReader;
 import org.apache.arrow.vector.types.DateUnit;
@@ -66,7 +65,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest.UNLIMITED_PAGE_SIZE_VALUE;
 /**
  * All items in the "com.amazonaws.athena.connector.lambda.examples" that this class belongs to are part of an
  * 'Example' connector. We do not recommend using any of the classes in this package directly. Instead you can/should
@@ -165,14 +163,9 @@ public class ExampleMetadataHandler
      *
      * @param request
      */
-    private void logCaller(FederationRequest request)
+    private void logCaller(FederatedIdentity identity)
     {
-        FederatedIdentity identity = request.getIdentity();
         logger.info("logCaller: account[" + identity.getAccount() + "] arn[" + identity.getArn() + "]");
-    }
-    private void logCaller(AbstractMessage request)
-    {
-      logger.info("logCaller: ...");
     }
 
     /**
@@ -186,7 +179,7 @@ public class ExampleMetadataHandler
     @Override
     public ListSchemasResponse doListSchemaNames(BlockAllocator allocator, ListSchemasRequest request)
     {
-        logCaller(request);
+        logCaller(request.getIdentity());
         List<String> schemas = new ArrayList<>();
         schemas.add(ExampleTable.schemaName);
         return ListSchemasResponse.newBuilder()
@@ -208,7 +201,7 @@ public class ExampleMetadataHandler
     @Override
     public ListTablesResponse doListTables(BlockAllocator allocator, ListTablesRequest request)
     {
-        logCaller(request);
+        logCaller(request.getIdentity());
         String nextToken = null;
         int pageSize = request.getPageSize();
         // The following list is purposely unordered to demonstrate that the pagination logic does not consider the
@@ -222,9 +215,8 @@ public class ExampleMetadataHandler
                 .add(new TableName("schema", "table2"))
                 .build();
 
-        logger.error("IN LIST TABLES EXAMPLE. RECEIVED PAGE SIZE IN REQUEST OF {}", pageSize);
         // Check if request has unlimited page size. If not, then list of tables will be paginated.
-        if (pageSize != UNLIMITED_PAGE_SIZE_VALUE) {
+        if (pageSize != ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE) {
             // Get the stating table for this page (if null, then this is the first page).
             String startToken = request.getNextToken();
             // Sort the list. Include all tables if the startToken is null, or only the tables whose names are equal to
@@ -276,7 +268,7 @@ public class ExampleMetadataHandler
     @Override
     public GetTableResponse doGetTable(BlockAllocator allocator, GetTableRequest request)
     {
-        logCaller(request);
+        logCaller(request.getIdentity());
         if (!request.getTableName().getSchemaName().equals(ExampleTable.schemaName) ||
                 !request.getTableName().getTableName().equals(ExampleTable.tableName)) {
             throw new IllegalArgumentException("Unknown table " + request.getTableName());
@@ -327,7 +319,7 @@ public class ExampleMetadataHandler
     @Override
     public void getPartitions(BlockAllocator allocator, BlockWriter writer, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
     {
-        logCaller(request);
+        logCaller(request.getIdentity());
 
         /**
          * Now use the constraint that was in the request to do some partition pruning. Here we are just
@@ -374,7 +366,7 @@ public class ExampleMetadataHandler
     @Override
     public GetSplitsResponse doGetSplits(BlockAllocator allocator, GetSplitsRequest request)
     {
-        logCaller(request);
+        logCaller(request.getIdentity());
         logger.info("doGetSplits: spill location " + makeSpillLocation(request.getQueryId()));
 
         /**
@@ -491,7 +483,7 @@ public class ExampleMetadataHandler
      */
     public void onPing(PingRequest request)
     {
-        logCaller(request);
+        logCaller(request.getIdentity());
     }
 
     /**
