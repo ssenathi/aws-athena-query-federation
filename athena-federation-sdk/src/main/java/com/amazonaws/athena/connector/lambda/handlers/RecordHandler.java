@@ -118,7 +118,6 @@ public abstract class RecordHandler
         logger.info("doHandleRequest: request[{}]", ProtobufSerDe.PROTOBUF_JSON_PRINTER.print(readRecordsRequest));
         Message response = doReadRecords(allocator, readRecordsRequest);
         String jsonOut = ProtobufSerDe.PROTOBUF_JSON_PRINTER.print(response);
-        logger.debug("ReadRecordsResponse json - {}", jsonOut);
         outputStream.write(jsonOut.getBytes());
     }
 
@@ -131,7 +130,7 @@ public abstract class RecordHandler
      * 2. The Catalog, Database, and Table the read request is for.
      * 3. The filtering predicate (if any)
      * 4. The columns required for projection.
-     * @return A RecordResponse which either a ReadRecordsResponse or a RemoteReadRecordsResponse containing the row
+     * @return A Message which is either a ReadRecordsResponse or a RemoteReadRecordsResponse containing the row
      * data for the requested Split.
      */
     public Message doReadRecords(BlockAllocator allocator, ReadRecordsRequest request)

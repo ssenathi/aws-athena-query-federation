@@ -91,16 +91,13 @@ public class CompositeHandler
     public final void handleRequest(InputStream inputStream, OutputStream outputStream, final Context context)
             throws IOException
     {
+        // in the existing logic, we were attching the Lambda Context variable to the metadata request, which is messy.
+        // For now, I'll stick it in the config options with only the part we need.
+        metadataHandler.configOptions.put(MetadataHandler.FUNCTION_ARN_CONFIG_KEY, context.getInvokedFunctionArn());
+
         try (BlockAllocatorImpl allocator = new BlockAllocatorImpl()) {
             String inputJson = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            TypeHeader.Builder typeHeaderBuilder = TypeHeader.newBuilder();
-            ProtobufSerDe.PROTOBUF_JSON_PARSER.merge(inputJson, typeHeaderBuilder);
-            TypeHeader typeHeader = typeHeaderBuilder.build();
-
-            // in the existing logic, we were attching the Lambda Context variable to the metadata request, which is messy.
-            // For now, I'll stick it in the config options with the fields we care about only.
-            metadataHandler.configOptions.put(MetadataHandler.FUNCTION_ARN_CONFIG_KEY, context.getInvokedFunctionArn());
-
+            TypeHeader typeHeader = (TypeHeader) ProtobufSerDe.buildFromJson(inputJson, TypeHeader.newBuilder());
             handleRequest(allocator, typeHeader, inputJson, outputStream);
         }
         catch (Exception ex) {
