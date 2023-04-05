@@ -1,16 +1,15 @@
-package com.amazonaws.athena.connector.lambda.examples;
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
  * %%
- * Copyright (C) 2019 Amazon Web Services
+ * Copyright (C) 2019 - 2023 Amazon Web Services
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +17,7 @@ package com.amazonaws.athena.connector.lambda.examples;
  * limitations under the License.
  * #L%
  */
-import com.amazonaws.athena.connector.lambda.ProtoUtils;
+package com.amazonaws.athena.connector.lambda.examples;
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
@@ -48,6 +47,7 @@ import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.proto.request.PingRequest;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.athena.AmazonAthenaClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
@@ -197,19 +197,19 @@ public class ExampleRecordHandler
         logCaller(request.getIdentity());
 
         Set<String> partitionCols = new HashSet<>();
-        String partitionColsMetadata = ProtoUtils.fromProtoSchema(allocator, request.getSchema()).getCustomMetadata().get("partitionCols");
+        String partitionColsMetadata = ProtobufMessageConverter.fromProtoSchema(allocator, request.getSchema()).getCustomMetadata().get("partitionCols");
         if (partitionColsMetadata != null) {
             partitionCols.addAll(Arrays.asList(partitionColsMetadata.split(",")));
         }
 
-        int year = Integer.valueOf(ProtoUtils.fromProtoSplit(request.getSplit()).getProperty("year"));
-        int month = Integer.valueOf(ProtoUtils.fromProtoSplit(request.getSplit()).getProperty("month"));
-        int day = Integer.valueOf(ProtoUtils.fromProtoSplit(request.getSplit()).getProperty("day"));
+        int year = Integer.valueOf(ProtobufMessageConverter.fromProtoSplit(request.getSplit()).getProperty("year"));
+        int month = Integer.valueOf(ProtobufMessageConverter.fromProtoSplit(request.getSplit()).getProperty("month"));
+        int day = Integer.valueOf(ProtobufMessageConverter.fromProtoSplit(request.getSplit()).getProperty("day"));
 
         final RowContext rowContext = new RowContext(year, month, day);
 
-        GeneratedRowWriter.RowWriterBuilder builder = GeneratedRowWriter.newBuilder(ProtoUtils.fromProtoConstraints(allocator, request.getConstraints()));
-        for (Field next : ProtoUtils.fromProtoSchema(allocator, request.getSchema()).getFields()) {
+        GeneratedRowWriter.RowWriterBuilder builder = GeneratedRowWriter.newBuilder(ProtobufMessageConverter.fromProtoConstraints(allocator, request.getConstraints()));
+        for (Field next : ProtobufMessageConverter.fromProtoSchema(allocator, request.getSchema()).getFields()) {
             Extractor extractor = makeExtractor(next, rowContext);
             if (extractor != null) {
                 builder.withExtractor(next.getName(), extractor);

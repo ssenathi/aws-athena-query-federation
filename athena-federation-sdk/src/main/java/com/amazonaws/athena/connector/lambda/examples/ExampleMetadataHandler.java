@@ -1,17 +1,15 @@
-package com.amazonaws.athena.connector.lambda.examples;
-
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
  * %%
- * Copyright (C) 2019 Amazon Web Services
+ * Copyright (C) 2019 - 2023 Amazon Web Services
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,8 +17,8 @@ package com.amazonaws.athena.connector.lambda.examples;
  * limitations under the License.
  * #L%
  */
+package com.amazonaws.athena.connector.lambda.examples;
 
-import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
@@ -45,6 +43,7 @@ import com.amazonaws.athena.connector.lambda.request.PingRequest;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connector.lambda.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.google.common.collect.ImmutableList;
@@ -257,7 +256,7 @@ public class ExampleMetadataHandler
             .setCatalogName(request.getCatalogName())
             .addAllTables(tables.stream()
                 .filter(table -> request.getSchemaName() == null || request.getSchemaName().equals(table.getSchemaName()))
-                .map(ProtoUtils::toTableName)
+                .map(ProtobufMessageConverter::toTableName)
                 .collect(Collectors.toList())
             );
         if (nextToken != null) {
@@ -290,7 +289,7 @@ public class ExampleMetadataHandler
         return GetTableResponse.newBuilder()
             .setCatalogName(request.getCatalogName())
             .setTableName(request.getTableName())
-            .setSchema(ProtoUtils.toProtoSchemaBytes(ExampleTable.schema))
+            .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(ExampleTable.schema))
             .addAllPartitionColumns(partitionCols)
             .build();
     }
@@ -392,7 +391,7 @@ public class ExampleMetadataHandler
         int partContd = requestToken.getPart();
 
         Set<Split> splits = new HashSet<>();
-        Block partitions = ProtoUtils.fromProtoBlock(allocator, request.getPartitions());
+        Block partitions = ProtobufMessageConverter.fromProtoBlock(allocator, request.getPartitions());
         for (int curPartition = partitionContd; curPartition < partitions.getRowCount(); curPartition++) {
             //We use the makeEncryptionKey() method from our parent class to make an EncryptionKey
             EncryptionKey encryptionKey = makeEncryptionKey();

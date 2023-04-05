@@ -20,7 +20,6 @@ package com.amazonaws.athena.connector.lambda.handlers;
  * #L%
  */
 import com.amazonaws.athena.connector.lambda.CollectionsUtils;
-import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
@@ -39,6 +38,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.Column;
@@ -132,7 +132,7 @@ public class GlueMetadataHandlerTest
                     .add(new TableName(schema, "table5"))
                     .build()
             .stream()
-            .map(ProtoUtils::toTableName)   
+            .map(ProtobufMessageConverter::toTableName)   
             .collect(Collectors.toList())
         )
         .build();
@@ -327,7 +327,7 @@ public class GlueMetadataHandlerTest
                     .add(new TableName(req.getSchemaName(), "table3"))
                     .build()
                 .stream()
-                .map(ProtoUtils::toTableName)
+                .map(ProtobufMessageConverter::toTableName)
                 .collect(Collectors.toList())
             )
             .build();
@@ -355,7 +355,7 @@ public class GlueMetadataHandlerTest
                     .add(new TableName(req.getSchemaName(), "table5"))
                     .build()
                 .stream()
-                .map(ProtoUtils::toTableName)
+                .map(ProtobufMessageConverter::toTableName)
                 .collect(Collectors.toList())
             )
             .build();
@@ -437,7 +437,7 @@ public class GlueMetadataHandlerTest
 
         logger.info("doGetTable - {}", res);
 
-        Schema arrowSchema = ProtoUtils.fromProtoSchema(allocator, res.getSchema());
+        Schema arrowSchema = ProtobufMessageConverter.fromProtoSchema(allocator, res.getSchema());
 
         assertTrue(arrowSchema.getFields().size() == 8);
         assertTrue(arrowSchema.getCustomMetadata().size() > 0);
@@ -531,7 +531,7 @@ public class GlueMetadataHandlerTest
 
         logger.info("doGetTable - {}", res);
 
-        Schema arrowSchema = ProtoUtils.fromProtoSchema(allocator, res.getSchema());
+        Schema arrowSchema = ProtobufMessageConverter.fromProtoSchema(allocator, res.getSchema());
 
         //Verify column name mapping works
         assertNotNull(arrowSchema.findField("col1"));

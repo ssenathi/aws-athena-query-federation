@@ -1,7 +1,5 @@
 package com.amazonaws.athena.connector.lambda.examples;
 
-import com.amazonaws.athena.connector.lambda.ProtoUtils;
-
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
@@ -33,6 +31,7 @@ import com.amazonaws.athena.connector.lambda.request.FederationResponse;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.serde.ObjectMapperUtil;
 import com.amazonaws.athena.connector.lambda.serde.VersionedObjectMapperFactory;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.proto.udf.UserDefinedFunctionRequest;
 import com.amazonaws.athena.connector.lambda.proto.udf.UserDefinedFunctionResponse;
@@ -105,7 +104,7 @@ public class ExampleUserDefinedFunctionHandlerTest
 
         UserDefinedFunctionResponse response = runAndAssertSerialization(inputRecords, outputSchema, "multiply");
 
-        Block outputRecords = ProtoUtils.fromProtoBlock(allocator, response.getRecords());
+        Block outputRecords = ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords());
         assertEquals(1, outputRecords.getRowCount());
         FieldReader fieldReader = outputRecords.getFieldReader("product");
         ArrowValueProjector arrowValueProjector = ProjectorUtils.createArrowValueProjector(fieldReader);
@@ -131,7 +130,7 @@ public class ExampleUserDefinedFunctionHandlerTest
 
         UserDefinedFunctionResponse response = runAndAssertSerialization(inputRecords, outputSchema, "concatenate");
 
-        Block outputRecords = ProtoUtils.fromProtoBlock(allocator, response.getRecords());
+        Block outputRecords = ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords());
         assertEquals(1, outputRecords.getRowCount());
         FieldReader fieldReader = outputRecords.getFieldReader("string");
         ArrowValueProjector arrowValueProjector = ProjectorUtils.createArrowValueProjector(fieldReader);
@@ -163,7 +162,7 @@ public class ExampleUserDefinedFunctionHandlerTest
 
         UserDefinedFunctionResponse response = runAndAssertSerialization(inputRecords, outputSchema, "to_json");
 
-        Block outputRecords = ProtoUtils.fromProtoBlock(allocator, response.getRecords());
+        Block outputRecords = ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords());
         assertEquals(1, outputRecords.getRowCount());
         FieldReader fieldReader = outputRecords.getFieldReader("json");
         ArrowValueProjector arrowValueProjector = ProjectorUtils.createArrowValueProjector(fieldReader);
@@ -188,7 +187,7 @@ public class ExampleUserDefinedFunctionHandlerTest
 
         UserDefinedFunctionResponse response = runAndAssertSerialization(inputRecords, outputSchema, "get_default_value_if_null");
 
-        Block outputRecords = ProtoUtils.fromProtoBlock(allocator, response.getRecords());
+        Block outputRecords = ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords());
         assertEquals(2, outputRecords.getRowCount());
         FieldReader fieldReader = outputRecords.getFieldReader("output");
         ArrowValueProjector arrowValueProjector = ProjectorUtils.createArrowValueProjector(fieldReader);
@@ -202,8 +201,8 @@ public class ExampleUserDefinedFunctionHandlerTest
     {
         UserDefinedFunctionRequest request = UserDefinedFunctionRequest.newBuilder()
             .setIdentity(FederatedIdentity.newBuilder().setAccount("account").setArn("arn"))
-            .setInputRecords(ProtoUtils.toProtoBlock(inputRecords))
-            .setOutputSchema(ProtoUtils.toProtoSchemaBytes(outputSchema))
+            .setInputRecords(ProtobufMessageConverter.toProtoBlock(inputRecords))
+            .setOutputSchema(ProtobufMessageConverter.toProtoSchemaBytes(outputSchema))
             .setMethodName(methodName)
             .setFunctionType(UserDefinedFunctionType.SCALAR)
             .build();

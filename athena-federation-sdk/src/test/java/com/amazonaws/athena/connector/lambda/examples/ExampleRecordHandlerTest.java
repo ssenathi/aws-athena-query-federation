@@ -1,7 +1,5 @@
 package com.amazonaws.athena.connector.lambda.examples;
 
-import com.amazonaws.athena.connector.lambda.ProtoUtils;
-
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
@@ -51,6 +49,7 @@ import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.athena.connector.lambda.domain.Split;
 import com.amazonaws.athena.connector.lambda.serde.ObjectMapperUtil;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -61,6 +60,7 @@ import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import com.google.protobuf.AbstractMessage;
+import com.google.protobuf.Message;
 
 import org.apache.arrow.vector.types.FloatingPointPrecision;
 import org.apache.arrow.vector.types.Types;
@@ -219,25 +219,25 @@ public class ExampleRecordHandlerTest
                     .build())
                 .setCatalogName("catalog")
                 .setQueryId("queryId-" + System.currentTimeMillis())
-                .setTableName(ProtoUtils.toTableName(new TableName("schema", "table")))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(schemaForRead))
+                .setTableName(ProtobufMessageConverter.toTableName(new TableName("schema", "table")))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schemaForRead))
                 .setSplit(
-                    ProtoUtils.toProtoSplit(Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build())
-                ).setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
+                    ProtobufMessageConverter.toProtoSplit(Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build())
+                ).setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setMaxBlockSize(100_000_000_000L) // 100GB don't expect this to spill
                 .setMaxInlineBlockSize(100_000_000_000L)
                 .build();
 
             // ObjectMapperUtil.assertSerialization(request);
 
-            AbstractMessage rawResponse = recordService.readRecords(request);
+            Message rawResponse = recordService.readRecords(request);
             // should not spill, so cast to non-spilled response
             ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
             // ObjectMapperUtil.assertSerialization(rawResponse);
-            logger.info("doReadRecordsNoSpill: rows[{}]", ProtoUtils.fromProtoBlock(allocator, response.getRecords()).getRowCount());
+            logger.info("doReadRecordsNoSpill: rows[{}]", ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
-            assertTrue(ProtoUtils.fromProtoBlock(allocator, response.getRecords()).getRowCount() == 1);
-            logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(ProtoUtils.fromProtoBlock(allocator, response.getRecords()), 0));
+            assertTrue(ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() == 1);
+            logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()), 0));
         }
         logger.info("doReadRecordsNoSpill: exit");
     }
@@ -264,18 +264,18 @@ public class ExampleRecordHandlerTest
                     .build())
                 .setCatalogName("catalog")
                 .setQueryId("queryId-" + System.currentTimeMillis())
-                .setTableName(ProtoUtils.toTableName(new TableName("schema", "table")))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(schemaForRead))
+                .setTableName(ProtobufMessageConverter.toTableName(new TableName("schema", "table")))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schemaForRead))
                 .setSplit(
-                    ProtoUtils.toProtoSplit(Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build())
-                ).setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
+                    ProtobufMessageConverter.toProtoSplit(Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build())
+                ).setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setMaxBlockSize(1_600_000L) // ~1.5MB so we should see some spill
                 .setMaxInlineBlockSize(1000L)
                 .build();
 
             // ObjectMapperUtil.assertSerialization(request);
 
-            AbstractMessage rawResponse = recordService.readRecords(request);
+            Message rawResponse = recordService.readRecords(request);
             // should have spilled, so cast to remote response
             RemoteReadRecordsResponse response = (RemoteReadRecordsResponse) rawResponse;
             // ObjectMapperUtil.assertSerialization(rawResponse);
@@ -285,9 +285,9 @@ public class ExampleRecordHandlerTest
             assertTrue(response.getRemoteBlocksList().size() > 1);
 
             int blockNum = 0;
-            for (SpillLocation next : response.getRemoteBlocksList().stream().map(ProtoUtils::fromProtoSpillLocation).collect(Collectors.toList())) {
+            for (SpillLocation next : response.getRemoteBlocksList().stream().map(ProtobufMessageConverter::fromProtoSpillLocation).collect(Collectors.toList())) {
                 S3SpillLocation spillLocation = (S3SpillLocation) next;
-                try (Block block = spillReader.read(spillLocation, ProtoUtils.fromProtoEncryptionKey(response.getEncryptionKey()), ProtoUtils.fromProtoSchema(allocator, response.getSchema()))) {
+                try (Block block = spillReader.read(spillLocation, ProtobufMessageConverter.fromProtoEncryptionKey(response.getEncryptionKey()), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
 
                     logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
                     // assertTrue(++blockNum < response.getRemoteBlocks().size() && block.getRowCount() > 10_000);
@@ -314,7 +314,7 @@ public class ExampleRecordHandlerTest
         }
 
         @Override
-        public AbstractMessage readRecords(ReadRecordsRequest request)
+        public Message readRecords(ReadRecordsRequest request)
         {
             try {
                 return handler.doReadRecords(allocator, request);

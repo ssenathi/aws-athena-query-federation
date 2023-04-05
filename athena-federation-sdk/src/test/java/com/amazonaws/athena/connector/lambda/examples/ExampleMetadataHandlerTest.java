@@ -1,19 +1,15 @@
-package com.amazonaws.athena.connector.lambda.examples;
-
-import com.amazonaws.athena.connector.lambda.CollectionsUtils;
-
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
  * %%
- * Copyright (C) 2019 Amazon Web Services
+ * Copyright (C) 2019 - 2023 Amazon Web Services
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *      http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,8 +17,9 @@ import com.amazonaws.athena.connector.lambda.CollectionsUtils;
  * limitations under the License.
  * #L%
  */
+package com.amazonaws.athena.connector.lambda.examples;
 
-import com.amazonaws.athena.connector.lambda.ProtoUtils;
+import com.amazonaws.athena.connector.lambda.CollectionsUtils;
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.data.BlockUtils;
@@ -45,12 +42,13 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.athena.connector.lambda.serde.ObjectMapperUtil;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.lambda.invoke.LambdaFunctionException;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.google.protobuf.util.JsonFormat;
 
 import org.apache.arrow.vector.types.Types;
 import org.apache.arrow.vector.types.pojo.ArrowType;
@@ -146,7 +144,7 @@ public class ExampleMetadataHandlerTest
                     .add(new TableName("schema", "table5"))
                     .build()
                 .stream()
-                .map(ProtoUtils::toTableName)
+                .map(ProtobufMessageConverter::toTableName)
                 .collect(Collectors.toList())
             )
             .build();
@@ -176,7 +174,7 @@ public class ExampleMetadataHandlerTest
                     .add(new TableName("schema", "table3"))
                     .build()
                 .stream()
-                .map(ProtoUtils::toTableName)
+                .map(ProtobufMessageConverter::toTableName)
                 .collect(Collectors.toList())
             )
             .setNextToken("table4")
@@ -207,7 +205,7 @@ public class ExampleMetadataHandlerTest
                 .add(new TableName("schema", "table5"))
                 .build()
             .stream()
-            .map(ProtoUtils::toTableName)
+            .map(ProtobufMessageConverter::toTableName)
             .collect(Collectors.toList())
         )
         .build();
@@ -249,7 +247,7 @@ public class ExampleMetadataHandlerTest
         // ObjectMapperUtil.assertSerialization(req);
         GetTableResponse res = metadataHandler.doGetTable(allocator, req);
         // ObjectMapperUtil.assertSerialization(res);
-        Schema arrowSchema = ProtoUtils.fromProtoSchema(allocator, res.getSchema());
+        Schema arrowSchema = ProtobufMessageConverter.fromProtoSchema(allocator, res.getSchema());
         assertTrue(arrowSchema.getFields().size() > 0);
         assertTrue(arrowSchema.getCustomMetadata().size() > 0);
         logger.info("doGetTable - {}", res);
@@ -320,9 +318,9 @@ public class ExampleMetadataHandlerTest
                 .setIdentity(IdentityUtil.fakeIdentity())
                 .setQueryId("queryId")
                 .setCatalogName("default")
-                .setTableName(ProtoUtils.toTableName(new TableName("schema1", "table1")))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(tableSchema))
+                .setTableName(ProtobufMessageConverter.toTableName(new TableName("schema1", "table1")))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(tableSchema))
                 .addAllPartitionCols(partitionCols)
                 .build();
 
@@ -332,7 +330,7 @@ public class ExampleMetadataHandlerTest
             // ObjectMapperUtil.assertSerialization(res);
 
             logger.info("doGetTableLayout - {}", res);
-            Block partitions = ProtoUtils.fromProtoBlock(allocator, res.getPartitions());
+            Block partitions = ProtobufMessageConverter.fromProtoBlock(allocator, res.getPartitions());
             for (int row = 0; row < partitions.getRowCount() && row < 10; row++) {
                 logger.info("doGetTableLayout:{} {}", row, BlockUtils.rowToString(partitions, row));
             }
@@ -341,8 +339,8 @@ public class ExampleMetadataHandlerTest
         }
         finally {
             try {
-                ProtoUtils.fromProtoConstraints(allocator, req.getConstraints()).close();
-                ProtoUtils.fromProtoBlock(allocator, res.getPartitions()).close();
+                ProtobufMessageConverter.fromProtoConstraints(allocator, req.getConstraints()).close();
+                ProtobufMessageConverter.fromProtoBlock(allocator, res.getPartitions()).close();
             }
             catch (Exception ex) {
                 logger.error("doGetTableLayout: ", ex);
@@ -419,10 +417,10 @@ public class ExampleMetadataHandlerTest
                 .setTableName("table_name")
                 .build()
             )
-            .setPartitions(ProtoUtils.toProtoBlock(partitions))
+            .setPartitions(ProtobufMessageConverter.toProtoBlock(partitions))
             .setConstraints(
                 com.amazonaws.athena.connector.lambda.proto.domain.predicate.Constraints.newBuilder()
-                .putAllSummary(ProtoUtils.toProtoSummary(constraintsMap))
+                .putAllSummary(ProtobufMessageConverter.toProtoSummary(constraintsMap))
                 .build()
             )
             .addAllPartitionCols(partitionCols);
@@ -467,7 +465,7 @@ public class ExampleMetadataHandlerTest
 
             hasContinuationToken = response.hasContinuationToken();
 
-            logger.info("Logging response from protobuf. {}", JsonFormat.printer().print(response));
+            logger.info("Logging response from protobuf. {}", ProtobufSerDe.PROTOBUF_JSON_PRINTER.print(response));
             logger.info("done logging response");
         }
         while (hasContinuationToken);

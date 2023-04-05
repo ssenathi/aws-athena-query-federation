@@ -20,7 +20,6 @@
 package com.amazonaws.athena.connectors.dynamodb;
 
 import com.amazonaws.AmazonServiceException;
-import com.amazonaws.athena.connector.lambda.ProtoUtils;
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
@@ -46,6 +45,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.dynamodbv2.document.ItemUtils;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
@@ -241,15 +241,15 @@ public class DynamoDBMetadataHandlerTest
         logger.info("doListTables - {}", res.getTablesList());
 
         List<com.amazonaws.athena.connector.lambda.proto.domain.TableName> expectedTables = 
-            tableNames.stream().map(table -> new TableName(DEFAULT_SCHEMA, table)).map(ProtoUtils::toTableName).collect(Collectors.toList());
-        expectedTables.add(ProtoUtils.toTableName(TEST_TABLE_NAME));
-        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table2")));
-        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table3")));
-        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table4")));
-        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table5")));
-        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table6")));
-        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table7")));
-        expectedTables.add(ProtoUtils.toTableName(new TableName(DEFAULT_SCHEMA, "test_table8")));
+            tableNames.stream().map(table -> new TableName(DEFAULT_SCHEMA, table)).map(ProtobufMessageConverter::toTableName).collect(Collectors.toList());
+        expectedTables.add(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME));
+        expectedTables.add(ProtobufMessageConverter.toTableName(new TableName(DEFAULT_SCHEMA, "test_table2")));
+        expectedTables.add(ProtobufMessageConverter.toTableName(new TableName(DEFAULT_SCHEMA, "test_table3")));
+        expectedTables.add(ProtobufMessageConverter.toTableName(new TableName(DEFAULT_SCHEMA, "test_table4")));
+        expectedTables.add(ProtobufMessageConverter.toTableName(new TableName(DEFAULT_SCHEMA, "test_table5")));
+        expectedTables.add(ProtobufMessageConverter.toTableName(new TableName(DEFAULT_SCHEMA, "test_table6")));
+        expectedTables.add(ProtobufMessageConverter.toTableName(new TableName(DEFAULT_SCHEMA, "test_table7")));
+        expectedTables.add(ProtobufMessageConverter.toTableName(new TableName(DEFAULT_SCHEMA, "test_table8")));
 
         // there was a bug in these tests before - the ExampleMetadataHandler doesn't actually sort the tables if it has no pagination,
         // but the tests implied they were supposed to by comparing the objects. However, the equals method defined in the old Response class
@@ -268,7 +268,7 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
+            .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
             .build();
         GetTableResponse res = handler.doGetTable(allocator, req);
 
@@ -276,7 +276,7 @@ public class DynamoDBMetadataHandlerTest
 
         assertThat(res.getTableName().getSchemaName(), equalTo(DEFAULT_SCHEMA));
         assertThat(res.getTableName().getTableName(), equalTo(TEST_TABLE));
-        assertThat(ProtoUtils.fromProtoSchema(allocator, res.getSchema()).getFields().size(), equalTo(11));
+        assertThat(ProtobufMessageConverter.fromProtoSchema(allocator, res.getSchema()).getFields().size(), equalTo(11));
     }
 
     @Test
@@ -289,14 +289,14 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtoUtils.toTableName(TEST_TABLE_2_NAME))
+            .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_2_NAME))
             .build();
         GetTableResponse res = handler.doGetTable(allocator, req);
 
         logger.info("doGetEmptyTable - {}", res.getSchema());
 
-        assertThat(res.getTableName(), equalTo(ProtoUtils.toTableName(TEST_TABLE_2_NAME)));
-        assertThat(ProtoUtils.fromProtoSchema(allocator, res.getSchema()).getFields().size(), equalTo(2));
+        assertThat(res.getTableName(), equalTo(ProtobufMessageConverter.toTableName(TEST_TABLE_2_NAME)));
+        assertThat(ProtobufMessageConverter.fromProtoSchema(allocator, res.getSchema()).getFields().size(), equalTo(2));
     }
 
     @Test
@@ -309,13 +309,13 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtoUtils.toTableName(TEST_TABLE_2_NAME))
+            .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_2_NAME))
             .build();
         GetTableResponse res = handler.doGetTable(allocator, req);
 
         logger.info("doGetTable - {}", res.getSchema());
 
-        assertThat(res.getTableName(), equalTo(ProtoUtils.toTableName(TEST_TABLE_2_NAME)));
+        assertThat(res.getTableName(), equalTo(ProtobufMessageConverter.toTableName(TEST_TABLE_2_NAME)));
     }
 
     @Test
@@ -331,13 +331,13 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtoUtils.toTableName(new TableName(TEST_CATALOG_NAME, TEST_TABLE)))
-            .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-            .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+            .setTableName(ProtobufMessageConverter.toTableName(new TableName(TEST_CATALOG_NAME, TEST_TABLE)))
+            .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+            .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
             .build();
 
         GetTableLayoutResponse res = handler.doGetTableLayout(allocator, req);
-        Block partitionsBlock = ProtoUtils.fromProtoBlock(allocator, res.getPartitions());
+        Block partitionsBlock = ProtobufMessageConverter.fromProtoBlock(allocator, res.getPartitions());
 
         logger.info("doGetTableLayout schema - {}", partitionsBlock.getSchema());
         logger.info("doGetTableLayout partitions - {}", partitionsBlock);
@@ -379,11 +379,11 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
-        Block partitionsBlock = ProtoUtils.fromProtoBlock(allocator, res.getPartitions());
+        Block partitionsBlock = ProtobufMessageConverter.fromProtoBlock(allocator, res.getPartitions());
 
         logger.info("doGetTableLayout schema - {}", partitionsBlock.getSchema());
         logger.info("doGetTableLayout partitions - {}", partitionsBlock);
@@ -413,13 +413,13 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
             
             // Verify that only the upper bound is present
-            assertThat(ProtoUtils.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 < :v0)"));
+            assertThat(ProtobufMessageConverter.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 < :v0)"));
         }
 
         // For the same filters that we applied above, validate that we still get two conditions for non sort keys
@@ -432,12 +432,12 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
             // Verify that both bounds are present for col_6 which is not a sort key
-            assertThat(ProtoUtils.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(NON_KEY_FILTER_METADATA), equalTo("(#col_6 < :v1 AND #col_6 >= :v2)"));
+            assertThat(ProtobufMessageConverter.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(NON_KEY_FILTER_METADATA), equalTo("(#col_6 < :v1 AND #col_6 >= :v2)"));
         }
 
         {
@@ -449,12 +449,12 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
             // Verify that only the upper bound is present
-            assertThat(ProtoUtils.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 <= :v0)"));
+            assertThat(ProtobufMessageConverter.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 <= :v0)"));
         }
 
         // For the same filters that we applied above, validate that we still get two conditions for non sort keys
@@ -467,12 +467,12 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
             // Verify that both bounds are present for col_6 which is not a sort key
-            assertThat(ProtoUtils.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(NON_KEY_FILTER_METADATA), equalTo("(#col_6 <= :v1 AND #col_6 > :v2)"));
+            assertThat(ProtobufMessageConverter.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(NON_KEY_FILTER_METADATA), equalTo("(#col_6 <= :v1 AND #col_6 > :v2)"));
         }
 
         // -------------------------------------------------------------------------
@@ -485,11 +485,11 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
-            assertThat(ProtoUtils.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 > :v0)"));
+            assertThat(ProtobufMessageConverter.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 > :v0)"));
         }
 
         {
@@ -500,11 +500,11 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
-            assertThat(ProtoUtils.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 >= :v0)"));
+            assertThat(ProtobufMessageConverter.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 >= :v0)"));
         }
 
         {
@@ -515,11 +515,11 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
-            assertThat(ProtoUtils.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 < :v0)"));
+            assertThat(ProtobufMessageConverter.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 < :v0)"));
         }
 
         {
@@ -530,11 +530,11 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
-            assertThat(ProtoUtils.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 <= :v0)"));
+            assertThat(ProtobufMessageConverter.fromProtoBlock(allocator, res2.getPartitions()).getSchema().getCustomMetadata().get(RANGE_KEY_FILTER_METADATA), equalTo("(#col_5 <= :v0)"));
         }
     }
 
@@ -546,9 +546,9 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(ImmutableMap.of())))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(ImmutableMap.of())))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
 
         GetSplitsRequest req = GetSplitsRequest.newBuilder()
@@ -596,9 +596,9 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(TEST_TABLE_NAME))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
-                .setSchema(ProtoUtils.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
+                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
 
 
@@ -682,11 +682,11 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtoUtils.toTableName(tableName))
+            .setTableName(ProtobufMessageConverter.toTableName(tableName))
             .build();
         GetTableResponse getTableResponse = handler.doGetTable(allocator, getTableRequest);
         logger.info("validateSourceTableNamePropagation: GetTableResponse[{}]", getTableResponse);
-        Map<String, String> customMetadata = ProtoUtils.fromProtoSchema(allocator, getTableResponse.getSchema()).getCustomMetadata();
+        Map<String, String> customMetadata = ProtobufMessageConverter.fromProtoSchema(allocator, getTableResponse.getSchema()).getCustomMetadata();
         assertThat(customMetadata.get(SOURCE_TABLE_PROPERTY), equalTo(TEST_TABLE));
         assertThat(customMetadata.get(DATETIME_FORMAT_MAPPING_PROPERTY_NORMALIZED), equalTo("Col1=datetime1,Col3=datetime3"));
 
@@ -694,8 +694,8 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setCatalogName(TEST_CATALOG_NAME)
             .setQueryId(TEST_QUERY_ID)
-            .setTableName(ProtoUtils.toTableName(tableName))
-            .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(ImmutableMap.of())))
+            .setTableName(ProtobufMessageConverter.toTableName(tableName))
+            .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(ImmutableMap.of())))
             .setSchema(getTableResponse.getSchema())
             .build();
 
@@ -703,7 +703,7 @@ public class DynamoDBMetadataHandlerTest
 
         GetTableLayoutResponse getTableLayoutResponse = handler.doGetTableLayout(allocator, getTableLayoutRequest);
         logger.info("validateSourceTableNamePropagation: GetTableLayoutResponse[{}]", getTableLayoutResponse);
-        assertThat(ProtoUtils.fromProtoBlock(allocator, getTableLayoutResponse.getPartitions()).getSchema().getCustomMetadata().get(TABLE_METADATA), equalTo(TEST_TABLE));
+        assertThat(ProtobufMessageConverter.fromProtoBlock(allocator, getTableLayoutResponse.getPartitions()).getSchema().getCustomMetadata().get(TABLE_METADATA), equalTo(TEST_TABLE));
     }
 
     @Test
@@ -731,11 +731,11 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtoUtils.toTableName(tableName))
+            .setTableName(ProtobufMessageConverter.toTableName(tableName))
             .build();
         GetTableResponse getTableResponse = handler.doGetTable(allocator, getTableRequest);
         logger.info("validateSourceTableNamePropagation: GetTableResponse[{}]", getTableResponse);
-        Map<String, String> customMetadata = ProtoUtils.fromProtoSchema(allocator, getTableResponse.getSchema()).getCustomMetadata();
+        Map<String, String> customMetadata = ProtobufMessageConverter.fromProtoSchema(allocator, getTableResponse.getSchema()).getCustomMetadata();
         assertThat(customMetadata.get(SOURCE_TABLE_PROPERTY), equalTo(TEST_TABLE));
         assertThat(customMetadata.get(DATETIME_FORMAT_MAPPING_PROPERTY_NORMALIZED), equalTo("Col1=datetime1,col3=datetime3"));
 
@@ -751,14 +751,14 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtoUtils.toTableName(tableName))
-                .setConstraints(ProtoUtils.toProtoConstraints(new Constraints(constraintsMap)))
+                .setTableName(ProtobufMessageConverter.toTableName(tableName))
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(getTableResponse.getSchema())
                 .build();
 
 
         GetTableLayoutResponse res = handler.doGetTableLayout(allocator, getTableLayoutRequest);
-        Block partitionsBlock = ProtoUtils.fromProtoBlock(allocator, res.getPartitions());
+        Block partitionsBlock = ProtobufMessageConverter.fromProtoBlock(allocator, res.getPartitions());
 
         logger.info("doGetTableLayoutScanWithTypeOverride schema - {}", partitionsBlock.getSchema());
         logger.info("doGetTableLayoutScanWithTypeOverride partitions - {}", partitionsBlock);
