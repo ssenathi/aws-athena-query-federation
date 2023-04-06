@@ -544,7 +544,6 @@ public class GlueMetadataHandlerTest
     public void testGetCatalog() {
         // Catalog should be the account from the request
         com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity identity = IdentityUtil.fakeIdentity();
-        //MetadataRequest req = new GetTableRequest(new com.amazonaws.athena.connector.lambda.security.FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList()), queryId, catalog, new TableName(schema, table));
         String catalog = handler.getCatalog(identity);
         assertEquals(IdentityUtil.fakeIdentity().getAccount(), catalog);
 
