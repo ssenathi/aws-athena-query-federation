@@ -21,7 +21,7 @@ package com.amazonaws.athena.connector.lambda.domain;
  */
 
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
-import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
+import com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey;
 import com.google.common.base.MoreObjects;
 
 import java.beans.Transient;

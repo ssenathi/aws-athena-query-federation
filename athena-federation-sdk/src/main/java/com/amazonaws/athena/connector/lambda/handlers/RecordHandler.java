@@ -159,7 +159,7 @@ public abstract class RecordHandler
                     .setCatalogName(request.getCatalogName())
                     .setSchema(request.getSchema())
                     .addAllRemoteBlocks(spiller.getSpillLocations().stream().map(ProtobufMessageConverter::toProtoSpillLocation).collect(Collectors.toList()))
-                    .setEncryptionKey(ProtobufMessageConverter.toProtoEncryptionKey(spillConfig.getEncryptionKey()))
+                    .setEncryptionKey(spillConfig.getEncryptionKey())
                     .build();
             }
         }

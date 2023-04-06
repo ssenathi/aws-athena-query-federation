@@ -33,7 +33,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
-import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
 import com.google.protobuf.ByteString;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.ipc.ReadChannel;
@@ -415,14 +414,14 @@ public class ProtobufMessageConverter
 
     public static Split fromProtoSplit(com.amazonaws.athena.connector.lambda.proto.domain.Split split)
     {
-        return new Split(fromProtoSpillLocation(split.getSpillLocation()), fromProtoEncryptionKey(split.getEncryptionKey()), split.getPropertiesMap());
+        return new Split(fromProtoSpillLocation(split.getSpillLocation()), split.getEncryptionKey(), split.getPropertiesMap());
     }
 
     public static com.amazonaws.athena.connector.lambda.proto.domain.Split toProtoSplit(Split split)
     {
         com.amazonaws.athena.connector.lambda.proto.domain.Split.Builder splitBuilder = com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder();
             if (split.getEncryptionKey() != null) {
-                splitBuilder.setEncryptionKey(ProtobufMessageConverter.toProtoEncryptionKey(split.getEncryptionKey()));
+                splitBuilder.setEncryptionKey(split.getEncryptionKey());
             }
             if (split.getSpillLocation() != null) {
                 splitBuilder.setSpillLocation(ProtobufMessageConverter.toProtoSpillLocation(split.getSpillLocation()));
@@ -432,18 +431,6 @@ public class ProtobufMessageConverter
             }
             
             return splitBuilder.build();
-    }
-
-    public static EncryptionKey fromProtoEncryptionKey(com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey encryptionKey)
-    {
-        return new EncryptionKey(encryptionKey.getKey().toByteArray(), encryptionKey.getNonce().toByteArray());
-    }
-    public static com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey toProtoEncryptionKey(EncryptionKey encryptionKey)
-    {
-        return com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey.newBuilder()
-            .setKey(ByteString.copyFrom(encryptionKey.getKey()))
-            .setNonce(ByteString.copyFrom(encryptionKey.getNonce()))
-            .build();
     }
 
     // preserving functionality of v2 RecordBatch SerDe, as it's the only thing we need still from Jackson

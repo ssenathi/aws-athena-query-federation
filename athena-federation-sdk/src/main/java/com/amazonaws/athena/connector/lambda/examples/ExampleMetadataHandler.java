@@ -39,8 +39,8 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.proto.request.PingRequest;
+import com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
-import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe;
@@ -409,8 +409,8 @@ public class ExampleMetadataHandler
                                         .putAllProperties(s.getProperties());
                                     if (s.getEncryptionKey() != null) {
                                         protoSplitBuilder.setEncryptionKey(com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey.newBuilder()
-                                            .setKey(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getKey()))
-                                            .setNonce(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getNonce()))
+                                            .setKey(s.getEncryptionKey().getKey())
+                                            .setNonce(s.getEncryptionKey().getNonce())
                                             .build());
                                     }
                                     return protoSplitBuilder.build();
@@ -466,8 +466,8 @@ public class ExampleMetadataHandler
                             .putAllProperties(s.getProperties());
                         if (s.getEncryptionKey() != null) {
                             protoSplitBuilder.setEncryptionKey(com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey.newBuilder()
-                                .setKey(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getKey()))
-                                .setNonce(com.google.protobuf.ByteString.copyFrom(s.getEncryptionKey().getNonce()))
+                                .setKey(s.getEncryptionKey().getKey())
+                                .setNonce(s.getEncryptionKey().getNonce())
                                 .build());
                         }
                         return protoSplitBuilder.build();

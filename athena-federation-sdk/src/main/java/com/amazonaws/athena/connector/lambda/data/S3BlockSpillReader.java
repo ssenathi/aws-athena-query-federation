@@ -21,9 +21,9 @@ package com.amazonaws.athena.connector.lambda.data;
  */
 
 import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
+import com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.security.AesGcmBlockCrypto;
 import com.amazonaws.athena.connector.lambda.security.BlockCrypto;
-import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.security.NoOpBlockCrypto;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.S3Object;
@@ -64,7 +64,7 @@ public class S3BlockSpillReader
             logger.debug("read: Started reading block from S3");
             fullObject = amazonS3.getObject(spillLocation.getBucket(), spillLocation.getKey());
             logger.debug("read: Completed reading block from S3");
-            BlockCrypto blockCrypto = (key != null && key.getKey().length > 0 && key.getNonce().length > 0) ? new AesGcmBlockCrypto(allocator) : new NoOpBlockCrypto(allocator);
+            BlockCrypto blockCrypto = (key != null && key.getKey().toByteArray().length > 0 && key.getNonce().toByteArray().length > 0) ? new AesGcmBlockCrypto(allocator) : new NoOpBlockCrypto(allocator);
             Block block = blockCrypto.decrypt(key, ByteStreams.toByteArray(fullObject.getObjectContent()), schema);
             logger.debug("read: Completed decrypting block of size.");
             return block;

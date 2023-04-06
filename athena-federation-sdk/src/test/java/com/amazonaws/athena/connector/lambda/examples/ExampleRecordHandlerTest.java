@@ -41,7 +41,7 @@ import com.amazonaws.athena.connector.lambda.proto.records.RemoteReadRecordsResp
 import com.amazonaws.athena.connector.lambda.proto.request.TypeHeader;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.records.RecordService;
-import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
+import com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
@@ -276,7 +276,7 @@ public class ExampleRecordHandlerTest
             int blockNum = 0;
             for (SpillLocation next : response.getRemoteBlocksList().stream().map(ProtobufMessageConverter::fromProtoSpillLocation).collect(Collectors.toList())) {
                 S3SpillLocation spillLocation = (S3SpillLocation) next;
-                try (Block block = spillReader.read(spillLocation, ProtobufMessageConverter.fromProtoEncryptionKey(response.getEncryptionKey()), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
+                try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
 
                     logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
                     // assertTrue(++blockNum < response.getRemoteBlocks().size() && block.getRowCount() > 10_000);
