@@ -20,8 +20,6 @@ package com.amazonaws.athena.connector.lambda.domain;
  * #L%
  */
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 
@@ -43,9 +41,7 @@ public class TableName
      * @param schemaName The name of the schema that the table belongs to.
      * @param tableName The name of the table.
      */
-    @JsonCreator
-    public TableName(@JsonProperty("schemaName") String schemaName,
-            @JsonProperty("tableName") String tableName)
+    public TableName(String schemaName, String tableName)
     {
         this.schemaName = requireNonNull(schemaName, "schemaName is null");
         this.tableName = requireNonNull(tableName, "tableName is null");
@@ -56,7 +52,6 @@ public class TableName
      *
      * @return A String containing the schema name for the table.
      */
-    @JsonProperty
     public String getSchemaName()
     {
         return schemaName;
@@ -67,7 +62,6 @@ public class TableName
      *
      * @return A String containing the name of the table.
      */
-    @JsonProperty
     public String getTableName()
     {
         return tableName;

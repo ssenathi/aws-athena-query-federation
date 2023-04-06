@@ -20,9 +20,6 @@ package com.amazonaws.athena.connector.lambda.domain.spill;
  * #L%
  */
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Objects;
 
 /**
@@ -47,10 +44,9 @@ public class S3SpillLocation
      * @param directory Boolean that if True indicates the key is a pre-fix (aka directory) where multiple Blocks may
      * be spilled.
      */
-    @JsonCreator
-    public S3SpillLocation(@JsonProperty("bucket") String bucket,
-            @JsonProperty("key") String key,
-            @JsonProperty("directory") boolean directory)
+    public S3SpillLocation(String bucket,
+            String key,
+            boolean directory)
     {
         this.bucket = bucket;
         this.key = key;
@@ -62,7 +58,6 @@ public class S3SpillLocation
      *
      * @return String containing the S3 bucket name.
      */
-    @JsonProperty
     public String getBucket()
     {
         return bucket;
@@ -73,7 +68,6 @@ public class S3SpillLocation
      *
      * @return String containing the S3 key.
      */
-    @JsonProperty
     public String getKey()
     {
         return key;
@@ -85,7 +79,6 @@ public class S3SpillLocation
      * @return True if the key is actually a prefix for a location that may have multiple blocks, False if the location
      * points to a specific S3 object.
      */
-    @JsonProperty
     public boolean isDirectory()
     {
         return directory;

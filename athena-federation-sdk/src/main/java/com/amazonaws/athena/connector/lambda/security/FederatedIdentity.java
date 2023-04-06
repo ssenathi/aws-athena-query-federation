@@ -20,9 +20,6 @@ package com.amazonaws.athena.connector.lambda.security;
  * #L%
  */
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,11 +35,10 @@ public class FederatedIdentity
     private final Map<String, String> principalTags;
     private final List<String> iamGroups;
 
-    @JsonCreator
-    public FederatedIdentity(@JsonProperty("arn") String arn,
-                             @JsonProperty("account") String account,
-                             @JsonProperty("principalTags") Map<String, String> principalTags,
-                             @JsonProperty("iamGroups") List<String> iamGroups)
+    public FederatedIdentity(String arn,
+                             String account,
+                             Map<String, String> principalTags,
+                             List<String> iamGroups)
     {
         this.arn = arn;
         this.account = account;
@@ -50,25 +46,21 @@ public class FederatedIdentity
         this.iamGroups = iamGroups;
     }
 
-    @JsonProperty("arn")
     public String getArn()
     {
         return arn;
     }
 
-    @JsonProperty("account")
     public String getAccount()
     {
         return account;
     }
 
-    @JsonProperty("principalTags")
     public Map<String, String> getPrincipalTags()
     {
         return principalTags;
     }
 
-    @JsonProperty("iamGroups")
     public List<String> getIamGroups()
     {
         return iamGroups;

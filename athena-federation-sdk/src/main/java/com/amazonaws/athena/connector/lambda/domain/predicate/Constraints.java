@@ -20,8 +20,6 @@ package com.amazonaws.athena.connector.lambda.domain.predicate;
  * #L%
  */
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 
 import java.util.Map;
@@ -42,8 +40,7 @@ public class Constraints
 {
     private Map<String, ValueSet> summary;
 
-    @JsonCreator
-    public Constraints(@JsonProperty("summary") Map<String, ValueSet> summary)
+    public Constraints(Map<String, ValueSet> summary)
     {
         this.summary = summary;
     }

@@ -22,8 +22,6 @@ package com.amazonaws.athena.connector.lambda.domain;
 
 import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKey;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.MoreObjects;
 
 import java.beans.Transient;
@@ -58,10 +56,9 @@ public class Split
      * @param encryptionKey The optional EncryptionKey this Split can use to encrypt/decrypt data.
      * @param properties The properties that define what this split is meant to do.
      */
-    @JsonCreator
-    public Split(@JsonProperty("spillLocation") SpillLocation spillLocation,
-            @JsonProperty("encryptionKey") EncryptionKey encryptionKey,
-            @JsonProperty("properties") Map<String, String> properties)
+    public Split(SpillLocation spillLocation,
+            EncryptionKey encryptionKey,
+            Map<String, String> properties)
     {
         requireNonNull(properties, "properties is null");
         this.spillLocation = spillLocation;
@@ -129,7 +126,6 @@ public class Split
      *
      * @return Map<String, String> containing all properties on the split.
      */
-    @JsonProperty
     public Map<String, String> getProperties()
     {
         return properties;
@@ -140,7 +136,6 @@ public class Split
      *
      * @return The SpillLocation.
      */
-    @JsonProperty
     public SpillLocation getSpillLocation()
     {
         return spillLocation;
@@ -151,7 +146,6 @@ public class Split
      *
      * @return The EncryptionKey.
      */
-    @JsonProperty
     public EncryptionKey getEncryptionKey()
     {
         return encryptionKey;

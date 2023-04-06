@@ -20,9 +20,6 @@ package com.amazonaws.athena.connector.lambda.security;
  * #L%
  */
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Arrays;
 
 /**
@@ -33,20 +30,17 @@ public class EncryptionKey
     private final byte[] key;
     private final byte[] nonce;
 
-    @JsonCreator
-    public EncryptionKey(@JsonProperty("key") byte[] key, @JsonProperty("nonce") byte[] nonce)
+    public EncryptionKey(byte[] key, byte[] nonce)
     {
         this.key = key;
         this.nonce = nonce;
     }
 
-    @JsonProperty
     public byte[] getKey()
     {
         return key;
     }
 
-    @JsonProperty
     public byte[] getNonce()
     {
         return nonce;
