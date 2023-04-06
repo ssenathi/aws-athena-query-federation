@@ -202,9 +202,9 @@ public class ExampleRecordHandler
             partitionCols.addAll(Arrays.asList(partitionColsMetadata.split(",")));
         }
 
-        int year = Integer.valueOf(ProtobufMessageConverter.fromProtoSplit(request.getSplit()).getProperty("year"));
-        int month = Integer.valueOf(ProtobufMessageConverter.fromProtoSplit(request.getSplit()).getProperty("month"));
-        int day = Integer.valueOf(ProtobufMessageConverter.fromProtoSplit(request.getSplit()).getProperty("day"));
+        int year = Integer.valueOf(request.getSplit().getPropertiesMap().get("year"));
+        int month = Integer.valueOf(request.getSplit().getPropertiesMap().get(("month")));
+        int day = Integer.valueOf(request.getSplit().getPropertiesMap().get(("day")));
 
         final RowContext rowContext = new RowContext(year, month, day);
 

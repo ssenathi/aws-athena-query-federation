@@ -44,7 +44,7 @@ import com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
-import com.amazonaws.athena.connector.lambda.domain.Split;
+import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufUtils;
 import com.amazonaws.services.athena.AmazonAthena;
@@ -209,6 +209,15 @@ public class ExampleRecordHandlerTest
             constraintsMap.put("col3", SortedRangeSet.copyOf(Types.MinorType.FLOAT8.getType(),
                     ImmutableList.of(Range.equal(allocator, Types.MinorType.FLOAT8.getType(), 22.0D)), false));
 
+            Split.Builder splitBuilder = Split.newBuilder()
+                .setSpillLocation(makeSpillLocation())
+                .putProperties("year", "10")
+                .putProperties("month", "10")
+                .putProperties("day", "10");
+            if (encryptionKey != null) {
+                splitBuilder.setEncryptionKey(encryptionKey);
+            }
+
             ReadRecordsRequest request = ReadRecordsRequest.newBuilder()
                 .setIdentity(FederatedIdentity.newBuilder()
                     .setArn("arn")
@@ -218,9 +227,8 @@ public class ExampleRecordHandlerTest
                 .setQueryId("queryId-" + System.currentTimeMillis())
                 .setTableName(TableName.newBuilder().setSchemaName("schema").setTableName("table").build())
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schemaForRead))
-                .setSplit(
-                    ProtobufMessageConverter.toProtoSplit(Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build())
-                ).setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSplit(splitBuilder.build())
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setMaxBlockSize(100_000_000_000L) // 100GB don't expect this to spill
                 .setMaxInlineBlockSize(100_000_000_000L)
                 .build();
@@ -251,6 +259,14 @@ public class ExampleRecordHandlerTest
             constraintsMap.put("unknown", EquatableValueSet.newBuilder(allocator, Types.MinorType.FLOAT8.getType(), false, true).add(1.1D).build());
             constraintsMap.put("unknown2", new AllOrNoneValueSet(Types.MinorType.FLOAT8.getType(), false, true));
 
+            Split.Builder splitBuilder = Split.newBuilder()
+                .setSpillLocation(makeSpillLocation())
+                .putProperties("year", "10")
+                .putProperties("month", "10")
+                .putProperties("day", "10");
+            if (encryptionKey != null) {
+                splitBuilder.setEncryptionKey(encryptionKey);
+            }
             ReadRecordsRequest request = ReadRecordsRequest.newBuilder()
                 .setIdentity(FederatedIdentity.newBuilder()
                     .setArn("arn")
@@ -260,9 +276,8 @@ public class ExampleRecordHandlerTest
                 .setQueryId("queryId-" + System.currentTimeMillis())
                 .setTableName(TableName.newBuilder().setSchemaName("schema").setTableName("table").build())
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schemaForRead))
-                .setSplit(
-                    ProtobufMessageConverter.toProtoSplit(Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build())
-                ).setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
+                .setSplit(splitBuilder.build())
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setMaxBlockSize(1_600_000L) // ~1.5MB so we should see some spill
                 .setMaxInlineBlockSize(1000L)
                 .build();

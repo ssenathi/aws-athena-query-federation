@@ -25,9 +25,9 @@ import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockWriter;
 import com.amazonaws.athena.connector.lambda.data.FieldBuilder;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
-import com.amazonaws.athena.connector.lambda.domain.Split;
 import com.amazonaws.athena.connector.lambda.exceptions.FederationThrottleException;
 import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
+import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
@@ -420,11 +420,15 @@ public class ExampleMetadataHandler
                 }
 
                 //We use makeSpillLocation(...) from our parent class to get a unique SpillLocation for each split
-                Split.Builder splitBuilder = Split.newBuilder(makeSpillLocation(request.getQueryId()), encryptionEnabled ? encryptionKey : null)
-                        .add(SplitProperties.LOCATION.getId(), String.valueOf(locationReader.readText()))
-                        .add(SplitProperties.SERDE.getId(), String.valueOf(storageClassReader.readText()))
-                        .add(SplitProperties.SPLIT_PART.getId(), String.valueOf(curPart));
-
+                Split.Builder splitBuilder = Split.newBuilder()
+                    .setSpillLocation(makeSpillLocation(request.getQueryId()))
+                    .putProperties(SplitProperties.LOCATION.getId(), String.valueOf(locationReader.readText()))
+                    .putProperties(SplitProperties.SERDE.getId(), String.valueOf(storageClassReader.readText()))
+                    .putProperties(SplitProperties.SPLIT_PART.getId(), String.valueOf(curPart));
+                if (encryptionEnabled) {
+                    splitBuilder.setEncryptionKey(encryptionKey);
+                }
+                    
                 //Add the partition column values to the split's properties.
                 //We are doing this because our example record reader depends on it, your specific needs
                 //will likely vary. Our example only supports a limited number of partition column types.
@@ -434,15 +438,15 @@ public class ExampleMetadataHandler
 
                     switch (reader.getMinorType()) {
                         case UINT2:
-                            splitBuilder.add(next, Integer.valueOf(reader.readCharacter()).toString());
+                            splitBuilder.putProperties(next, Integer.valueOf(reader.readCharacter()).toString());
                             break;
                         case UINT4:
                         case INT:
-                            splitBuilder.add(next, String.valueOf(reader.readInteger()));
+                            splitBuilder.putProperties(next, String.valueOf(reader.readInteger()));
                             break;
                         case UINT8:
                         case BIGINT:
-                            splitBuilder.add(next, String.valueOf(reader.readLong()));
+                            splitBuilder.putProperties(next, String.valueOf(reader.readLong()));
                             break;
                         default:
                             throw new RuntimeException("Unsupported partition column type. " + reader.getMinorType());

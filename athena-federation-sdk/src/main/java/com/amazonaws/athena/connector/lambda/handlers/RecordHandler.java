@@ -191,11 +191,11 @@ public abstract class RecordHandler
         }
 
         return SpillConfig.newBuilder()
-                .withSpillLocation(ProtobufMessageConverter.fromProtoSplit(request.getSplit()).getSpillLocation())
+                .withSpillLocation(request.getSplit().getSpillLocation())
                 .withMaxBlockBytes(maxBlockSize)
                 .withMaxInlineBlockBytes(request.getMaxInlineBlockSize())
                 .withRequestId(request.getQueryId())
-                .withEncryptionKey(ProtobufMessageConverter.fromProtoSplit(request.getSplit()).getEncryptionKey())
+                .withEncryptionKey(request.getSplit().getEncryptionKey())
                 .withNumSpillThreads(NUM_SPILL_THREADS)
                 .build();
     }

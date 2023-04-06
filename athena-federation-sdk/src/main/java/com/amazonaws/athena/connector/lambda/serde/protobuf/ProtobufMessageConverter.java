@@ -22,7 +22,6 @@ package com.amazonaws.athena.connector.lambda.serde.protobuf;
 import com.amazonaws.athena.connector.lambda.data.AthenaFederationIpcOption;
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
-import com.amazonaws.athena.connector.lambda.domain.Split;
 import com.amazonaws.athena.connector.lambda.domain.predicate.AllOrNoneValueSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.EquatableValueSet;
@@ -384,42 +383,6 @@ public class ProtobufMessageConverter
         }
 
         return block;
-    }
-
-    // public static com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation toProtoSpillLocation(SpillLocation spillLocation)
-    // {
-    //     S3SpillLocation s3SpillLocation = (S3SpillLocation) spillLocation;
-    //     return com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation.newBuilder()
-    //         .setType("S3SpillLocation")
-    //         .setBucket(s3SpillLocation.getBucket())
-    //         .setKey(s3SpillLocation.getKey())
-    //         .setDirectory(s3SpillLocation.isDirectory())
-    //         .build();
-    // }
-    // public static S3SpillLocation fromProtoSpillLocation(com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation s3SpillLocation)
-    // {
-    //     return new S3SpillLocation(s3SpillLocation.getBucket(), s3SpillLocation.getKey(), s3SpillLocation.getDirectory());
-    // }
-
-    public static Split fromProtoSplit(com.amazonaws.athena.connector.lambda.proto.domain.Split split)
-    {
-        return new Split(split.getSpillLocation(), split.getEncryptionKey(), split.getPropertiesMap());
-    }
-
-    public static com.amazonaws.athena.connector.lambda.proto.domain.Split toProtoSplit(Split split)
-    {
-        com.amazonaws.athena.connector.lambda.proto.domain.Split.Builder splitBuilder = com.amazonaws.athena.connector.lambda.proto.domain.Split.newBuilder();
-            if (split.getEncryptionKey() != null) {
-                splitBuilder.setEncryptionKey(split.getEncryptionKey());
-            }
-            if (split.getSpillLocation() != null) {
-                splitBuilder.setSpillLocation(split.getSpillLocation());
-            }
-            if (split.getProperties() != null) {
-                splitBuilder.putAllProperties(split.getProperties());
-            }
-            
-            return splitBuilder.build();
     }
 
     // preserving functionality of v2 RecordBatch SerDe, as it's the only thing we need still from Jackson
