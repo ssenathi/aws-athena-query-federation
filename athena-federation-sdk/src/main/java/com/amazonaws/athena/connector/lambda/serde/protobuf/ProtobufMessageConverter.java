@@ -30,8 +30,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.Marker;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
-import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
-import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
 import com.google.protobuf.ByteString;
 import org.apache.arrow.memory.BufferAllocator;
 import org.apache.arrow.vector.ipc.ReadChannel;
@@ -388,24 +386,24 @@ public class ProtobufMessageConverter
         return block;
     }
 
-    public static com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation toProtoSpillLocation(SpillLocation spillLocation)
-    {
-        S3SpillLocation s3SpillLocation = (S3SpillLocation) spillLocation;
-        return com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation.newBuilder()
-            .setType("S3SpillLocation")
-            .setBucket(s3SpillLocation.getBucket())
-            .setKey(s3SpillLocation.getKey())
-            .setDirectory(s3SpillLocation.isDirectory())
-            .build();
-    }
-    public static S3SpillLocation fromProtoSpillLocation(com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation s3SpillLocation)
-    {
-        return new S3SpillLocation(s3SpillLocation.getBucket(), s3SpillLocation.getKey(), s3SpillLocation.getDirectory());
-    }
+    // public static com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation toProtoSpillLocation(SpillLocation spillLocation)
+    // {
+    //     S3SpillLocation s3SpillLocation = (S3SpillLocation) spillLocation;
+    //     return com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation.newBuilder()
+    //         .setType("S3SpillLocation")
+    //         .setBucket(s3SpillLocation.getBucket())
+    //         .setKey(s3SpillLocation.getKey())
+    //         .setDirectory(s3SpillLocation.isDirectory())
+    //         .build();
+    // }
+    // public static S3SpillLocation fromProtoSpillLocation(com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation s3SpillLocation)
+    // {
+    //     return new S3SpillLocation(s3SpillLocation.getBucket(), s3SpillLocation.getKey(), s3SpillLocation.getDirectory());
+    // }
 
     public static Split fromProtoSplit(com.amazonaws.athena.connector.lambda.proto.domain.Split split)
     {
-        return new Split(fromProtoSpillLocation(split.getSpillLocation()), split.getEncryptionKey(), split.getPropertiesMap());
+        return new Split(split.getSpillLocation(), split.getEncryptionKey(), split.getPropertiesMap());
     }
 
     public static com.amazonaws.athena.connector.lambda.proto.domain.Split toProtoSplit(Split split)
@@ -415,7 +413,7 @@ public class ProtobufMessageConverter
                 splitBuilder.setEncryptionKey(split.getEncryptionKey());
             }
             if (split.getSpillLocation() != null) {
-                splitBuilder.setSpillLocation(ProtobufMessageConverter.toProtoSpillLocation(split.getSpillLocation()));
+                splitBuilder.setSpillLocation(split.getSpillLocation());
             }
             if (split.getProperties() != null) {
                 splitBuilder.putAllProperties(split.getProperties());

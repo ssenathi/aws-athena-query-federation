@@ -33,8 +33,7 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.EquatableValueSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
-import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
-import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
+import com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsResponse;
 import com.amazonaws.athena.connector.lambda.proto.records.RemoteReadRecordsResponse;
@@ -47,6 +46,7 @@ import com.amazonaws.athena.connector.lambda.security.IdentityUtil;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.athena.connector.lambda.domain.Split;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufUtils;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -274,8 +274,8 @@ public class ExampleRecordHandlerTest
             assertTrue(response.getRemoteBlocksList().size() > 1);
 
             int blockNum = 0;
-            for (SpillLocation next : response.getRemoteBlocksList().stream().map(ProtobufMessageConverter::fromProtoSpillLocation).collect(Collectors.toList())) {
-                S3SpillLocation spillLocation = (S3SpillLocation) next;
+            for (SpillLocation next : response.getRemoteBlocksList()) {
+                SpillLocation spillLocation = next;
                 try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
 
                     logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
@@ -317,12 +317,10 @@ public class ExampleRecordHandlerTest
 
     private SpillLocation makeSpillLocation()
     {
-        return S3SpillLocation.newBuilder()
-                .withBucket("athena-virtuoso-test")
-                .withPrefix("lambda-spill")
-                .withQueryId(UUID.randomUUID().toString())
-                .withSplitId(UUID.randomUUID().toString())
-                .withIsDirectory(true)
+        return SpillLocation.newBuilder()
+                .setBucket("athena-virtuoso-test")
+                .setKey(ProtobufUtils.buildS3SpillLocationKey("lambda-spill", UUID.randomUUID().toString(), UUID.randomUUID().toString()))
+                .setDirectory(true)
                 .build();
     }
 

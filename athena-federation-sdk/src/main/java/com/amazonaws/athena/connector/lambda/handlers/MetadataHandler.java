@@ -29,8 +29,7 @@ import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
 import com.amazonaws.athena.connector.lambda.data.SimpleBlockWriter;
 import com.amazonaws.athena.connector.lambda.data.SupportedTypes;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ConstraintEvaluator;
-import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
-import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
+import com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
@@ -51,6 +50,7 @@ import com.amazonaws.athena.connector.lambda.security.KmsKeyFactory;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufUtils;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.athena.AmazonAthenaClientBuilder;
 import com.amazonaws.services.kms.AWSKMSClientBuilder;
@@ -195,11 +195,10 @@ public abstract class MetadataHandler
      */
     protected SpillLocation makeSpillLocation(String queryId)
     {
-        return S3SpillLocation.newBuilder()
-                .withBucket(spillBucket)
-                .withPrefix(spillPrefix)
-                .withQueryId(queryId)
-                .withSplitId(UUID.randomUUID().toString())
+        return SpillLocation.newBuilder()
+                .setBucket(spillBucket)
+                .setKey(ProtobufUtils.buildS3SpillLocationKey(spillPrefix, queryId, UUID.randomUUID().toString()))
+                .setDirectory(true) // this is true because our key is a nested path
                 .build();
     }
 

@@ -20,7 +20,7 @@ package com.amazonaws.athena.connector.lambda.data;
  * #L%
  */
 
-import com.amazonaws.athena.connector.lambda.domain.spill.SpillLocation;
+import com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey;
 
 import static java.util.Objects.requireNonNull;

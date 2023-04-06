@@ -1,5 +1,4 @@
 package com.amazonaws.athena.connector.lambda.data;
-
 /*-
  * #%L
  * Amazon Athena Query Federation SDK
@@ -19,8 +18,7 @@ package com.amazonaws.athena.connector.lambda.data;
  * limitations under the License.
  * #L%
  */
-
-import com.amazonaws.athena.connector.lambda.domain.spill.S3SpillLocation;
+import com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.proto.security.EncryptionKey;
 import com.amazonaws.athena.connector.lambda.security.AesGcmBlockCrypto;
 import com.amazonaws.athena.connector.lambda.security.BlockCrypto;
@@ -57,7 +55,7 @@ public class S3BlockSpillReader
      * @param schema The Schema to use when deserializing the spilled Block.
      * @return The Block stored at the spill location.
      */
-    public Block read(S3SpillLocation spillLocation, EncryptionKey key, Schema schema)
+    public Block read(SpillLocation spillLocation, EncryptionKey key, Schema schema)
     {
         S3Object fullObject = null;
         try {
@@ -91,7 +89,7 @@ public class S3BlockSpillReader
      * @param key The encryption key to use when reading the spilled Block.
      * @return The Block stored at the spill location.
      */
-    public byte[] read(S3SpillLocation spillLocation, EncryptionKey key)
+    public byte[] read(SpillLocation spillLocation, EncryptionKey key)
     {
         S3Object fullObject = null;
         try {

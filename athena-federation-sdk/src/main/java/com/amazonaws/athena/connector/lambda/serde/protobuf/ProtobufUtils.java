@@ -39,4 +39,9 @@ public class ProtobufUtils
     {
         return String.format("%s.%s", tableName.getSchemaName(), tableName.getTableName());
     }
+
+    public static String buildS3SpillLocationKey(String prefix, String queryId, String splitId)
+    {
+        return prefix + "/" + queryId + "/" + splitId;
+    }
 }
