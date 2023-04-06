@@ -23,8 +23,8 @@ package com.amazonaws.athena.connector.lambda.handlers;
 import com.amazonaws.ClientConfiguration;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
-import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.metadata.glue.GlueFieldLexer;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
@@ -330,7 +330,7 @@ public abstract class GlueMetadataHandler
 
             for (Table next : result.getTableList()) {
                 if (filter == null || filter.filter(next)) {
-                    tables.add(new TableName(request.getSchemaName(), next.getName()));
+                    tables.add(TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName(next.getName()).build());
                 }
             }
 
@@ -341,7 +341,7 @@ public abstract class GlueMetadataHandler
         ListTablesResponse.Builder listTablesResponseBuilder = ListTablesResponse.newBuilder()
             .setType("ListTablesResponse")
             .setCatalogName(request.getCatalogName())
-            .addAllTables(tables.stream().map(ProtobufMessageConverter::toTableName).collect(Collectors.toList()));
+            .addAllTables(tables);
         if (nextToken != null) {
             listTablesResponseBuilder.setNextToken(nextToken);
         }

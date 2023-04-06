@@ -23,7 +23,6 @@ import com.amazonaws.athena.connector.lambda.data.AthenaFederationIpcOption;
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.domain.Split;
-import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.AllOrNoneValueSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.EquatableValueSet;
@@ -402,14 +401,6 @@ public class ProtobufMessageConverter
     public static S3SpillLocation fromProtoSpillLocation(com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation s3SpillLocation)
     {
         return new S3SpillLocation(s3SpillLocation.getBucket(), s3SpillLocation.getKey(), s3SpillLocation.getDirectory());
-    }
-
-    public static com.amazonaws.athena.connector.lambda.proto.domain.TableName toTableName(TableName tableName)
-    {
-        return com.amazonaws.athena.connector.lambda.proto.domain.TableName.newBuilder()
-            .setSchemaName(tableName.getSchemaName())
-            .setTableName(tableName.getTableName())
-            .build();
     }
 
     public static Split fromProtoSplit(com.amazonaws.athena.connector.lambda.proto.domain.Split split)

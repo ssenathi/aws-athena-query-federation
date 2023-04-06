@@ -24,7 +24,7 @@ import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.data.BlockUtils;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
-import com.amazonaws.athena.connector.lambda.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
@@ -133,14 +133,13 @@ public class ExampleMetadataHandlerTest
             .setCatalogName("default")
             .addAllTables(
                 new ImmutableList.Builder<TableName>()
-                    .add(new TableName("schema", "table1"))
-                    .add(new TableName("schema", "table2"))
-                    .add(new TableName("schema", "table3"))
-                    .add(new TableName("schema", "table4"))
-                    .add(new TableName("schema", "table5"))
+                    .add(TableName.newBuilder().setSchemaName("schema").setTableName("table1").build())
+                    .add(TableName.newBuilder().setSchemaName("schema").setTableName("table2").build())
+                    .add(TableName.newBuilder().setSchemaName("schema").setTableName("table3").build())
+                    .add(TableName.newBuilder().setSchemaName("schema").setTableName("table4").build())
+                    .add(TableName.newBuilder().setSchemaName("schema").setTableName("table5").build())
                     .build()
                 .stream()
-                .map(ProtobufMessageConverter::toTableName)
                 .collect(Collectors.toList())
             )
             .build();
@@ -163,12 +162,11 @@ public class ExampleMetadataHandlerTest
             .setCatalogName("default")
             .addAllTables(
                 new ImmutableList.Builder<TableName>()
-                    .add(new TableName("schema", "table1"))
-                    .add(new TableName("schema", "table2"))
-                    .add(new TableName("schema", "table3"))
+                    .add(TableName.newBuilder().setSchemaName("schema").setTableName("table1").build())
+                    .add(TableName.newBuilder().setSchemaName("schema").setTableName("table2").build())
+                    .add(TableName.newBuilder().setSchemaName("schema").setTableName("table3").build())
                     .build()
                 .stream()
-                .map(ProtobufMessageConverter::toTableName)
                 .collect(Collectors.toList())
             )
             .setNextToken("table4")
@@ -193,11 +191,10 @@ public class ExampleMetadataHandlerTest
         .setCatalogName("default")
         .addAllTables(
             new ImmutableList.Builder<TableName>()
-                .add(new TableName("schema", "table4"))
-                .add(new TableName("schema", "table5"))
+                .add(TableName.newBuilder().setSchemaName("schema").setTableName("table4").build())
+                .add(TableName.newBuilder().setSchemaName("schema").setTableName("table5").build())
                 .build()
             .stream()
-            .map(ProtobufMessageConverter::toTableName)
             .collect(Collectors.toList())
         )
         .build();
@@ -306,7 +303,7 @@ public class ExampleMetadataHandlerTest
                 .setIdentity(IdentityUtil.fakeIdentity())
                 .setQueryId("queryId")
                 .setCatalogName("default")
-                .setTableName(ProtobufMessageConverter.toTableName(new TableName("schema1", "table1")))
+                .setTableName(TableName.newBuilder().setSchemaName("schema1").setTableName("table1").build())
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(tableSchema))
                 .addAllPartitionCols(partitionCols)

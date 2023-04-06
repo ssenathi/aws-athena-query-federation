@@ -26,7 +26,7 @@ import com.amazonaws.athena.connector.lambda.data.S3BlockSpillReader;
 import com.amazonaws.athena.connector.lambda.data.BlockUtils;
 import com.amazonaws.athena.connector.lambda.data.FieldBuilder;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
-import com.amazonaws.athena.connector.lambda.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.AllOrNoneValueSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.EquatableValueSet;
@@ -216,7 +216,7 @@ public class ExampleRecordHandlerTest
                     .build())
                 .setCatalogName("catalog")
                 .setQueryId("queryId-" + System.currentTimeMillis())
-                .setTableName(ProtobufMessageConverter.toTableName(new TableName("schema", "table")))
+                .setTableName(TableName.newBuilder().setSchemaName("schema").setTableName("table").build())
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schemaForRead))
                 .setSplit(
                     ProtobufMessageConverter.toProtoSplit(Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build())
@@ -258,7 +258,7 @@ public class ExampleRecordHandlerTest
                     .build())
                 .setCatalogName("catalog")
                 .setQueryId("queryId-" + System.currentTimeMillis())
-                .setTableName(ProtobufMessageConverter.toTableName(new TableName("schema", "table")))
+                .setTableName(TableName.newBuilder().setSchemaName("schema").setTableName("table").build())
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schemaForRead))
                 .setSplit(
                     ProtobufMessageConverter.toProtoSplit(Split.newBuilder(makeSpillLocation(), encryptionKey).add("year", "10").add("month", "10").add("day", "10").build())

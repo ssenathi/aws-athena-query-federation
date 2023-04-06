@@ -26,9 +26,9 @@ import com.amazonaws.athena.connector.lambda.data.BlockWriter;
 import com.amazonaws.athena.connector.lambda.data.FieldBuilder;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
 import com.amazonaws.athena.connector.lambda.domain.Split;
-import com.amazonaws.athena.connector.lambda.domain.TableName;
 import com.amazonaws.athena.connector.lambda.exceptions.FederationThrottleException;
 import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
@@ -208,11 +208,11 @@ public class ExampleMetadataHandler
         // order of the tables deterministic (i.e. pagination will work irrespective of the order that the tables are
         // returned from the source).
         List<TableName> tables = new ImmutableList.Builder<TableName>()
-                .add(new TableName("schema", "table4"))
-                .add(new TableName("schema", "table3"))
-                .add(new TableName("schema", "table5"))
-                .add(new TableName("schema", "table1"))
-                .add(new TableName("schema", "table2"))
+                .add(TableName.newBuilder().setSchemaName("schema").setTableName("table4").build())
+                .add(TableName.newBuilder().setSchemaName("schema").setTableName("table3").build())
+                .add(TableName.newBuilder().setSchemaName("schema").setTableName("table5").build())
+                .add(TableName.newBuilder().setSchemaName("schema").setTableName("table1").build())
+                .add(TableName.newBuilder().setSchemaName("schema").setTableName("table2").build())
                 .build();
 
         // Check if request has unlimited page size. If not, then list of tables will be paginated.
@@ -248,7 +248,6 @@ public class ExampleMetadataHandler
             .setCatalogName(request.getCatalogName())
             .addAllTables(tables.stream()
                 .filter(table -> request.getSchemaName() == null || request.getSchemaName().equals(table.getSchemaName()))
-                .map(ProtobufMessageConverter::toTableName)
                 .collect(Collectors.toList())
             );
         if (nextToken != null) {

@@ -25,7 +25,7 @@ import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.data.BlockWriter;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
-import com.amazonaws.athena.connector.lambda.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
@@ -125,14 +125,13 @@ public class GlueMetadataHandlerTest
         .setCatalogName(catalog)
         .addAllTables(
             new ImmutableList.Builder<TableName>()
-                    .add(new TableName(schema, "table1"))
-                    .add(new TableName(schema, "table2"))
-                    .add(new TableName(schema, "table3"))
-                    .add(new TableName(schema, "table4"))
-                    .add(new TableName(schema, "table5"))
+                    .add(TableName.newBuilder().setSchemaName(schema).setTableName("table1").build())
+                    .add(TableName.newBuilder().setSchemaName(schema).setTableName("table2").build())
+                    .add(TableName.newBuilder().setSchemaName(schema).setTableName("table3").build())
+                    .add(TableName.newBuilder().setSchemaName(schema).setTableName("table4").build())
+                    .add(TableName.newBuilder().setSchemaName(schema).setTableName("table5").build())
                     .build()
             .stream()
-            .map(ProtobufMessageConverter::toTableName)   
             .collect(Collectors.toList())
         )
         .build();
@@ -322,12 +321,11 @@ public class GlueMetadataHandlerTest
             .setNextToken("table4")
             .addAllTables(
                 new ImmutableList.Builder<TableName>()
-                    .add(new TableName(req.getSchemaName(), "table1"))
-                    .add(new TableName(req.getSchemaName(), "table2"))
-                    .add(new TableName(req.getSchemaName(), "table3"))
+                    .add(TableName.newBuilder().setSchemaName(req.getSchemaName()).setTableName("table1").build())
+                    .add(TableName.newBuilder().setSchemaName(req.getSchemaName()).setTableName("table2").build())
+                    .add(TableName.newBuilder().setSchemaName(req.getSchemaName()).setTableName("table3").build())
                     .build()
                 .stream()
-                .map(ProtobufMessageConverter::toTableName)
                 .collect(Collectors.toList())
             )
             .build();
@@ -351,11 +349,10 @@ public class GlueMetadataHandlerTest
             .setCatalogName(req.getCatalogName())
             .addAllTables(
                 new ImmutableList.Builder<TableName>()
-                    .add(new TableName(req.getSchemaName(), "table4"))
-                    .add(new TableName(req.getSchemaName(), "table5"))
+                    .add(TableName.newBuilder().setSchemaName(req.getSchemaName()).setTableName("table4").build())
+                    .add(TableName.newBuilder().setSchemaName(req.getSchemaName()).setTableName("table5").build())
                     .build()
                 .stream()
-                .map(ProtobufMessageConverter::toTableName)
                 .collect(Collectors.toList())
             )
             .build();
