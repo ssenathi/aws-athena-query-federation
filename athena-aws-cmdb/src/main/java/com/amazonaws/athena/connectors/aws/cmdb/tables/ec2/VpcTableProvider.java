@@ -71,7 +71,7 @@ public class VpcTableProvider
     @Override
     public TableName getTableName()
     {
-        return new TableName(getSchema(), "vpcs");
+        return TableName.newBuilder().setSchemaName(getSchema()).setTableName("vpcs").build();
     }
 
     /**

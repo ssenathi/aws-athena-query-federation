@@ -81,7 +81,7 @@ public class ImagesTableProvider
     @Override
     public TableName getTableName()
     {
-        return new TableName(getSchema(), "ec2_images");
+        return TableName.newBuilder().setSchemaName(getSchema()).setTableName("ec2_images").build();
     }
 
     /**

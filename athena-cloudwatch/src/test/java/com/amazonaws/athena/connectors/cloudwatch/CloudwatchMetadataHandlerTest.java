@@ -217,7 +217,7 @@ public class CloudwatchMetadataHandlerTest
         ListTablesResponse res = handler.doListTables(allocator, req);
         logger.info("doListTables - {}", res.getTables());
 
-        assertTrue(res.getTables().contains(new TableName("schema-1", "all_log_streams")));
+        assertTrue(res.getTables().contains(TableName.newBuilder().setSchemaName("schema-1").setTableName("all_log_streams"))).build();
 
         assertTrue(res.getTables().size() == 31);
 
@@ -268,11 +268,11 @@ public class CloudwatchMetadataHandlerTest
             return result;
         });
 
-        GetTableRequest req = new GetTableRequest(identity, "queryId", "default", new TableName(expectedSchema, "table-9"));
+        GetTableRequest req = new GetTableRequest(identity, "queryId", "default", TableName.newBuilder().setSchemaName(expectedSchema).setTableName("table-9")).build();
         GetTableResponse res = handler.doGetTable(allocator, req);
         logger.info("doGetTable - {} {}", res.getTableName(), res.getSchema());
 
-        assertEquals(new TableName(expectedSchema, "table-9"), res.getTableName());
+        assertEquals(TableName.newBuilder().setSchemaName(expectedSchema, "table-9")).setTableName(res.getTableName()).build();
         assertTrue(res.getSchema() != null);
 
         verify(mockAwsLogs, times(1)).describeLogStreams(nullable(DescribeLogStreamsRequest.class));
@@ -332,7 +332,7 @@ public class CloudwatchMetadataHandlerTest
         GetTableLayoutRequest req = new GetTableLayoutRequest(identity,
                 "queryId",
                 "default",
-                new TableName("schema-1", "all_log_streams"),
+                TableName.newBuilder().setSchemaName("schema-1").setTableName("all_log_streams").build(),
                 new Constraints(constraintsMap),
                 schema,
                 Collections.singleton("log_stream"));
@@ -375,7 +375,7 @@ public class CloudwatchMetadataHandlerTest
         GetSplitsRequest originalReq = new GetSplitsRequest(identity,
                 "queryId",
                 "catalog_name",
-                new TableName("schema", "all_log_streams"),
+                TableName.newBuilder().setSchemaName("schema").setTableName("all_log_streams").build(),
                 partitions,
                 Collections.singletonList(CloudwatchMetadataHandler.LOG_STREAM_FIELD),
                 new Constraints(new HashMap<>()),

@@ -118,7 +118,7 @@ public class TPCDSMetadataHandlerTest
         ListTablesResponse res = handler.doListTables(allocator, req);
         logger.info("doListTables - {}", res.getTables());
 
-        assertTrue(res.getTables().contains(new TableName("tpcds1", "customer")));
+        assertTrue(res.getTables().contains(TableName.newBuilder().setSchemaName("tpcds1").setTableName("customer"))).build();
 
         assertTrue(res.getTables().size() == 25);
 
@@ -134,12 +134,12 @@ public class TPCDSMetadataHandlerTest
         GetTableRequest req = new GetTableRequest(identity,
                 "queryId",
                 "default",
-                new TableName(expectedSchema, "customer"));
+                TableName.newBuilder().setSchemaName(expectedSchema).setTableName("customer")).build();
 
         GetTableResponse res = handler.doGetTable(allocator, req);
         logger.info("doGetTable - {} {}", res.getTableName(), res.getSchema());
 
-        assertEquals(new TableName(expectedSchema, "customer"), res.getTableName());
+        assertEquals(TableName.newBuilder().setSchemaName(expectedSchema, "customer")).setTableName(res.getTableName()).build();
         assertTrue(res.getSchema() != null);
 
         logger.info("doGetTable - exit");
@@ -158,7 +158,7 @@ public class TPCDSMetadataHandlerTest
         GetTableLayoutRequest req = new GetTableLayoutRequest(identity,
                 "queryId",
                 "default",
-                new TableName("tpcds1", "customer"),
+                TableName.newBuilder().setSchemaName("tpcds1").setTableName("customer").build(),
                 new Constraints(constraintsMap),
                 schema,
                 Collections.EMPTY_SET);
@@ -188,7 +188,7 @@ public class TPCDSMetadataHandlerTest
         GetSplitsRequest originalReq = new GetSplitsRequest(identity,
                 "queryId",
                 "catalog_name",
-                new TableName("tpcds1", "customer"),
+                TableName.newBuilder().setSchemaName("tpcds1").setTableName("customer").build(),
                 partitions,
                 Collections.EMPTY_LIST,
                 new Constraints(new HashMap<>()),

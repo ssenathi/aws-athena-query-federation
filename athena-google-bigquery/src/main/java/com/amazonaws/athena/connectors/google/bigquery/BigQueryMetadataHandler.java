@@ -133,14 +133,14 @@ public class BigQueryMetadataHandler
                     if (tables.size() > BigQueryConstants.MAX_RESULTS) {
                         throw new BigQueryExceptions.TooManyTablesException();
                     }
-                    tables.add(new TableName(listTablesRequest.getSchemaName(), table.getTableId().getTable()));
+                    tables.add(TableName.newBuilder().setSchemaName(listTablesRequest.getSchemaName()).setTableName(table.getTableId().getTable())).build();
                 }
             }
             else {
                 Page<Table> response = bigQuery.listTables(datasetId,
                         BigQuery.TableListOption.pageToken(listTablesRequest.getNextToken()), BigQuery.TableListOption.pageSize(listTablesRequest.getPageSize()));
                 for (Table table : response.getValues()) {
-                    tables.add(new TableName(listTablesRequest.getSchemaName(), table.getTableId().getTable()));
+                    tables.add(TableName.newBuilder().setSchemaName(listTablesRequest.getSchemaName()).setTableName(table.getTableId().getTable())).build();
                 }
                 nextToken = response.getNextPageToken();
             }

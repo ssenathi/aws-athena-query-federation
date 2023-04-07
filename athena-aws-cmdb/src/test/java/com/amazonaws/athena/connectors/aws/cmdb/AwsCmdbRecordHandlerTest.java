@@ -90,7 +90,7 @@ public class AwsCmdbRecordHandlerTest
             throws Exception
     {
         when(mockTableProviderFactory.getTableProviders())
-                .thenReturn(Collections.singletonMap(new TableName("schema", "table"), mockTableProvider));
+                .thenReturn(Collections.singletonMap(TableName.newBuilder().setSchemaName("schema", "table")).setTableName(mockTableProvider)).build();
 
         handler = new AwsCmdbRecordHandler(mockS3, mockSecretsManager, mockAthena, mockTableProviderFactory, com.google.common.collect.ImmutableMap.of());
 
@@ -105,7 +105,7 @@ public class AwsCmdbRecordHandlerTest
     {
         ReadRecordsRequest request = new ReadRecordsRequest(identity, "catalog",
                 "queryId",
-                new TableName("schema", "table"),
+                TableName.newBuilder().setSchemaName("schema").setTableName("table").build(),
                 SchemaBuilder.newBuilder().build(),
                 Split.newBuilder(S3SpillLocation.newBuilder()
                         .withBucket(bucket)

@@ -105,7 +105,7 @@ public class MySqlMetadataHandlerTest
     {
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.mySqlMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
         GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId", "testCatalogName", tableName, constraints, partitionSchema, partitionCols);
@@ -147,7 +147,7 @@ public class MySqlMetadataHandlerTest
     {
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.mySqlMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
         GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId", "testCatalogName", tableName, constraints, partitionSchema, partitionCols);
@@ -188,7 +188,7 @@ public class MySqlMetadataHandlerTest
             throws Exception
     {
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.mySqlMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
         GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId", "testCatalogName", tableName, constraints, partitionSchema, partitionCols);
@@ -208,7 +208,7 @@ public class MySqlMetadataHandlerTest
     {
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
 
         PreparedStatement preparedStatement = Mockito.mock(PreparedStatement.class);
         Mockito.when(this.connection.prepareStatement(MySqlMetadataHandler.GET_PARTITIONS_QUERY)).thenReturn(preparedStatement);
@@ -245,7 +245,7 @@ public class MySqlMetadataHandlerTest
     {
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.mySqlMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
         GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId", "testCatalogName", tableName, constraints, partitionSchema, partitionCols);

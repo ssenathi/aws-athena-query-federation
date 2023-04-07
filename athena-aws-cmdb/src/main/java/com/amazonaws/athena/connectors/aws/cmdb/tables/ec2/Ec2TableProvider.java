@@ -78,7 +78,7 @@ public class Ec2TableProvider
     @Override
     public TableName getTableName()
     {
-        return new TableName(getSchema(), "ec2_instances");
+        return TableName.newBuilder().setSchemaName(getSchema()).setTableName("ec2_instances").build();
     }
 
     /**

@@ -99,8 +99,8 @@ public class MetricsRecordHandlerTest
     private static final Table METRIC_TABLE = new MetricsTable();
     //Schema for the metric_samples table.
     private static final Table METRIC_DATA_TABLE = new MetricSamplesTable();
-    private static final TableName METRICS_TABLE_NAME = new TableName("default", METRIC_TABLE.getName());
-    private static final TableName METRIC_SAMPLES_TABLE_NAME = new TableName("default", METRIC_DATA_TABLE.getName());
+    private static final TableName METRICS_TABLE_NAME = TableName.newBuilder().setSchemaName("default").setTableName(METRIC_TABLE.getName()).build();
+    private static final TableName METRIC_SAMPLES_TABLE_NAME = TableName.newBuilder().setSchemaName("default").setTableName(METRIC_DATA_TABLE.getName()).build();
 
     private FederatedIdentity identity = new FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList());
     private List<ByteHolder> mockS3Storage;

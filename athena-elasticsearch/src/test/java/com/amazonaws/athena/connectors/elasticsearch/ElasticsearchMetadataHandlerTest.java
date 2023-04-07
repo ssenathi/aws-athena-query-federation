@@ -177,8 +177,8 @@ public class ElasticsearchMetadataHandlerTest
         logger.info("doListTables - enter");
 
         // Hardcoded response with 2 indices.
-        Collection<TableName> mockIndices = ImmutableList.of(new TableName("movies", "customer"),
-                new TableName("movies", "movies"));
+        Collection<TableName> mockIndices = ImmutableList.of(TableName.newBuilder().setSchemaName("movies").setTableName("customer").build(),
+                TableName.newBuilder().setSchemaName("movies").setTableName("movies")).build();
 
         // Get real indices.
         when(domainMapProvider.getDomainMap(null)).thenReturn(ImmutableMap.of("movies",
@@ -358,7 +358,7 @@ public class ElasticsearchMetadataHandlerTest
         handler = new ElasticsearchMetadataHandler(awsGlue, new LocalKeyFactory(), awsSecretsManager, amazonAthena,
                 "spill-bucket", "spill-prefix", domainMapProvider, clientFactory, 10, com.google.common.collect.ImmutableMap.of());
         GetTableRequest req = new GetTableRequest(fakeIdentity(), "queryId", "elasticsearch",
-                new TableName("movies", "mishmash"));
+                TableName.newBuilder().setSchemaName("movies").setTableName("mishmash")).build();
         GetTableResponse res = handler.doGetTable(allocator, req);
         Schema realMapping = res.getSchema();
 
@@ -390,7 +390,7 @@ public class ElasticsearchMetadataHandlerTest
         GetSplitsRequest originalReq = new GetSplitsRequest(fakeIdentity(),
                 "queryId",
                 "elasticsearch",
-                new TableName("movies", "customer"),
+                TableName.newBuilder().setSchemaName("movies").setTableName("customer").build(),
                 partitions,
                 partitionCols,
                 new Constraints(new HashMap<>()),

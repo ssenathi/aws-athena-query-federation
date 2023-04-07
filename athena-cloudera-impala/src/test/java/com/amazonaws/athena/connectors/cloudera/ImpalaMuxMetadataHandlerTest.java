@@ -129,7 +129,7 @@ public class ImpalaMuxMetadataHandlerTest
             throws Exception
     {
         GetTableLayoutRequest getTableLayoutRequest = Mockito.mock(GetTableLayoutRequest.class);
-        Mockito.when(getTableLayoutRequest.getTableName()).thenReturn(new TableName("testSchema", "testTable"));
+        Mockito.when(getTableLayoutRequest.getTableName()).thenReturn(TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable")).build();
         Mockito.when(getTableLayoutRequest.getCatalogName()).thenReturn("metaImpala");
         this.jdbcMetadataHandler.doGetTableLayout(this.allocator, getTableLayoutRequest);
         Mockito.verify(this.impalaMetadataHandler, Mockito.times(1)).doGetTableLayout(Mockito.eq(this.allocator), Mockito.eq(getTableLayoutRequest));

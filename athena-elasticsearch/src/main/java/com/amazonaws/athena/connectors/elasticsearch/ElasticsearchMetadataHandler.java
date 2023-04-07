@@ -185,7 +185,7 @@ public class ElasticsearchMetadataHandler
                         continue;
                     }
 
-                    indices.add(new TableName(request.getSchemaName(), index));
+                    indices.add(TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName(index)).build();
                 }
             }
             catch (IOException error) {

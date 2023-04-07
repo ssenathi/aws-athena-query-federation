@@ -168,7 +168,7 @@ public class VerticaMetadataHandler
             DatabaseMetaData dbMetadata = client.getMetaData();
             ResultSet table = dbMetadata.getTables(null, request.getSchemaName(),null, TABLE_TYPES);
             while (table.next()){
-                tables.add(new TableName(table.getString(TABLE_SCHEMA), table.getString(TABLE_NAME)));
+                tables.add(TableName.newBuilder().setSchemaName(table.getString(TABLE_SCHEMA)).setTableName(table.getString(TABLE_NAME))).build();
             }
         }
         return new ListTablesResponse(request.getCatalogName(), tables, null);

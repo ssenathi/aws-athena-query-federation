@@ -155,7 +155,7 @@ public class NeptuneMetadataHandler extends GlueMetadataHandler
         List<Table> glueTableList = getTablesResult.getTableList();
         String schemaName = request.getSchemaName();
         glueTableList.forEach(e -> {
-            tables.add(new TableName(schemaName, e.getName()));
+            tables.add(TableName.newBuilder().setSchemaName(schemaName).setTableName(e.getName())).build();
         });
 
         return new ListTablesResponse(request.getCatalogName(), tables, null);

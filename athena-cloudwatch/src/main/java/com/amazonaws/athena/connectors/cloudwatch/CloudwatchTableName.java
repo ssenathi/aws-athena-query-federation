@@ -46,7 +46,7 @@ public class CloudwatchTableName
 
     public TableName toTableName()
     {
-        return new TableName(logGroupName.toLowerCase(), logStreamName.toLowerCase());
+        return TableName.newBuilder().setSchemaName(logGroupName.toLowerCase()).setTableName(logStreamName.toLowerCase()).build();
     }
 
     @Override

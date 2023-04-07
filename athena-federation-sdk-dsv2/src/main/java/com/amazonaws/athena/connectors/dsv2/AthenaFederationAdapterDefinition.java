@@ -58,7 +58,7 @@ public interface AthenaFederationAdapterDefinition
 
     public default TableName getTableName(Map<String, String> configOptions)
     {
-        return new TableName(configOptions.get(DefaultSchemaKey), configOptions.get(DefaultTableKey));
+        return TableName.newBuilder().setSchemaName(configOptions.get(DefaultSchemaKey)).setTableName(configOptions.get(DefaultTableKey)).build();
     }
 
     /**

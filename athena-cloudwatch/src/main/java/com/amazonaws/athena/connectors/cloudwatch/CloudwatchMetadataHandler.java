@@ -208,7 +208,7 @@ public class CloudwatchMetadataHandler
         if (nextToken == null) {
             //We add a special table that represents all log streams. This is helpful depending on how
             //you have your logs organized.
-            tables.add(new TableName(listTablesRequest.getSchemaName(), ALL_LOG_STREAMS_TABLE));
+            tables.add(TableName.newBuilder().setSchemaName(listTablesRequest.getSchemaName()).setTableName(ALL_LOG_STREAMS_TABLE)).build();
         }
 
         return new ListTablesResponse(listTablesRequest.getCatalogName(), tables, nextToken);
@@ -360,6 +360,6 @@ public class CloudwatchMetadataHandler
      */
     private TableName toTableName(ListTablesRequest request, LogStream logStream)
     {
-        return new TableName(request.getSchemaName(), logStream.getLogStreamName().toLowerCase());
+        return TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName(logStream.getLogStreamName().toLowerCase()).build();
     }
 }

@@ -60,7 +60,7 @@ public class BigQueryMetadataHandlerTest
 {
     private static final String QUERY_ID = "queryId";
     private static final String CATALOG = "catalog";
-    private static final TableName TABLE_NAME = new TableName("dataset1", "table1");
+    private static final TableName TABLE_NAME = TableName.newBuilder().setSchemaName("dataset1").setTableName("table1").build();
 
     @Mock
     BigQuery bigQuery;
@@ -179,7 +179,7 @@ public class BigQueryMetadataHandlerTest
         //Make the call
         GetTableRequest getTableRequest = new GetTableRequest(federatedIdentity,
                 QUERY_ID, BigQueryTestUtils.PROJECT_1_NAME,
-                new TableName(datasetName, tableName));
+                TableName.newBuilder().setSchemaName(datasetName).setTableName(tableName)).build();
 
         GetTableResponse response = bigQueryMetadataHandler.doGetTable(blockAllocator, getTableRequest);
 

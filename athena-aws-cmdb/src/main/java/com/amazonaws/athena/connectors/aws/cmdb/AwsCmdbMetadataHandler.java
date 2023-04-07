@@ -173,7 +173,7 @@ public class AwsCmdbMetadataHandler
         //Every split needs a unique spill location.
         SpillLocation spillLocation = makeSpillLocation(getSplitsRequest.getQueryId());
         EncryptionKey encryptionKey = makeEncryptionKey();
-        Split split = Split.newBuilder(spillLocation, encryptionKey).build();
-        return new GetSplitsResponse(getSplitsRequest.getCatalogName(), split);
+        Split split = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(encryptionKey).build();
+        return GetSplitsResponse.newBuilder().setType("GetSplitsResponse").setCatalogName(getSplitsRequest.getCatalogName()).addSplits(split).build();
     }
 }

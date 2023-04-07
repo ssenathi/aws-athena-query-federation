@@ -110,7 +110,7 @@ public class DataLakeGen2MetadataHandlerTest
     {
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
 
         Schema partitionSchema = this.dataLakeGen2MetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
@@ -137,7 +137,7 @@ public class DataLakeGen2MetadataHandlerTest
             throws Exception
     {
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.dataLakeGen2MetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
         GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId", "testCatalogName", tableName, constraints, partitionSchema, partitionCols);
@@ -157,7 +157,7 @@ public class DataLakeGen2MetadataHandlerTest
     {
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
 
         Schema partitionSchema = this.dataLakeGen2MetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
@@ -195,7 +195,7 @@ public class DataLakeGen2MetadataHandlerTest
         PARTITION_SCHEMA.getFields().forEach(expectedSchemaBuilder::addField);
         Schema expected = expectedSchemaBuilder.build();
 
-        TableName inputTableName = new TableName("TESTSCHEMA", "TESTTABLE");
+        TableName inputTableName = TableName.newBuilder().setSchemaName("TESTSCHEMA").setTableName("TESTTABLE").build();
         Mockito.when(connection.getMetaData().getColumns("testCatalog", inputTableName.getSchemaName(), inputTableName.getTableName(), null)).thenReturn(resultSet);
         Mockito.when(connection.getCatalog()).thenReturn("testCatalog");
         GetTableResponse getTableResponse = this.dataLakeGen2MetadataHandler.doGetTable(

@@ -24,8 +24,8 @@ import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
-import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
@@ -67,7 +67,7 @@ public class S3ObjectsTableProvider
     @Override
     public TableName getTableName()
     {
-        return new TableName(getSchema(), "objects");
+        return TableName.newBuilder().setSchemaName(getSchema()).setTableName("objects").build();
     }
 
     /**

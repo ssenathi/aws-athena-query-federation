@@ -176,7 +176,7 @@ public class KafkaMetadataHandlerTest {
         PowerMockito.when(AWSGlueClientBuilder.defaultClient()).thenReturn(awsGlue);
         PowerMockito.when(awsGlue.getSchema(any())).thenReturn(getSchemaResult);
         PowerMockito.when(awsGlue.getSchemaVersion(any())).thenReturn(getSchemaVersionResult);
-        GetTableRequest getTableRequest = new GetTableRequest(federatedIdentity, QUERY_ID, "kafka", new TableName("default", "testtable"));
+        GetTableRequest getTableRequest = new GetTableRequest(federatedIdentity, QUERY_ID, "kafka", TableName.newBuilder().setSchemaName("default").setTableName("testtable")).build();
         GetTableResponse getTableResponse = kafkaMetadataHandler.doGetTable(blockAllocator, getTableRequest);
         assertEquals(1, getTableResponse.getSchema().getFields().size());
     }
@@ -213,7 +213,7 @@ public class KafkaMetadataHandlerTest {
                 federatedIdentity,
                 QUERY_ID,
                 "kafka",
-                new TableName("default", "testTopic"),
+                TableName.newBuilder().setSchemaName("default").setTableName("testTopic").build(),
                 Mockito.mock(Block.class),
                 new ArrayList<>(),
                 Mockito.mock(Constraints.class),
@@ -227,7 +227,7 @@ public class KafkaMetadataHandlerTest {
                 federatedIdentity,
                 QUERY_ID,
                 "kafka",
-                new TableName("default", "testTopic"),
+                TableName.newBuilder().setSchemaName("default").setTableName("testTopic").build(),
                 Mockito.mock(Block.class),
                 new ArrayList<>(),
                 Mockito.mock(Constraints.class),

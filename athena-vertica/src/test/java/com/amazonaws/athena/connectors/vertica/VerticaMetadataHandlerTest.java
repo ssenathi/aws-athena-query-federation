@@ -172,7 +172,7 @@ public class VerticaMetadataHandlerTest extends TestBase
         String[] schema = {"TABLE_SCHEM", "TABLE_NAME", };
         Object[][] values = {{"testSchema", "testTable1"}};
         List<TableName> expectedTables = new ArrayList<>();
-        expectedTables.add(new TableName("testSchema", "testTable1"));
+        expectedTables.add(TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable1")).build();
 
         AtomicInteger rowNumber = new AtomicInteger(-1);
         ResultSet resultSet = mockResultSet(schema, values, rowNumber);
@@ -253,7 +253,7 @@ public class VerticaMetadataHandlerTest extends TestBase
                 {"testSchema", "testTable1", "queryId", "varchar"},  {"testSchema", "testTable1", "awsRegionSql", "varchar"}};
         int[] types = {Types.INTEGER, Types.INTEGER, Types.INTEGER,Types.VARCHAR, Types.VARCHAR, Types.VARCHAR};
         List<TableName> expectedTables = new ArrayList<>();
-        expectedTables.add(new TableName("testSchema", "testTable1"));
+        expectedTables.add(TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable1")).build();
 
         AtomicInteger rowNumber = new AtomicInteger(-1);
         ResultSet resultSet = mockResultSet(schema, types, values, rowNumber);
@@ -266,7 +266,7 @@ public class VerticaMetadataHandlerTest extends TestBase
 
         try {
             req = new GetTableLayoutRequest(this.federatedIdentity, "queryId", "default",
-                    new TableName("schema1", "table1"),
+                    TableName.newBuilder().setSchemaName("schema1").setTableName("table1").build(),
                     new Constraints(constraintsMap),
                     tableSchema,
                     partitionCols);
@@ -358,7 +358,7 @@ public class VerticaMetadataHandlerTest extends TestBase
         Mockito.when(objectListing.getObjectSummaries()).thenReturn(s3ObjectSummariesList);
 
         GetSplitsRequest originalReq = new GetSplitsRequest(this.federatedIdentity, "queryId", "catalog_name",
-                new TableName("schema", "table_name"),
+                TableName.newBuilder().setSchemaName("schema").setTableName("table_name").build(),
                 partitions,
                 partitionCols,
                 new Constraints(constraintsMap),

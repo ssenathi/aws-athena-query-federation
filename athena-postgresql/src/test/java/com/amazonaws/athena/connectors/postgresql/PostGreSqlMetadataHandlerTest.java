@@ -114,7 +114,7 @@ public class PostGreSqlMetadataHandlerTest
     {
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.postGreSqlMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
         GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId", "testCatalogName", tableName, constraints, partitionSchema, partitionCols);
@@ -157,7 +157,7 @@ public class PostGreSqlMetadataHandlerTest
     {
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.postGreSqlMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
         GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId", "testCatalogName", tableName, constraints, partitionSchema, partitionCols);
@@ -199,7 +199,7 @@ public class PostGreSqlMetadataHandlerTest
             throws Exception
     {
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.postGreSqlMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
         GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId", "testCatalogName", tableName, constraints, partitionSchema, partitionCols);
@@ -219,7 +219,7 @@ public class PostGreSqlMetadataHandlerTest
     {
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.postGreSqlMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
         GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId", "testCatalogName", tableName, constraints, partitionSchema, partitionCols);
@@ -255,7 +255,7 @@ public class PostGreSqlMetadataHandlerTest
     {
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
         Constraints constraints = Mockito.mock(Constraints.class);
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.postGreSqlMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
         GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId", "testCatalogName", tableName, constraints, partitionSchema, partitionCols);
@@ -327,7 +327,7 @@ public class PostGreSqlMetadataHandlerTest
                 .forEach(expectedSchemaBuilder::addField);
         Schema expected = expectedSchemaBuilder.build();
 
-        TableName inputTableName = new TableName("testSchema", "testTable");
+        TableName inputTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Mockito.when(connection.getMetaData().getColumns("testCatalog", inputTableName.getSchemaName(), inputTableName.getTableName(), null)).thenReturn(resultSet);
         Mockito.when(connection.getCatalog()).thenReturn("testCatalog");
 

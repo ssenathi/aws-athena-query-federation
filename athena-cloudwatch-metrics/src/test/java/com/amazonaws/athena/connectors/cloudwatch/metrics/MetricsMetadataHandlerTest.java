@@ -139,8 +139,8 @@ public class MetricsMetadataHandlerTest
         logger.info("doListTables - {}", res.getTables());
 
         assertEquals(2, res.getTables().size());
-        assertTrue(res.getTables().contains(new TableName(defaultSchema, "metrics")));
-        assertTrue(res.getTables().contains(new TableName(defaultSchema, "metric_samples")));
+        assertTrue(res.getTables().contains(TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metrics"))).build();
+        assertTrue(res.getTables().contains(TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metric_samples"))).build();
 
         logger.info("doListTables - exit");
     }
@@ -150,11 +150,11 @@ public class MetricsMetadataHandlerTest
     {
         logger.info("doGetMetricsTable - enter");
 
-        GetTableRequest metricsTableReq = new GetTableRequest(identity, "queryId", "default", new TableName(defaultSchema, "metrics"));
+        GetTableRequest metricsTableReq = new GetTableRequest(identity, "queryId", "default", TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metrics")).build();
         GetTableResponse metricsTableRes = handler.doGetTable(allocator, metricsTableReq);
         logger.info("doGetMetricsTable - {} {}", metricsTableRes.getTableName(), metricsTableRes.getSchema());
 
-        assertEquals(new TableName(defaultSchema, "metrics"), metricsTableRes.getTableName());
+        assertEquals(TableName.newBuilder().setSchemaName(defaultSchema, "metrics")).setTableName(metricsTableRes.getTableName()).build();
         assertNotNull(metricsTableRes.getSchema());
         assertEquals(6, metricsTableRes.getSchema().getFields().size());
 
@@ -169,12 +169,12 @@ public class MetricsMetadataHandlerTest
         GetTableRequest metricsTableReq = new GetTableRequest(identity,
                 "queryId",
                 "default",
-                new TableName(defaultSchema, "metric_samples"));
+                TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metric_samples")).build();
 
         GetTableResponse metricsTableRes = handler.doGetTable(allocator, metricsTableReq);
         logger.info("doGetMetricSamplesTable - {} {}", metricsTableRes.getTableName(), metricsTableRes.getSchema());
 
-        assertEquals(new TableName(defaultSchema, "metric_samples"), metricsTableRes.getTableName());
+        assertEquals(TableName.newBuilder().setSchemaName(defaultSchema, "metric_samples")).setTableName(metricsTableRes.getTableName()).build();
         assertNotNull(metricsTableRes.getSchema());
         assertEquals(9, metricsTableRes.getSchema().getFields().size());
 
@@ -196,7 +196,7 @@ public class MetricsMetadataHandlerTest
         GetTableLayoutRequest req = new GetTableLayoutRequest(identity,
                 "queryId",
                 "default",
-                new TableName(defaultSchema, "metrics"),
+                TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metrics").build(),
                 new Constraints(constraintsMap),
                 SchemaBuilder.newBuilder().build(),
                 Collections.EMPTY_SET);
@@ -227,7 +227,7 @@ public class MetricsMetadataHandlerTest
         GetSplitsRequest originalReq = new GetSplitsRequest(identity,
                 "queryId",
                 "catalog_name",
-                new TableName(defaultSchema, "metrics"),
+                TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metrics").build(),
                 partitions,
                 Collections.singletonList("partitionId"),
                 new Constraints(new HashMap<>()),
@@ -301,7 +301,7 @@ public class MetricsMetadataHandlerTest
         GetSplitsRequest originalReq = new GetSplitsRequest(identity,
                 "queryId",
                 "catalog_name",
-                new TableName(defaultSchema, "metric_samples"),
+                TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metric_samples").build(),
                 partitions,
                 Collections.singletonList("partitionId"),
                 new Constraints(constraintsMap),
@@ -368,7 +368,7 @@ public class MetricsMetadataHandlerTest
         GetSplitsRequest originalReq = new GetSplitsRequest(identity,
                 "queryId",
                 "catalog_name",
-                new TableName(defaultSchema, "metric_samples"),
+                TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metric_samples").build(),
                 partitions,
                 Collections.singletonList("partitionId"),
                 new Constraints(constraintsMap),

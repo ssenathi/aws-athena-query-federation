@@ -63,7 +63,7 @@ public class S3BucketsTableProvider
     @Override
     public TableName getTableName()
     {
-        return new TableName(getSchema(), "buckets");
+        return TableName.newBuilder().setSchemaName(getSchema()).setTableName("buckets").build();
     }
 
     /**

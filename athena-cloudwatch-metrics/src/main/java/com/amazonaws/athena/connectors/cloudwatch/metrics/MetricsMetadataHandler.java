@@ -172,7 +172,7 @@ public class MetricsMetadataHandler
     public ListTablesResponse doListTables(BlockAllocator blockAllocator, ListTablesRequest listTablesRequest)
     {
         List<TableName> tables = new ArrayList<>();
-        TABLES.keySet().stream().forEach(next -> tables.add(new TableName(SCHEMA_NAME, next)));
+        TABLES.keySet().stream().forEach(next -> tables.add(TableName.newBuilder().setSchemaName(SCHEMA_NAME).setTableName(next))).build();
         return new ListTablesResponse(listTablesRequest.getCatalogName(), tables, null);
     }
 

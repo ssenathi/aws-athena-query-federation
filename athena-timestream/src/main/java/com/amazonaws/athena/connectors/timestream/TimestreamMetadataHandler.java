@@ -141,7 +141,7 @@ public class TimestreamMetadataHandler
         ListTablesResult nextResult = tsMeta.listTables(listTablesRequest);
         List<com.amazonaws.services.timestreamwrite.model.Table> nextTables = nextResult.getTables();
         while (!nextTables.isEmpty()) {
-            nextTables.stream().forEach(next -> tableNames.add(new TableName(request.getSchemaName(), next.getTableName())));
+            nextTables.stream().forEach(next -> tableNames.add(TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName(next.getTableName()))).build();
             if (nextResult.getNextToken() != null && !nextResult.getNextToken().isEmpty()) {
                 listTablesRequest.setNextToken(nextResult.getNextToken());
                 nextResult = tsMeta.listTables(listTablesRequest);

@@ -75,7 +75,7 @@ public class SecurityGroupsTableProvider
     @Override
     public TableName getTableName()
     {
-        return new TableName(getSchema(), "security_groups");
+        return TableName.newBuilder().setSchemaName(getSchema()).setTableName("security_groups").build();
     }
 
     /**

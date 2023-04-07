@@ -71,7 +71,7 @@ public class EmrClusterTableProvider
     @Override
     public TableName getTableName()
     {
-        return new TableName(getSchema(), "emr_clusters");
+        return TableName.newBuilder().setSchemaName(getSchema()).setTableName("emr_clusters").build();
     }
 
     /**

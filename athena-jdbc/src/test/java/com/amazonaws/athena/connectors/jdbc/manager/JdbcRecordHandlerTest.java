@@ -115,7 +115,7 @@ public class JdbcRecordHandlerTest
         ConstraintEvaluator constraintEvaluator = Mockito.mock(ConstraintEvaluator.class);
         Mockito.when(constraintEvaluator.apply(nullable(String.class), any())).thenReturn(true);
 
-        TableName inputTableName = new TableName("testSchema", "testTable");
+        TableName inputTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         SchemaBuilder expectedSchemaBuilder = SchemaBuilder.newBuilder();
         expectedSchemaBuilder.addField(FieldBuilder.newBuilder("testCol1", org.apache.arrow.vector.types.Types.MinorType.INT.getType()).build());
         expectedSchemaBuilder.addField(FieldBuilder.newBuilder("testCol2", org.apache.arrow.vector.types.Types.MinorType.VARCHAR.getType()).build());

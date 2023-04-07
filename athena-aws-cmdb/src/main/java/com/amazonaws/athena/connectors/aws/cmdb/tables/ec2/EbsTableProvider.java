@@ -74,7 +74,7 @@ public class EbsTableProvider
     @Override
     public TableName getTableName()
     {
-        return new TableName(getSchema(), "ebs_volumes");
+        return TableName.newBuilder().setSchemaName(getSchema()).setTableName("ebs_volumes").build();
     }
 
     /**

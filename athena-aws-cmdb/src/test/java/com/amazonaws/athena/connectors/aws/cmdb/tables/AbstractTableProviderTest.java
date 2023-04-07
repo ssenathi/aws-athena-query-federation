@@ -90,7 +90,7 @@ public abstract class AbstractTableProviderTest
     private String expectedCatalog = "catalog";
     private String expectedSchema = getExpectedSchema();
     private String expectedTable = getExpectedTable();
-    private TableName expectedTableName = new TableName(expectedSchema, expectedTable);
+    private TableName expectedTableName = TableName.newBuilder().setSchemaName(expectedSchema).setTableName(expectedTable).build();
 
     private TableProvider provider;
 

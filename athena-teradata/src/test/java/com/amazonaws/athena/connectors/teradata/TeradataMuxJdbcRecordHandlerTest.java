@@ -95,7 +95,7 @@ public class TeradataMuxJdbcRecordHandlerTest
         ReadRecordsRequest readRecordsRequest = Mockito.mock(ReadRecordsRequest.class);
         Mockito.when(readRecordsRequest.getCatalogName()).thenReturn("teradata");
         Connection jdbcConnection = Mockito.mock(Connection.class);
-        TableName tableName = new TableName("testSchema", "tableName");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("tableName").build();
         Schema schema = Mockito.mock(Schema.class);
         Constraints constraints = Mockito.mock(Constraints.class);
         Split split = Mockito.mock(Split.class);

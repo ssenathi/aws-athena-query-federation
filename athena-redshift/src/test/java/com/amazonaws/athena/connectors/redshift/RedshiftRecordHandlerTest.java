@@ -97,7 +97,7 @@ public class RedshiftRecordHandlerTest
     {
         logger.info("buildSplitSqlTest - enter");
 
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
 
         SchemaBuilder schemaBuilder = SchemaBuilder.newBuilder();
         schemaBuilder.addField(FieldBuilder.newBuilder("testCol1", Types.MinorType.INT.getType()).build());
@@ -178,7 +178,7 @@ public class RedshiftRecordHandlerTest
     {
         logger.info("buildSplitSqlForDateTest - enter");
 
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
 
         SchemaBuilder schemaBuilder = SchemaBuilder.newBuilder();
         schemaBuilder.addField(FieldBuilder.newBuilder("testDate", Types.MinorType.DATEDAY.getType()).build());

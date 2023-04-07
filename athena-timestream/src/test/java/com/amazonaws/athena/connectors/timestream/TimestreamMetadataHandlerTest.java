@@ -266,7 +266,7 @@ public class TimestreamMetadataHandlerTest
         GetTableRequest req = new GetTableRequest(identity,
                 "query-id",
                 "default",
-                new TableName(defaultSchema, "table1"));
+                TableName.newBuilder().setSchemaName(defaultSchema).setTableName("table1")).build();
 
         GetTableResponse res = handler.doGetTable(allocator, req);
         logger.info("doGetTable - {}", res);
@@ -316,7 +316,7 @@ public class TimestreamMetadataHandlerTest
         GetTableRequest req = new GetTableRequest(identity,
                 "query-id",
                 "default",
-                new TableName(defaultSchema, "table1"));
+                TableName.newBuilder().setSchemaName(defaultSchema).setTableName("table1")).build();
 
         GetTableResponse res = handler.doGetTable(allocator, req);
         logger.info("doGetTable - {}", res);
@@ -364,7 +364,7 @@ public class TimestreamMetadataHandlerTest
         GetTableRequest req = new GetTableRequest(identity,
                 "query-id",
                 "default",
-                new TableName(defaultSchema, "table1"));
+                TableName.newBuilder().setSchemaName(defaultSchema).setTableName("table1")).build();
 
         GetTableResponse res = handler.doGetTable(allocator, req);
         logger.info("doGetTable - {}", res);
@@ -408,7 +408,7 @@ public class TimestreamMetadataHandlerTest
         GetTableLayoutRequest req = new GetTableLayoutRequest(identity,
                 "query-id",
                 defaultSchema,
-                new TableName("database1", "table1"),
+                TableName.newBuilder().setSchemaName("database1").setTableName("table1").build(),
                 new Constraints(new HashMap<>()),
                 schema,
                 Collections.EMPTY_SET);
@@ -439,7 +439,7 @@ public class TimestreamMetadataHandlerTest
         GetSplitsRequest originalReq = new GetSplitsRequest(identity,
                 "query-id",
                 defaultSchema,
-                new TableName("database1", "table1"),
+                TableName.newBuilder().setSchemaName("database1").setTableName("table1").build(),
                 partitions,
                 partitionCols,
                 new Constraints(new HashMap<>()),

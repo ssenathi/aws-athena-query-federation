@@ -91,7 +91,7 @@ public class SynapseRecordHandlerTest
     public void buildSplitSql()
             throws SQLException
     {
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
 
         SchemaBuilder schemaBuilder = SchemaBuilder.newBuilder();
         schemaBuilder.addField(FieldBuilder.newBuilder("testCol1", Types.MinorType.INT.getType()).build());
@@ -124,7 +124,7 @@ public class SynapseRecordHandlerTest
     public void buildSplitSqlWithPartition()
             throws SQLException
     {
-        TableName tableName = new TableName("testSchema", "testTable");
+        TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
 
         SchemaBuilder schemaBuilder = SchemaBuilder.newBuilder();
         schemaBuilder.addField(FieldBuilder.newBuilder("testCol1", Types.MinorType.INT.getType()).build());

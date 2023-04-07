@@ -164,7 +164,7 @@ public class DocDBMetadataHandler
 
         try (MongoCursor<String> itr = client.getDatabase(request.getSchemaName()).listCollectionNames().iterator()) {
             while (itr.hasNext()) {
-                tables.add(new TableName(request.getSchemaName(), itr.next()));
+                tables.add(TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName(itr.next())).build();
             }
 
             return new ListTablesResponse(request.getCatalogName(), tables, null);

@@ -134,7 +134,7 @@ public class JdbcMetadataHandlerTest
     {
         String[] schema = {"TABLE_SCHEM", "TABLE_NAME"};
         Object[][] values = {{"testSchema", "testTable"}, {"testSchema", "testtable2"}};
-        TableName[] expected = {new TableName("testSchema", "testTable"), new TableName("testSchema", "testtable2")};
+        TableName[] expected = {TableName.newBuilder().setSchemaName("testSchema", "testTable"), new TableName("testSchema").setTableName("testtable2").build()};
         AtomicInteger rowNumber = new AtomicInteger(-1);
         ResultSet resultSet = mockResultSet(schema, values, rowNumber);
 
@@ -151,7 +151,7 @@ public class JdbcMetadataHandlerTest
     {
         String[] schema = {"TABLE_SCHEM", "TABLE_NAME"};
         Object[][] values = {{"test_Schema", "testTable"}, {"test_Schema", "testtable2"}};
-        TableName[] expected = {new TableName("test_Schema", "testTable"), new TableName("test_Schema", "testtable2")};
+        TableName[] expected = {TableName.newBuilder().setSchemaName("test_Schema", "testTable"), new TableName("test_Schema").setTableName("testtable2").build()};
         AtomicInteger rowNumber = new AtomicInteger(-1);
         ResultSet resultSet = mockResultSet(schema, values, rowNumber);
         Mockito.when(connection.getMetaData().getTables("testCatalog", "test\\_Schema", null, new String[] {"TABLE", "VIEW", "EXTERNAL TABLE"})).thenReturn(resultSet);
@@ -189,7 +189,7 @@ public class JdbcMetadataHandlerTest
         PARTITION_SCHEMA.getFields().forEach(expectedSchemaBuilder::addField);
         Schema expected = expectedSchemaBuilder.build();
 
-        TableName inputTableName = new TableName("testSchema", "testTable");
+        TableName inputTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Mockito.when(connection.getMetaData().getColumns("testCatalog", inputTableName.getSchemaName(), inputTableName.getTableName(), null)).thenReturn(resultSet);
 
         GetTableResponse getTableResponse = this.jdbcMetadataHandler.doGetTable(
@@ -204,7 +204,7 @@ public class JdbcMetadataHandlerTest
     public void doGetTableNoColumns()
             throws Exception
     {
-        TableName inputTableName = new TableName("testSchema", "testTable");
+        TableName inputTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
 
         this.jdbcMetadataHandler.doGetTable(this.blockAllocator, new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
     }
@@ -213,7 +213,7 @@ public class JdbcMetadataHandlerTest
     public void doGetTableSQLException()
             throws Exception
     {
-        TableName inputTableName = new TableName("testSchema", "testTable");
+        TableName inputTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Mockito.when(this.connection.getMetaData().getColumns(nullable(String.class), nullable(String.class), nullable(String.class), Mockito.isNull()))
                 .thenThrow(new SQLException());
         this.jdbcMetadataHandler.doGetTable(this.blockAllocator, new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));

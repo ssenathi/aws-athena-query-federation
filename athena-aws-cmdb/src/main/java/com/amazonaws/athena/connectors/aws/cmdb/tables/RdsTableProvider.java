@@ -77,7 +77,7 @@ public class RdsTableProvider
     @Override
     public TableName getTableName()
     {
-        return new TableName(getSchema(), "rds_instances");
+        return TableName.newBuilder().setSchemaName(getSchema()).setTableName("rds_instances").build();
     }
 
     /**

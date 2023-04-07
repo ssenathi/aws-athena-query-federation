@@ -112,18 +112,18 @@ public class AwsCmdbMetadataHandlerTest
     {
         blockAllocator = new BlockAllocatorImpl();
         Map<TableName, TableProvider> tableProviderMap = new HashMap<>();
-        tableProviderMap.putIfAbsent(new TableName("schema1", "table1"), mockTableProvider1);
-        tableProviderMap.putIfAbsent(new TableName("schema1", "table2"), mockTableProvider2);
-        tableProviderMap.putIfAbsent(new TableName("schema2", "table1"), mockTableProvider3);
+        tableProviderMap.putIfAbsent(TableName.newBuilder().setSchemaName("schema1", "table1")).setTableName(mockTableProvider1).build();
+        tableProviderMap.putIfAbsent(TableName.newBuilder().setSchemaName("schema1", "table2")).setTableName(mockTableProvider2).build();
+        tableProviderMap.putIfAbsent(TableName.newBuilder().setSchemaName("schema2", "table1")).setTableName(mockTableProvider3).build();
 
         when(mockTableProviderFactory.getTableProviders()).thenReturn(tableProviderMap);
 
         Map<String, List<TableName>> schemas = new HashMap<>();
         schemas.put("schema1", new ArrayList<>());
         schemas.put("schema2", new ArrayList<>());
-        schemas.get("schema1").add(new TableName("schema1", "table1"));
-        schemas.get("schema1").add(new TableName("schema1", "table2"));
-        schemas.get("schema2").add(new TableName("schema2", "table1"));
+        schemas.get("schema1").add(TableName.newBuilder().setSchemaName("schema1").setTableName("table1")).build();
+        schemas.get("schema1").add(TableName.newBuilder().setSchemaName("schema1").setTableName("table2")).build();
+        schemas.get("schema2").add(TableName.newBuilder().setSchemaName("schema2").setTableName("table1")).build();
 
         when(mockTableProviderFactory.getSchemas()).thenReturn(schemas);
 
@@ -160,14 +160,14 @@ public class AwsCmdbMetadataHandlerTest
         ListTablesResponse response = handler.doListTables(blockAllocator, request);
 
         assertEquals(2, response.getTables().size());
-        assertTrue(response.getTables().contains(new TableName("schema1", "table1")));
-        assertTrue(response.getTables().contains(new TableName("schema1", "table2")));
+        assertTrue(response.getTables().contains(TableName.newBuilder().setSchemaName("schema1").setTableName("table1"))).build();
+        assertTrue(response.getTables().contains(TableName.newBuilder().setSchemaName("schema1").setTableName("table2"))).build();
     }
 
     @Test
     public void doGetTable()
     {
-        GetTableRequest request = new GetTableRequest(identity, queryId, catalog, new TableName("schema1", "table1"));
+        GetTableRequest request = new GetTableRequest(identity, queryId, catalog, TableName.newBuilder().setSchemaName("schema1").setTableName("table1")).build();
 
         when(mockTableProvider1.getTable(eq(blockAllocator), eq(request))).thenReturn(mock(GetTableResponse.class));
         GetTableResponse response = handler.doGetTable(blockAllocator, request);
@@ -181,7 +181,7 @@ public class AwsCmdbMetadataHandlerTest
             throws Exception
     {
         GetTableLayoutRequest request = new GetTableLayoutRequest(identity, queryId, catalog,
-                new TableName("schema1", "table1"),
+                TableName.newBuilder().setSchemaName("schema1").setTableName("table1").build(),
                 mockConstraints,
                 SchemaBuilder.newBuilder().build(),
                 Collections.EMPTY_SET);
@@ -196,7 +196,7 @@ public class AwsCmdbMetadataHandlerTest
     public void doGetSplits()
     {
         GetSplitsRequest request = new GetSplitsRequest(identity, queryId, catalog,
-                new TableName("schema1", "table1"),
+                TableName.newBuilder().setSchemaName("schema1").setTableName("table1").build(),
                 mockBlock,
                 Collections.emptyList(),
                 new Constraints(new HashMap<>()),

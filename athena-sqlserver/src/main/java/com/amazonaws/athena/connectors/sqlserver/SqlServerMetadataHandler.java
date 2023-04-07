@@ -328,7 +328,7 @@ public class SqlServerMetadataHandler extends JdbcMetadataHandler
     {
         try (Connection connection = getJdbcConnectionFactory().getConnection(getCredentialProvider())) {
             Schema partitionSchema = getPartitionSchema(getTableRequest.getCatalogName());
-            TableName tableName = new TableName(getTableRequest.getTableName().getSchemaName().toUpperCase(), getTableRequest.getTableName().getTableName().toUpperCase());
+            TableName tableName = TableName.newBuilder().setSchemaName(getTableRequest.getTableName().getSchemaName().toUpperCase()).setTableName(getTableRequest.getTableName().getTableName().toUpperCase()).build();
             return new GetTableResponse(getTableRequest.getCatalogName(), tableName, getSchema(connection, tableName, partitionSchema),
                     partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet()));
         }

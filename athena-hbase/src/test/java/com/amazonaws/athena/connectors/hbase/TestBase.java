@@ -30,5 +30,5 @@ public class TestBase {
     protected static final String DEFAULT_CATALOG = "default";
     protected static final String TEST_TABLE = "test_table";
     protected static final String DEFAULT_SCHEMA = "default";
-    protected static final TableName TABLE_NAME = new TableName(DEFAULT_SCHEMA, TEST_TABLE);
+    protected static final TableName TABLE_NAME = TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName(TEST_TABLE).build();
 }

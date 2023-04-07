@@ -45,7 +45,7 @@ import static org.junit.Assert.assertEquals;
 
 public class BigQuerySqlUtilsTest
 {
-    static final TableName tableName = new TableName("schema", "table");
+    static final TableName tableName = TableName.newBuilder().setSchemaName("schema").setTableName("table").build();
     static final Split split = Mockito.mock(Split.class);
 
     static final ArrowType BOOLEAN_TYPE = ArrowType.Bool.INSTANCE;

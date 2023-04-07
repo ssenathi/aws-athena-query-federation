@@ -154,7 +154,7 @@ public class Db2MetadataHandler extends JdbcMetadataHandler
         try (Connection connection = getJdbcConnectionFactory().getConnection(getCredentialProvider())) {
             LOGGER.info("{}: List table names for Catalog {}, Schema {}", listTablesRequest.getQueryId(), listTablesRequest.getCatalogName(), listTablesRequest.getSchemaName());
             List<String> tableNames = getTableList(connection, Db2Constants.QRY_TO_LIST_TABLES_AND_VIEWS, listTablesRequest.getSchemaName());
-            List<TableName> tables = tableNames.stream().map(tableName -> new TableName(listTablesRequest.getSchemaName(), tableName)).collect(Collectors.toList());
+            List<TableName> tables = tableNames.stream().map(tableName -> TableName.newBuilder().setSchemaName(listTablesRequest.getSchemaName()).setTableName(tableName)).collect(Collectors.toList()).build();
             return new ListTablesResponse(listTablesRequest.getCatalogName(), tables, null);
         }
     }

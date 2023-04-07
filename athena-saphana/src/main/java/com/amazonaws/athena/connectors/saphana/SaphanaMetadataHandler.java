@@ -389,7 +389,7 @@ public class SaphanaMetadataHandler extends JdbcMetadataHandler
         ResultSet resultSet = metadata.getTables(catalogName, tableName.getSchemaName(), tableName.getTableName(), null);
         while (resultSet.next()) {
             if (tableName.getTableName().equals(resultSet.getString(3))) {
-                tableName = new TableName(tableName.getSchemaName(), resultSet.getString(3));
+                tableName = TableName.newBuilder().setSchemaName(tableName.getSchemaName()).setTableName(resultSet.getString(3)).build();
                 return tableName;
             }
         }
@@ -397,7 +397,7 @@ public class SaphanaMetadataHandler extends JdbcMetadataHandler
         ResultSet rs = metadata.getTables(catalogName, tableName.getSchemaName().toUpperCase(), "%", null);
         while (rs.next()) {
             if (tableName.getTableName().equalsIgnoreCase(rs.getString(3))) {
-                tableName = new TableName(tableName.getSchemaName().toUpperCase(), rs.getString(3));
+                tableName = TableName.newBuilder().setSchemaName(tableName.getSchemaName().toUpperCase()).setTableName(rs.getString(3)).build();
                 return tableName;
             }
         }
@@ -434,19 +434,19 @@ public class SaphanaMetadataHandler extends JdbcMetadataHandler
             }
         }
         if (schemaCase.equalsIgnoreCase(SaphanaConstants.CASE_UPPER) && tableCase.equalsIgnoreCase(SaphanaConstants.CASE_UPPER)) {
-            return new TableName(table.getSchemaName().toUpperCase(), tableName.toUpperCase());
+            return TableName.newBuilder().setSchemaName(table.getSchemaName().toUpperCase()).setTableName(tableName.toUpperCase()).build();
         }
         else if (schemaCase.equalsIgnoreCase(SaphanaConstants.CASE_LOWER) && tableCase.equalsIgnoreCase(SaphanaConstants.CASE_LOWER)) {
-            return new TableName(table.getSchemaName().toLowerCase(), tableName.toLowerCase());
+            return TableName.newBuilder().setSchemaName(table.getSchemaName().toLowerCase()).setTableName(tableName.toLowerCase()).build();
         }
         else if (schemaCase.equalsIgnoreCase(SaphanaConstants.CASE_LOWER) && tableCase.equalsIgnoreCase(SaphanaConstants.CASE_UPPER)) {
-            return new TableName(table.getSchemaName().toLowerCase(), tableName.toUpperCase());
+            return TableName.newBuilder().setSchemaName(table.getSchemaName().toLowerCase()).setTableName(tableName.toUpperCase()).build();
         }
         else if (schemaCase.equalsIgnoreCase(SaphanaConstants.CASE_UPPER) && tableCase.equalsIgnoreCase(SaphanaConstants.CASE_LOWER)) {
-            return new TableName(table.getSchemaName().toUpperCase(), tableName.toLowerCase());
+            return TableName.newBuilder().setSchemaName(table.getSchemaName().toUpperCase()).setTableName(tableName.toLowerCase()).build();
         }
         else {
-            return new TableName(table.getSchemaName().toUpperCase(), tableName.toUpperCase());
+            return TableName.newBuilder().setSchemaName(table.getSchemaName().toUpperCase()).setTableName(tableName.toUpperCase()).build();
         }
     }
 

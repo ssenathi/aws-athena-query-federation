@@ -141,9 +141,9 @@ public class ExampleMetadataHandler
         /**
          * TODO: Add tables for the requested schema, example below
          *
-         tables.add(new TableName(request.getSchemaName(), "table1"));
-         tables.add(new TableName(request.getSchemaName(), "table2"));
-         tables.add(new TableName(request.getSchemaName(), "table3"));
+         tables.add(TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName("table1")).build();
+         tables.add(TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName("table2")).build();
+         tables.add(TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName("table3")).build();
          *
          */
 

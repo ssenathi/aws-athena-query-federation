@@ -71,7 +71,7 @@ public class SubnetTableProvider
     @Override
     public TableName getTableName()
     {
-        return new TableName(getSchema(), "subnets");
+        return TableName.newBuilder().setSchemaName(getSchema()).setTableName("subnets").build();
     }
 
     /**

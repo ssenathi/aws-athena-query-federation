@@ -72,7 +72,7 @@ public class RouteTableProvider
     @Override
     public TableName getTableName()
     {
-        return new TableName(getSchema(), "routing_tables");
+        return TableName.newBuilder().setSchemaName(getSchema()).setTableName("routing_tables").build();
     }
 
     /**

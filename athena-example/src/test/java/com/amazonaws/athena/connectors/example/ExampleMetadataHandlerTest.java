@@ -139,9 +139,9 @@ public class ExampleMetadataHandlerTest
         ListTablesResponse res = handler.doListTables(allocator, req);
         ListTablesResponse expectedResponse = new ListTablesResponse("default",
                 new ImmutableList.Builder<TableName>()
-                        .add(new TableName("schema1", "table1"))
-                        .add(new TableName("schema1", "table2"))
-                        .add(new TableName("schema1", "table3"))
+                        .add(TableName.newBuilder().setSchemaName("schema1").setTableName("table1")).build()
+                        .add(TableName.newBuilder().setSchemaName("schema1").setTableName("table2")).build()
+                        .add(TableName.newBuilder().setSchemaName("schema1").setTableName("table3")).build()
                         .build(), null);
         logger.info("doListTables - {}", res);
         assertEquals("Expecting a different response", expectedResponse, res);
@@ -152,8 +152,8 @@ public class ExampleMetadataHandlerTest
                 null, 2);
         expectedResponse = new ListTablesResponse("default",
                 new ImmutableList.Builder<TableName>()
-                        .add(new TableName("schema1", "table1"))
-                        .add(new TableName("schema1", "table2"))
+                        .add(TableName.newBuilder().setSchemaName("schema1").setTableName("table1")).build()
+                        .add(TableName.newBuilder().setSchemaName("schema1").setTableName("table2")).build()
                         .build(), "table3");
         res = handler.doListTables(allocator, req);
         logger.info("doListTables - {}", res);
@@ -165,7 +165,7 @@ public class ExampleMetadataHandlerTest
                 res.getNextToken(), 2);
         expectedResponse = new ListTablesResponse("default",
                 new ImmutableList.Builder<TableName>()
-                        .add(new TableName("schema1", "table3"))
+                        .add(TableName.newBuilder().setSchemaName("schema1").setTableName("table3")).build()
                         .build(), null);
         res = handler.doListTables(allocator, req);
         logger.info("doListTables - {}", res);
@@ -189,7 +189,7 @@ public class ExampleMetadataHandlerTest
 
         logger.info("doGetTable - enter");
         GetTableRequest req = new GetTableRequest(fakeIdentity(), "queryId", "default",
-                new TableName("schema1", "table1"));
+                TableName.newBuilder().setSchemaName("schema1").setTableName("table1")).build();
         GetTableResponse res = handler.doGetTable(allocator, req);
         assertTrue(res.getSchema().getFields().size() > 0);
         assertTrue(res.getSchema().getCustomMetadata().size() > 0);
@@ -240,7 +240,7 @@ public class ExampleMetadataHandlerTest
         try {
 
             req = new GetTableLayoutRequest(fakeIdentity(), "queryId", "default",
-                    new TableName("schema1", "table1"),
+                    TableName.newBuilder().setSchemaName("schema1").setTableName("table1").build(),
                     new Constraints(constraintsMap),
                     tableSchema,
                     partitionCols);
@@ -314,7 +314,7 @@ public class ExampleMetadataHandlerTest
 
         String continuationToken = null;
         GetSplitsRequest originalReq = new GetSplitsRequest(fakeIdentity(), "queryId", "catalog_name",
-                new TableName("schema", "table_name"),
+                TableName.newBuilder().setSchemaName("schema").setTableName("table_name").build(),
                 partitions,
                 partitionCols,
                 new Constraints(constraintsMap),
