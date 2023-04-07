@@ -19,13 +19,13 @@
  */
 package com.amazonaws.athena.connectors.cloudwatch.metrics;
 
-import com.amazonaws.athena.connector.lambda.domain.Split;
+import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ConstraintEvaluator;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
-import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.services.cloudwatch.model.Dimension;
 import com.amazonaws.services.cloudwatch.model.DimensionFilter;
 import com.amazonaws.services.cloudwatch.model.GetMetricDataRequest;

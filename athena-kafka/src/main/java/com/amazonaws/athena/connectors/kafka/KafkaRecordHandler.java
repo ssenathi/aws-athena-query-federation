@@ -23,7 +23,7 @@ import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
 import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
-import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connectors.kafka.dto.KafkaField;
 import com.amazonaws.athena.connectors.kafka.dto.SplitParameters;
 import com.amazonaws.athena.connectors.kafka.dto.TopicResultSet;

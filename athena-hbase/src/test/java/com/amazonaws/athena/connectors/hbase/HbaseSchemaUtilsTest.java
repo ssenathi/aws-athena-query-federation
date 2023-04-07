@@ -19,7 +19,7 @@
  */
 package com.amazonaws.athena.connectors.hbase;
 
-import com.amazonaws.athena.connector.lambda.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connectors.hbase.connection.HBaseConnection;
 import com.amazonaws.athena.connectors.hbase.connection.ResultProcessor;
 import org.apache.arrow.vector.types.Types;

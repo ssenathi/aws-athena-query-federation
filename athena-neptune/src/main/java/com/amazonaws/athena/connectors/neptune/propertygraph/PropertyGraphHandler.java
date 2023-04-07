@@ -27,7 +27,7 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.EquatableValueSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
-import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connectors.neptune.NeptuneConnection;
 import com.amazonaws.athena.connectors.neptune.NeptuneRecordHandler;
 import com.amazonaws.athena.connectors.neptune.propertygraph.Enums.TableSchemaMetaType;

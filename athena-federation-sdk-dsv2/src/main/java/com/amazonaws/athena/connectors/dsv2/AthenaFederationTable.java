@@ -19,7 +19,7 @@
  */
 package com.amazonaws.athena.connectors.dsv2;
 
-import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import org.apache.spark.sql.connector.catalog.SupportsRead;
 import org.apache.spark.sql.connector.catalog.TableCapability;
 import org.apache.spark.sql.connector.expressions.Transform;

@@ -21,8 +21,8 @@ package com.amazonaws.athena.connectors.dsv2;
 
 import com.amazonaws.athena.connector.lambda.data.ArrowSchemaUtils;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import org.apache.arrow.vector.types.TimeUnit;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;

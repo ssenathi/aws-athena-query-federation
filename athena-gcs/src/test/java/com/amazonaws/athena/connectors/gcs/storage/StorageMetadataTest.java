@@ -20,7 +20,7 @@
 package com.amazonaws.athena.connectors.gcs.storage;
 
 
-import com.amazonaws.athena.connector.lambda.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler;
 import com.amazonaws.services.glue.AWSGlue;

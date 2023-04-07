@@ -19,10 +19,10 @@
  */
 package com.amazonaws.athena.connectors.dsv2;
 
-import com.amazonaws.athena.connector.lambda.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
 import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
-import com.amazonaws.athena.connector.lambda.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
 

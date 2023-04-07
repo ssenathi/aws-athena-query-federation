@@ -21,11 +21,11 @@ package com.amazonaws.athena.connectors.dsv2;
 
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetSplitsResponse;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableLayoutResponse;
-import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutResponse;
+import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.request.FederationRequest;
 import com.amazonaws.athena.connector.lambda.serde.VersionedObjectMapperFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;

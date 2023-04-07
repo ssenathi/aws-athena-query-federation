@@ -23,7 +23,7 @@ import com.amazonaws.athena.connector.integ.IntegrationTestBase;
 import com.amazonaws.athena.connector.integ.clients.CloudFormationClient;
 import com.amazonaws.athena.connector.integ.data.ConnectorVpcAttributes;
 import com.amazonaws.athena.connector.integ.data.SecretsManagerCredentials;
-import com.amazonaws.athena.connector.lambda.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionInfo;
 import com.amazonaws.athena.connectors.jdbc.integ.JdbcTableUtils;
 import com.amazonaws.services.athena.model.Row;

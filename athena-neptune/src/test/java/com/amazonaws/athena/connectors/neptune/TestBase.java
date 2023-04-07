@@ -19,8 +19,8 @@
  */
 package com.amazonaws.athena.connectors.neptune;
 
-import com.amazonaws.athena.connector.lambda.domain.TableName;
-import com.amazonaws.athena.connector.lambda.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 
 import java.util.Collections;
 /**

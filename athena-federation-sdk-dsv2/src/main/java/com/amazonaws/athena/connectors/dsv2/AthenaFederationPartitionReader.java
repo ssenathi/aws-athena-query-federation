@@ -22,7 +22,7 @@ package com.amazonaws.athena.connectors.dsv2;
 import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
-import com.amazonaws.athena.connector.lambda.records.ReadRecordsResponse;
+import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsResponse;
 import com.amazonaws.athena.connector.lambda.serde.VersionedObjectMapperFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.spark.sql.connector.read.PartitionReader;

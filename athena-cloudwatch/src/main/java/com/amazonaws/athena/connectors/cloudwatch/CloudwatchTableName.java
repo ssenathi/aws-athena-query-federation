@@ -19,7 +19,7 @@
  */
 package com.amazonaws.athena.connectors.cloudwatch;
 
-import com.amazonaws.athena.connector.lambda.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 
 import java.util.Objects;
 

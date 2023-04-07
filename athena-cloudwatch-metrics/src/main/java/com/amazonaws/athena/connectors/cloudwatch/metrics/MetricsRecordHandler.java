@@ -25,7 +25,7 @@ import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
-import com.amazonaws.athena.connector.lambda.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connectors.cloudwatch.metrics.tables.MetricSamplesTable;
 import com.amazonaws.athena.connectors.cloudwatch.metrics.tables.MetricsTable;
 import com.amazonaws.athena.connectors.cloudwatch.metrics.tables.Table;

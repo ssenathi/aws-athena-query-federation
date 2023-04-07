@@ -19,7 +19,7 @@
  */
 package com.amazonaws.athena.connectors.vertica;
 
-import com.amazonaws.athena.connector.lambda.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import org.mockito.Mockito;
 import org.mockito.stubbing.Answer;
 

@@ -20,7 +20,7 @@
 package com.amazonaws.athena.connectors.cloudwatch;
 
 import com.amazonaws.athena.connector.lambda.ThrottlingInvoker;
-import com.amazonaws.athena.connector.lambda.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.services.logs.AWSLogs;
 import com.amazonaws.services.logs.model.DescribeLogGroupsRequest;
 import com.amazonaws.services.logs.model.DescribeLogGroupsResult;

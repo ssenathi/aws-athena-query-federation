@@ -20,13 +20,13 @@
 package com.amazonaws.athena.connectors.neptune;
 
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
-import com.amazonaws.athena.connector.lambda.domain.TableName;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableRequest;
-import com.amazonaws.athena.connector.lambda.metadata.GetTableResponse;
-import com.amazonaws.athena.connector.lambda.metadata.ListSchemasRequest;
-import com.amazonaws.athena.connector.lambda.metadata.ListSchemasResponse;
-import com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest;
-import com.amazonaws.athena.connector.lambda.metadata.ListTablesResponse;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
+import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.glue.AWSGlue;
