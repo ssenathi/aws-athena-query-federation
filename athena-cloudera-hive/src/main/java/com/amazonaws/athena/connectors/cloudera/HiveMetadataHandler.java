@@ -214,7 +214,7 @@ public class HiveMetadataHandler extends JdbcMetadataHandler
         for (int curPartition = partitionContd; curPartition < partitions.getRowCount(); curPartition++) {
             FieldReader locationReader = partitions.getFieldReader(HiveConstants.BLOCK_PARTITION_COLUMN_NAME);
             locationReader.setPosition(curPartition);
-            SpillLocation spillLocation = makeSpillLocation(getSplitsRequest);
+            SpillLocation spillLocation = makeSpillLocation(getSplitsRequest.getQueryId());
             Split.Builder splitBuilder = Split.newBuilder(spillLocation, makeEncryptionKey())
                     .add(HiveConstants.BLOCK_PARTITION_COLUMN_NAME, String.valueOf(locationReader.readText()));
             splits.add(splitBuilder.build());
@@ -223,7 +223,7 @@ public class HiveMetadataHandler extends JdbcMetadataHandler
                         encodeContinuationToken(curPartition));
             }
         }
-        return new GetSplitsResponse(getSplitsRequest.getCatalogName(), splits, null);
+        return GetSplitsResponse.newBuilder().setType("GetSplitsResponse").setCatalogName(getSplitsRequest.getCatalogName()).addAllSplits(splits).build();
     }
     private int decodeContinuationToken(GetSplitsRequest request)
     {

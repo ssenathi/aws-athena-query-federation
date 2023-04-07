@@ -137,7 +137,7 @@ public class Db2MetadataHandler extends JdbcMetadataHandler
     {
         try (Connection connection = getJdbcConnectionFactory().getConnection(getCredentialProvider())) {
             LOGGER.info("{}: List schema names for Catalog {}", listSchemasRequest.getQueryId(), listSchemasRequest.getCatalogName());
-            return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName(), getSchemaList(connection).addAllSchemas(Db2Constants.QRY_TO_LIST_SCHEMAS)).build();
+            return ListSchemasResponse.newBuilder().setCatalogName(listSchemasRequest.getCatalogName(), getSchemaList(connection).addAllSchemas(Db2Constants.QRY_TO_LIST_SCHEMAS)).build();
         }
     }
 
@@ -262,7 +262,7 @@ public class Db2MetadataHandler extends JdbcMetadataHandler
 
         int partitionContd = decodeContinuationToken(getSplitsRequest);
         Block partitions = getSplitsRequest.getPartitions();
-        SpillLocation spillLocation = makeSpillLocation(getSplitsRequest);
+        SpillLocation spillLocation = makeSpillLocation(getSplitsRequest.getQueryId());
         Split.Builder splitBuilder;
         Set<Split> splits = new HashSet<>();
 
@@ -295,7 +295,7 @@ public class Db2MetadataHandler extends JdbcMetadataHandler
                 return new GetSplitsResponse(getSplitsRequest.getCatalogName(), splits, encodeContinuationToken(curPartition));
             }
         }
-        return new GetSplitsResponse(getSplitsRequest.getCatalogName(), splits, null);
+        return GetSplitsResponse.newBuilder().setType("GetSplitsResponse").setCatalogName(getSplitsRequest.getCatalogName()).addAllSplits(splits).build();
     }
 
     /**

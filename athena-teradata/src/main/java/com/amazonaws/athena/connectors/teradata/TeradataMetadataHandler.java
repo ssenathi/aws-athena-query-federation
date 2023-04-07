@@ -284,7 +284,7 @@ public class TeradataMetadataHandler extends JdbcMetadataHandler
             FieldReader locationReader = partitions.getFieldReader(BLOCK_PARTITION_COLUMN_NAME);
             locationReader.setPosition(curPartition);
 
-            SpillLocation spillLocation = makeSpillLocation(getSplitsRequest);
+            SpillLocation spillLocation = makeSpillLocation(getSplitsRequest.getQueryId());
 
             LOGGER.info("{}: Input partition is {}", getSplitsRequest.getQueryId(), locationReader.readText());
 
@@ -299,7 +299,7 @@ public class TeradataMetadataHandler extends JdbcMetadataHandler
             }
         }
 
-        return new GetSplitsResponse(getSplitsRequest.getCatalogName(), splits, null);
+        return GetSplitsResponse.newBuilder().setType("GetSplitsResponse").setCatalogName(getSplitsRequest.getCatalogName()).addAllSplits(splits).build();
     }
 
     private int decodeContinuationToken(GetSplitsRequest request)

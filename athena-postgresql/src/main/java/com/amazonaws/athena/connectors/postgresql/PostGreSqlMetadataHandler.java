@@ -179,7 +179,7 @@ public class PostGreSqlMetadataHandler
             if (ALL_PARTITIONS.equals(partitionsSchemaFieldReader.readText().toString()) && ALL_PARTITIONS.equals(partitionsFieldReader.readText().toString())) {
                 for (String splitClause : getSplitClauses(getSplitsRequest.getTableName())) {
                     //Every split must have a unique location if we wish to spill to avoid failures
-                    SpillLocation spillLocation = makeSpillLocation(getSplitsRequest);
+                    SpillLocation spillLocation = makeSpillLocation(getSplitsRequest.getQueryId());
 
                     Split.Builder splitBuilder = Split.newBuilder(spillLocation, makeEncryptionKey())
                             .add(BLOCK_PARTITION_SCHEMA_COLUMN_NAME, String.valueOf(partitionsSchemaFieldReader.readText()))
@@ -204,7 +204,7 @@ public class PostGreSqlMetadataHandler
                 partitionsFieldReader.setPosition(curPartition);
 
                 //Every split must have a unique location if we wish to spill to avoid failures
-                SpillLocation spillLocation = makeSpillLocation(getSplitsRequest);
+                SpillLocation spillLocation = makeSpillLocation(getSplitsRequest.getQueryId());
 
                 LOGGER.info("{}: Input partition is {}", getSplitsRequest.getQueryId(), String.valueOf(partitionsFieldReader.readText()));
                 Split.Builder splitBuilder = Split.newBuilder(spillLocation, makeEncryptionKey())
@@ -220,7 +220,7 @@ public class PostGreSqlMetadataHandler
             }
         }
 
-        return new GetSplitsResponse(getSplitsRequest.getCatalogName(), splits, null);
+        return GetSplitsResponse.newBuilder().setType("GetSplitsResponse").setCatalogName(getSplitsRequest.getCatalogName()).addAllSplits(splits).build();
     }
 
     private int decodeContinuationToken(GetSplitsRequest request)

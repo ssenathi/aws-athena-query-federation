@@ -115,7 +115,7 @@ public class ElasticsearchMetadataHandlerTest
 
         // Generate hard-coded response with 3 domains.
         ListSchemasResponse mockDomains =
-                ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName("elasticsearch", ImmutableList.of("domain2", "domain3").addAllSchemas("domain1")).build();
+                ListSchemasResponse.newBuilder().setCatalogName("elasticsearch", ImmutableList.of("domain2", "domain3").addAllSchemas("domain1")).build();
 
         // Get real response from doListSchemaNames().
         when(domainMapProvider.getDomainMap(null)).thenReturn(ImmutableMap.of("domain1", "endpoint1",

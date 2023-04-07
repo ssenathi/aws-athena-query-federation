@@ -140,7 +140,7 @@ public class KafkaMetadataHandler extends MetadataHandler
             // Concat the results from the current page
             allFilteredRegistries = Stream.concat(allFilteredRegistries, filteredRegistriesStream(currentResult.getRegistries().stream()));
         }
-        ListSchemasResponse result = ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(allFilteredRegistries.collect(Collectors.toList())).build();
+        ListSchemasResponse result = ListSchemasResponse.newBuilder().setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(allFilteredRegistries.collect(Collectors.toList())).build();
         LOGGER.debug("doListSchemaNames result: {}", result);
         return result;
     }

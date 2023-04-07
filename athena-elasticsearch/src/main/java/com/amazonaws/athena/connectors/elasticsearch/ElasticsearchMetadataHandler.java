@@ -154,7 +154,7 @@ public class ElasticsearchMetadataHandler
             domainMap = domainMapProvider.getDomainMap(null);
         }
 
-        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(request.getCatalogName()).addAllSchemas(domainMap.keySet()).build();
+        return ListSchemasResponse.newBuilder().setCatalogName(request.getCatalogName()).addAllSchemas(domainMap.keySet()).build();
     }
 
     /**

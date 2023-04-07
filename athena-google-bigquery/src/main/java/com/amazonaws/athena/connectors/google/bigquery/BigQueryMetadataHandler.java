@@ -105,7 +105,7 @@ public class BigQueryMetadataHandler
 
             logger.info("Found {} schemas!", schemas.size());
 
-            return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(schemas).build();
+            return ListSchemasResponse.newBuilder().setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(schemas).build();
         }
         catch
         (Exception e) {

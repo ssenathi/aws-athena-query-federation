@@ -118,7 +118,7 @@ public class ExampleMetadataHandler
          *
          */
 
-        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(request.getCatalogName()).addAllSchemas(schemas).build();
+        return ListSchemasResponse.newBuilder().setCatalogName(request.getCatalogName()).addAllSchemas(schemas).build();
     }
 
     /**

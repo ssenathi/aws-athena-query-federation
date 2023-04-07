@@ -96,7 +96,7 @@ public class AwsCmdbMetadataHandler
     @Override
     public ListSchemasResponse doListSchemaNames(BlockAllocator blockAllocator, ListSchemasRequest listSchemasRequest)
     {
-        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(schemas.keySet()).build();
+        return ListSchemasResponse.newBuilder().setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(schemas.keySet()).build();
     }
 
     /**
@@ -171,7 +171,7 @@ public class AwsCmdbMetadataHandler
         }
 
         //Every split needs a unique spill location.
-        SpillLocation spillLocation = makeSpillLocation(getSplitsRequest);
+        SpillLocation spillLocation = makeSpillLocation(getSplitsRequest.getQueryId());
         EncryptionKey encryptionKey = makeEncryptionKey();
         Split split = Split.newBuilder(spillLocation, encryptionKey).build();
         return new GetSplitsResponse(getSplitsRequest.getCatalogName(), split);

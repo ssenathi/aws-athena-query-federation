@@ -126,7 +126,7 @@ public class TimestreamMetadataHandler
             }
         }
 
-        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(request.getCatalogName()).addAllSchemas(schemaNames).build();
+        return ListSchemasResponse.newBuilder().setCatalogName(request.getCatalogName()).addAllSchemas(schemaNames).build();
     }
 
     @Override

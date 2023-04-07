@@ -183,7 +183,7 @@ public class DynamoDBMetadataHandler
         }
 
         combinedSchemas.add(DEFAULT_SCHEMA);
-        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(request.getCatalogName()).addAllSchemas(combinedSchemas).build();
+        return ListSchemasResponse.newBuilder().setCatalogName(request.getCatalogName()).addAllSchemas(combinedSchemas).build();
     }
 
     /**

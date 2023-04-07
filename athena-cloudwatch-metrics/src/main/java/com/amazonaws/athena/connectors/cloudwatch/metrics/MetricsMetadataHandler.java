@@ -160,7 +160,7 @@ public class MetricsMetadataHandler
     @Override
     public ListSchemasResponse doListSchemaNames(BlockAllocator blockAllocator, ListSchemasRequest listSchemasRequest)
     {
-        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(Collections.singletonList(SCHEMA_NAME)).build();
+        return ListSchemasResponse.newBuilder().setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(Collections.singletonList(SCHEMA_NAME)).build();
     }
 
     /**
@@ -227,7 +227,7 @@ public class MetricsMetadataHandler
         //Handle requests for the METRIC_TABLE which requires only 1 split to list available metrics.
         if (METRIC_TABLE_NAME.equals(getSplitsRequest.getTableName().getTableName())) {
             //The request is just for meta-data about what metrics exist.
-            Split metricsSplit = Split.newBuilder(makeSpillLocation(getSplitsRequest), makeEncryptionKey()).build();
+            Split metricsSplit = Split.newBuilder(makeSpillLocation(getSplitsRequest.getQueryId()), makeEncryptionKey()).build();
             return new GetSplitsResponse(getSplitsRequest.getCatalogName(), metricsSplit);
         }
 
@@ -260,13 +260,13 @@ public class MetricsMetadataHandler
 
             if (CollectionUtils.isNullOrEmpty(metricStats)) {
                 logger.info("No metric stats present after filtering predicates.");
-                return new GetSplitsResponse(getSplitsRequest.getCatalogName(), splits, null);
+                return GetSplitsResponse.newBuilder().setType("GetSplitsResponse").setCatalogName(getSplitsRequest.getCatalogName()).addAllSplits(splits).build();
             }
 
             List<List<MetricStat>> partitions = Lists.partition(metricStats, calculateSplitSize(metricStats.size()));
             for (List<MetricStat> partition : partitions) {
                 String serializedMetricStats = MetricStatSerDe.serialize(partition);
-                splits.add(Split.newBuilder(makeSpillLocation(getSplitsRequest), makeEncryptionKey())
+                splits.add(Split.newBuilder(makeSpillLocation(getSplitsRequest.getQueryId()), makeEncryptionKey())
                         .add(MetricStatSerDe.SERIALIZED_METRIC_STATS_FIELD_NAME, serializedMetricStats)
                         .build());
             }

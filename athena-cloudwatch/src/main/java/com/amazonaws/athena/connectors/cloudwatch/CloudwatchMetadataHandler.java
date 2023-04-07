@@ -165,7 +165,7 @@ public class CloudwatchMetadataHandler
         }
         while (result.getNextToken() != null);
 
-        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(schemas).build();
+        return ListSchemasResponse.newBuilder().setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(schemas).build();
     }
 
     /**
