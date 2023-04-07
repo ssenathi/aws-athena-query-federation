@@ -196,7 +196,7 @@ public class GcsMetadataHandler
      * @param queryStatusChecker A QueryStatusChecker that you can use to stop doing work for a query that has already terminated
      */
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker) throws URISyntaxException
+    public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker) throws URISyntaxException
     {
         TableName tableInfo = request.getTableName();
         LOGGER.info("Retrieving partition for table {}.{}", tableInfo.getSchemaName(), tableInfo.getTableName());

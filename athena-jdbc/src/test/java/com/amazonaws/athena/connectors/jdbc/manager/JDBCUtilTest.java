@@ -59,7 +59,7 @@ public class JDBCUtilTest
         }
 
         @Override
-        public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
+        public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
                 throws Exception
         {
 

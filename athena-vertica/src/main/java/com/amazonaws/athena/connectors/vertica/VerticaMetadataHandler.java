@@ -211,7 +211,7 @@ public class VerticaMetadataHandler
      * @param request The GetTableLayoutResquest that triggered this call.
      */
     @Override
-    public void enhancePartitionSchema(SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request) {
+    public void enhancePartitionSchema(BlockAllocator allocator, SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request) {
 
         logger.info("{}: Catalog {}, table {}", request.getQueryId(), request.getTableName().getSchemaName(), request.getTableName());
         partitionSchemaBuilder.addField("preparedStmt", new ArrowType.Utf8());
@@ -228,7 +228,7 @@ public class VerticaMetadataHandler
      * @param queryStatusChecker A QueryStatusChecker that you can use to stop doing work for a query that has already terminated
      */
     @Override
-        public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker) throws SQLException {
+        public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker) throws SQLException {
         logger.info("in getPartitions: "+ request);
 
         Schema schemaName = request.getSchema();

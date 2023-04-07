@@ -209,7 +209,7 @@ public class RedisMetadataHandler
     }
 
     @Override
-    public void enhancePartitionSchema(SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request)
+    public void enhancePartitionSchema(BlockAllocator allocator, SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request)
     {
         partitionSchemaBuilder.addStringField(REDIS_ENDPOINT_PROP)
                 .addStringField(VALUE_TYPE_TABLE_PROP)
@@ -226,7 +226,7 @@ public class RedisMetadataHandler
      * We also use this 1 partition to carry settings that we will need in order to generate splits.
      */
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
+    public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
             throws Exception
     {
         Map<String, String> properties = request.getSchema().getCustomMetadata();

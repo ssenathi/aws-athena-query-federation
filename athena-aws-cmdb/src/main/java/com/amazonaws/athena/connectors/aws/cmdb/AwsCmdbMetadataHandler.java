@@ -132,7 +132,7 @@ public class AwsCmdbMetadataHandler
      * @see MetadataHandler
      */
     @Override
-    public void enhancePartitionSchema(SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request)
+    public void enhancePartitionSchema(BlockAllocator allocator, SchemaBuilder partitionSchemaBuilder, GetTableLayoutRequest request)
     {
         TableProvider tableProvider = tableProviders.get(request.getTableName());
         if (tableProvider == null) {
@@ -147,7 +147,7 @@ public class AwsCmdbMetadataHandler
      * @see MetadataHandler
      */
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
+    public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
             throws Exception
     {
         TableProvider tableProvider = tableProviders.get(request.getTableName());

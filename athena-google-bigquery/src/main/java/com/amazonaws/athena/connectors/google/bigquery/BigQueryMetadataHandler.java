@@ -172,7 +172,7 @@ public class BigQueryMetadataHandler
      * in the query instead we are using limit and offset for non constraints query with basic concurrency limit
      */
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
+    public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
             throws Exception
     {
         //NoOp since we don't support partitioning at this time.

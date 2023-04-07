@@ -329,7 +329,7 @@ public class KafkaMetadataHandler extends MetadataHandler
      * @param queryStatusChecker - instance of {@link QueryStatusChecker}
      */
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
+    public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
     {
     }
 

@@ -256,7 +256,7 @@ public class ExampleMetadataHandler
      * partition data are ignored by Athena but passed on to calls on GetSplits.
      */
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
+    public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker queryStatusChecker)
             throws Exception
     {
         for (int year = 2000; year < 2018; year++) {
