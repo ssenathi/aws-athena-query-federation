@@ -196,6 +196,7 @@ public abstract class MetadataHandler
     protected SpillLocation makeSpillLocation(String queryId)
     {
         return SpillLocation.newBuilder()
+                .setType("S3SpillLocation")
                 .setBucket(spillBucket)
                 .setKey(ProtobufUtils.buildS3SpillLocationKey(spillPrefix, queryId, UUID.randomUUID().toString()))
                 .setDirectory(true) // this is true because our key is a nested path
