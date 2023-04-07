@@ -45,8 +45,8 @@ public class Db2QueryStringBuilderTest {
     {
         Db2QueryStringBuilder builder = new Db2QueryStringBuilder("'");
         Split split = Mockito.mock(Split.class);
-        Mockito.when(split.getProperty(Mockito.eq("PARTITION_NUMBER"))).thenReturn("0");
-        Mockito.when(split.getProperty(Mockito.eq("PARTITIONING_COLUMN"))).thenReturn("PC");
+        Mockito.when(split.getPropertiesMap().get(Mockito.eq("PARTITION_NUMBER"))).thenReturn("0");
+        Mockito.when(split.getPropertiesMap().get(Mockito.eq("PARTITIONING_COLUMN"))).thenReturn("PC");
         Assert.assertEquals(Arrays.asList(" DATAPARTITIONNUM(PC) = 0"), builder.getPartitionWhereClauses(split));
     }
 }

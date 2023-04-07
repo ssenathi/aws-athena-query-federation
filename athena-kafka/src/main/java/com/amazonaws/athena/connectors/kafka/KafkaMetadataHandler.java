@@ -393,7 +393,7 @@ public class KafkaMetadataHandler extends MetadataHandler
         }
 
         Set<Split> splits = new HashSet<>();
-        SpillLocation spillLocation = makeSpillLocation(request);
+        SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
         int continuationToken = request.getContinuationToken() == null ? 0 : Integer.parseInt(request.getContinuationToken());
         for (
             int partitionIndex = continuationToken;
@@ -418,7 +418,7 @@ public class KafkaMetadataHandler extends MetadataHandler
                 // In split, we are putting parameters so that later, in RecordHandler we know
                 // for which topic and for which partition we will initiate a kafka consumer
                 // as well as to consume data from which start offset to which end offset.
-                Split.Builder splitBuilder = Split.newBuilder(spillLocation, makeEncryptionKey())
+                Split.Builder splitBuilder = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()
                         .add(SplitParameters.TOPIC, partition.topic())
                         .add(SplitParameters.PARTITION, Integer.toString(partition.partition()))
                         .add(SplitParameters.START_OFFSET, Long.toString(topicPartitionPiece.startOffset))

@@ -29,7 +29,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsResponse;
-import com.amazonaws.athena.connector.lambda.records.RecordResponse;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
@@ -224,7 +223,7 @@ public class MetricsRecordHandlerTest
         assertTrue(rawResponse instanceof ReadRecordsResponse);
 
         ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-        logger.info("readMetricsWithConstraint: rows[{}]", response.getRecordCount());
+        logger.info("readMetricsWithConstraint: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
         assertEquals(numCalls.get() * numMetrics, response.getRecords().getRowCount());
         logger.info("readMetricsWithConstraint: {}", BlockUtils.rowToString(response.getRecords(), 0));
@@ -300,7 +299,7 @@ public class MetricsRecordHandlerTest
         assertTrue(rawResponse instanceof ReadRecordsResponse);
 
         ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-        logger.info("readMetricSamplesWithConstraint: rows[{}]", response.getRecordCount());
+        logger.info("readMetricSamplesWithConstraint: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
         assertEquals(numCalls.get() * numMetrics * numSamples, response.getRecords().getRowCount());
         logger.info("readMetricSamplesWithConstraint: {}", BlockUtils.rowToString(response.getRecords(), 0));

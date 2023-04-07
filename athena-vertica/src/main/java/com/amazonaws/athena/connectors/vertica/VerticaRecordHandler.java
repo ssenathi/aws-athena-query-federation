@@ -102,9 +102,9 @@ public class VerticaRecordHandler
 
         Schema schemaName = recordsRequest.getSchema();
         Split split = recordsRequest.getSplit();
-        String id = split.getProperty("query_id");
-        String exportBucket = split.getProperty("exportBucket");
-        String s3ObjectKey = split.getProperty("s3ObjectKey");
+        String id = split.getPropertiesMap().get("query_id");
+        String exportBucket = split.getPropertiesMap().get("exportBucket");
+        String s3ObjectKey = split.getPropertiesMap().get("s3ObjectKey");
 
         if(!s3ObjectKey.isEmpty()) {
             //get column name and type from the Schema

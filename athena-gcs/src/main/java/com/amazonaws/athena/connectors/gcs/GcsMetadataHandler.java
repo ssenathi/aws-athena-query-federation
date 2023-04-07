@@ -236,7 +236,7 @@ public class GcsMetadataHandler
         Table table = GcsUtil.getGlueTable(request.getTableName(), glueClient);
         String catalogName = request.getCatalogName();
         Set<Split> splits = new HashSet<>();
-        Block partitions = request.getPartitions();
+        Block partitions = ProtobufMessageConverter.fromProtoBlock(allocator, request.getPartitions());
 
         for (int curPartition = partitionContd; curPartition < partitions.getRowCount(); curPartition++) {
             //getting the partition folder name with bucket and file type
@@ -245,14 +245,14 @@ public class GcsMetadataHandler
 
             //getting storage file list
             List<String> fileList = datasource.getStorageSplits(locationUri);
-            SpillLocation spillLocation = makeSpillLocation(request);
+            SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
             LOGGER.info("Split list for {}.{} is \n{}", table.getDatabaseName(), table.getName(), fileList);
 
             //creating splits based folder
             String storageSplitJson = new ObjectMapper().writeValueAsString(fileList);
             LOGGER.info("MetadataHandler=GcsMetadataHandler|Method=doGetSplits|Message=StorageSplit JSON\n{}",
                     storageSplitJson);
-            Split.Builder splitBuilder = Split.newBuilder(spillLocation, makeEncryptionKey())
+            Split.Builder splitBuilder = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()
                     .add(FILE_FORMAT, table.getParameters().get(CLASSIFICATION_GLUE_TABLE_PARAM))
                     .add(STORAGE_SPLIT_JSON, storageSplitJson);
 

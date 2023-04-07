@@ -97,9 +97,9 @@ public class TPCDSRecordHandler
             throws IOException
     {
         Split split = recordsRequest.getSplit();
-        int splitNumber = Integer.parseInt(split.getProperty(SPLIT_NUMBER_FIELD));
-        int totalNumSplits = Integer.parseInt(split.getProperty(SPLIT_TOTAL_NUMBER_FIELD));
-        int scaleFactor = Integer.parseInt(split.getProperty(SPLIT_SCALE_FACTOR_FIELD));
+        int splitNumber = Integer.parseInt(split.getPropertiesMap().get(SPLIT_NUMBER_FIELD));
+        int totalNumSplits = Integer.parseInt(split.getPropertiesMap().get(SPLIT_TOTAL_NUMBER_FIELD));
+        int scaleFactor = Integer.parseInt(split.getPropertiesMap().get(SPLIT_SCALE_FACTOR_FIELD));
         Table table = validateTable(recordsRequest.getTableName());
 
         Session session = Session.getDefaultSession()

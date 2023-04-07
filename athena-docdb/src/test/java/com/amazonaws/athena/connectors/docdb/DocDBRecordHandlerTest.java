@@ -35,7 +35,6 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsResponse;
-import com.amazonaws.athena.connector.lambda.records.RecordResponse;
 import com.amazonaws.athena.connector.lambda.proto.records.RemoteReadRecordsResponse;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
@@ -275,7 +274,7 @@ public class DocDBRecordHandlerTest
         assertTrue(rawResponse instanceof ReadRecordsResponse);
 
         ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-        logger.info("doReadRecordsNoSpill: rows[{}]", response.getRecordCount());
+        logger.info("doReadRecordsNoSpill: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
         assertTrue(response.getRecords().getRowCount() == 2);
         logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(response.getRecords(), 0));
@@ -328,17 +327,17 @@ public class DocDBRecordHandlerTest
         assertTrue(rawResponse instanceof RemoteReadRecordsResponse);
 
         try (RemoteReadRecordsResponse response = (RemoteReadRecordsResponse) rawResponse) {
-            logger.info("doReadRecordsSpill: remoteBlocks[{}]", response.getRemoteBlocks().size());
+            logger.info("doReadRecordsSpill: remoteBlocks[{}]", response.getRemoteBlocksList().size());
 
-            assertTrue(response.getNumberBlocks() > 1);
+            assertTrue(response.getRemoteBlocksList().size() > 1);
 
             int blockNum = 0;
-            for (SpillLocation next : response.getRemoteBlocks()) {
+            for (SpillLocation next : response.getRemoteBlocksList()) {
                 S3SpillLocation spillLocation = (S3SpillLocation) next;
                 try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
 
                     logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
-                    // assertTrue(++blockNum < response.getRemoteBlocks().size() && block.getRowCount() > 10_000);
+                    // assertTrue(++blockNum < response.getRemoteBlocksList().size() && block.getRowCount() > 10_000);
 
                     logger.info("doReadRecordsSpill: {}", BlockUtils.rowToString(block, 0));
                     assertNotNull(BlockUtils.rowToString(block, 0));
@@ -429,9 +428,9 @@ public class DocDBRecordHandlerTest
         assertTrue(rawResponse instanceof ReadRecordsResponse);
 
         ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-        logger.info("doReadRecordsNoSpill: rows[{}]", response.getRecordCount());
+        logger.info("doReadRecordsNoSpill: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
         logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(response.getRecords(), 0));
-        assertTrue(response.getRecordCount() == 1);
+        assertTrue(response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() == 1);
         String expectedString = "[ComplexStruct : {[SomeList : {{[SomeSubStruct : someSubStruct1]," +
                 "[SomeSubList : {{[SomeSubSubStruct : someSubSubStruct]}}]}," +
                 "{[SomeSubStruct : someSubStruct1],[SomeSubList : {{[SomeSubSubStruct : someSubSubStruct]}}]}}]," +

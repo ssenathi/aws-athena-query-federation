@@ -101,9 +101,9 @@ public class SqlServerRecordHandlerTest
         Schema schema = schemaBuilder.build();
 
         Split split = Mockito.mock(Split.class);
-        Mockito.when(split.getProperty(SqlServerMetadataHandler.PARTITION_FUNCTION)).thenReturn("pf");
-        Mockito.when(split.getProperty(SqlServerMetadataHandler.PARTITIONING_COLUMN)).thenReturn("testCol1");
-        Mockito.when(split.getProperty(SqlServerMetadataHandler.PARTITION_NUMBER)).thenReturn("1");
+        Mockito.when(split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITION_FUNCTION)).thenReturn("pf");
+        Mockito.when(split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITIONING_COLUMN)).thenReturn("testCol1");
+        Mockito.when(split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITION_NUMBER)).thenReturn("1");
 
         ValueSet valueSet = getSingleValueSet("varcharTest");
         Constraints constraints = Mockito.mock(Constraints.class);

@@ -430,8 +430,8 @@ public class ElasticsearchMetadataHandlerTest
         shardIds.add("_shards:1");
         shardIds.add("_shards:2");
         response.getSplits().forEach(split -> {
-            assertEquals(endpoint, split.getProperty(domain));
-            String shard = split.getProperty(ElasticsearchMetadataHandler.SHARD_KEY);
+            assertEquals(endpoint, split.getPropertiesMap().get(domain));
+            String shard = split.getPropertiesMap().get(ElasticsearchMetadataHandler.SHARD_KEY);
             assertTrue("Split contains invalid shard: " + shard, shardIds.contains(shard));
             shardIds.remove(shard);
         });

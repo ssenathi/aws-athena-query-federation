@@ -31,7 +31,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsResponse;
-import com.amazonaws.athena.connector.lambda.records.RecordResponse;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.athena.connectors.redis.lettuce.RedisCommandsWrapper;
@@ -256,7 +255,7 @@ public class RedisRecordHandlerTest
         assertTrue(rawResponse instanceof ReadRecordsResponse);
 
         ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-        logger.info("doReadRecordsLiteral: rows[{}]", response.getRecordCount());
+        logger.info("doReadRecordsLiteral: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
         logger.info("doReadRecordsLiteral: {}", BlockUtils.rowToString(response.getRecords(), 0));
         assertTrue(response.getRecords().getRowCount() == 2);
@@ -355,7 +354,7 @@ public class RedisRecordHandlerTest
         assertTrue(rawResponse instanceof ReadRecordsResponse);
 
         ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-        logger.info("doReadRecordsHash: rows[{}]", response.getRecordCount());
+        logger.info("doReadRecordsHash: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
         logger.info("doReadRecordsHash: {}", BlockUtils.rowToString(response.getRecords(), 0));
         assertTrue(response.getRecords().getRowCount() == 5);
@@ -469,7 +468,7 @@ public class RedisRecordHandlerTest
         assertTrue(rawResponse instanceof ReadRecordsResponse);
 
         ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-        logger.info("doReadRecordsZset: rows[{}]", response.getRecordCount());
+        logger.info("doReadRecordsZset: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
         logger.info("doReadRecordsZset: {}", BlockUtils.rowToString(response.getRecords(), 0));
         assertTrue(response.getRecords().getRowCount() == 12);

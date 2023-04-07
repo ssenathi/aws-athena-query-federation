@@ -302,7 +302,7 @@ public class ElasticsearchMetadataHandler
                 Set<Integer> shardIds = client.getShardIds(index, queryTimeout);
                 for (Integer shardId : shardIds) {
                     // Every split must have a unique location if we wish to spill to avoid failures
-                    SpillLocation spillLocation = makeSpillLocation(request);
+                    SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
                     // Create a new split (added to the splits set) that includes the domain and endpoint, and
                     // shard information (to be used later by the Record Handler).
                     splits.add(new Split(spillLocation, makeEncryptionKey(), ImmutableMap

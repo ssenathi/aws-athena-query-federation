@@ -34,7 +34,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsResponse;
-import com.amazonaws.athena.connector.lambda.records.RecordResponse;
 import com.amazonaws.athena.connector.lambda.proto.records.RemoteReadRecordsResponse;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
@@ -235,7 +234,7 @@ public class TimestreamRecordHandlerTest
         assertTrue(rawResponse instanceof ReadRecordsResponse);
 
         ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-        logger.info("doReadRecordsNoSpill: rows[{}]", response.getRecordCount());
+        logger.info("doReadRecordsNoSpill: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
         assertTrue(response.getRecords().getRowCount() > 0);
 
@@ -289,17 +288,17 @@ public class TimestreamRecordHandlerTest
         assertTrue(rawResponse instanceof RemoteReadRecordsResponse);
 
         try (RemoteReadRecordsResponse response = (RemoteReadRecordsResponse) rawResponse) {
-            logger.info("doReadRecordsSpill: remoteBlocks[{}]", response.getRemoteBlocks().size());
+            logger.info("doReadRecordsSpill: remoteBlocks[{}]", response.getRemoteBlocksList().size());
 
-            assertTrue(response.getNumberBlocks() > 1);
+            assertTrue(response.getRemoteBlocksList().size() > 1);
 
             int blockNum = 0;
-            for (SpillLocation next : response.getRemoteBlocks()) {
+            for (SpillLocation next : response.getRemoteBlocksList()) {
                 S3SpillLocation spillLocation = (S3SpillLocation) next;
                 try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
 
                     logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
-                    // assertTrue(++blockNum < response.getRemoteBlocks().size() && block.getRowCount() > 10_000);
+                    // assertTrue(++blockNum < response.getRemoteBlocksList().size() && block.getRowCount() > 10_000);
 
                     logger.info("doReadRecordsSpill: {}", BlockUtils.rowToString(block, 0));
                     assertNotNull(BlockUtils.rowToString(block, 0));
@@ -362,9 +361,9 @@ public class TimestreamRecordHandlerTest
         RecordResponse rawResponse = handler.doReadRecords(allocator, request);
 
         ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-        logger.info("readRecordsView: rows[{}]", response.getRecordCount());
+        logger.info("readRecordsView: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
-        for (int i = 0; i < response.getRecordCount() && i < 10; i++) {
+        for (int i = 0; i < response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() && i < 10; i++) {
             logger.info("readRecordsView: {}", BlockUtils.rowToString(response.getRecords(), i));
         }
 
@@ -430,9 +429,9 @@ public class TimestreamRecordHandlerTest
         RecordResponse rawResponse = handler.doReadRecords(allocator, request);
 
         ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-        logger.info("readRecordsTimeSeriesView: rows[{}]", response.getRecordCount());
+        logger.info("readRecordsTimeSeriesView: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
-        for (int i = 0; i < response.getRecordCount() && i < 10; i++) {
+        for (int i = 0; i < response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() && i < 10; i++) {
             logger.info("readRecordsTimeSeriesView: {}", BlockUtils.rowToString(response.getRecords(), i));
         }
 
@@ -485,13 +484,13 @@ public class TimestreamRecordHandlerTest
         assertTrue(rawResponse instanceof ReadRecordsResponse);
 
         ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-        logger.info("doReadRecordsNoSpill: rows[{}]", response.getRecordCount());
+        logger.info("doReadRecordsNoSpill: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
         assertTrue(response.getRecords().getRowCount() > 0);
 
         Block block = response.getRecords();
         FieldReader time = block.getFieldReader("time");
-        for (int i = 0; i < response.getRecordCount() && i < numRows; i++) {
+        for (int i = 0; i < response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() && i < numRows; i++) {
             time.setPosition(i);
             assertTrue(time.readObject() instanceof LocalDateTime);
             assertEquals(TestUtils.startDate.plusDays(i).truncatedTo(ChronoUnit.MILLIS), time.readObject());

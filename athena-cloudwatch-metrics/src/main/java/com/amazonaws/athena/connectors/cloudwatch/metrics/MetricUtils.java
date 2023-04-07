@@ -134,12 +134,12 @@ public class MetricUtils
     protected static GetMetricDataRequest makeGetMetricDataRequest(ReadRecordsRequest readRecordsRequest)
     {
         Split split = readRecordsRequest.getSplit();
-        String serializedMetricStats = split.getProperty(MetricStatSerDe.SERIALIZED_METRIC_STATS_FIELD_NAME);
+        String serializedMetricStats = split.getPropertiesMap().get(MetricStatSerDe.SERIALIZED_METRIC_STATS_FIELD_NAME);
         List<MetricStat> metricStats = MetricStatSerDe.deserialize(serializedMetricStats);
         GetMetricDataRequest dataRequest = new GetMetricDataRequest();
         com.amazonaws.services.cloudwatch.model.Metric metric = new com.amazonaws.services.cloudwatch.model.Metric();
-        metric.setNamespace(split.getProperty(NAMESPACE_FIELD));
-        metric.setMetricName(split.getProperty(METRIC_NAME_FIELD));
+        metric.setNamespace(split.getPropertiesMap().get(NAMESPACE_FIELD));
+        metric.setMetricName(split.getPropertiesMap().get(METRIC_NAME_FIELD));
 
         List<MetricDataQuery> metricDataQueries = new ArrayList<>();
         int metricId = 1;

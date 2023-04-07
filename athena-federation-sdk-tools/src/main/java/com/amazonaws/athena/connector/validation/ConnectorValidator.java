@@ -312,8 +312,8 @@ public class ConnectorValidator
                                                                    split,
                                                                    testConfig.getRecordFunction(),
                                                                    testConfig.getIdentity());
-    log.info("Received " + records.getRecordCount() + " records.");
-    checkState(records.getRecordCount() > 0,
+    log.info("Received " + records.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() + " records.");
+    checkState(records.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() > 0,
                              "Table " + toQualifiedTableName(table)
                        + " did not return any rows in the tested split, even though an empty constraint was used."
                        + " This can happen if the table is empty but could also indicate an issue."
@@ -324,7 +324,7 @@ public class ConnectorValidator
                                .map(f -> f.getName() + ":" + f.getType().getTypeID())
                                .collect(Collectors.toList()));
 
-    if (records.getRecordCount() == 0) {
+    if (records.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() == 0) {
       return records;
     }
 

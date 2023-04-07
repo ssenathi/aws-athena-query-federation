@@ -113,8 +113,8 @@ public class PostGreSqlRecordHandlerTest extends TestBase
 
         Split split = Mockito.mock(Split.class);
         Mockito.when(split.getProperties()).thenReturn(ImmutableMap.of("partition_schema_name", "s0", "partition_name", "p0"));
-        Mockito.when(split.getProperty(Mockito.eq(com.amazonaws.athena.connectors.postgresql.PostGreSqlMetadataHandler.BLOCK_PARTITION_SCHEMA_COLUMN_NAME))).thenReturn("s0");
-        Mockito.when(split.getProperty(Mockito.eq(com.amazonaws.athena.connectors.postgresql.PostGreSqlMetadataHandler.BLOCK_PARTITION_COLUMN_NAME))).thenReturn("p0");
+        Mockito.when(split.getPropertiesMap().get(Mockito.eq(com.amazonaws.athena.connectors.postgresql.PostGreSqlMetadataHandler.BLOCK_PARTITION_SCHEMA_COLUMN_NAME))).thenReturn("s0");
+        Mockito.when(split.getPropertiesMap().get(Mockito.eq(com.amazonaws.athena.connectors.postgresql.PostGreSqlMetadataHandler.BLOCK_PARTITION_COLUMN_NAME))).thenReturn("p0");
 
         Range range1a = Mockito.mock(Range.class, Mockito.RETURNS_DEEP_STUBS);
         Mockito.when(range1a.isSingleValue()).thenReturn(true);
@@ -186,8 +186,8 @@ public class PostGreSqlRecordHandlerTest extends TestBase
 
         Split split = Mockito.mock(Split.class);
         Mockito.when(split.getProperties()).thenReturn(ImmutableMap.of("partition_schema_name", "s0", "partition_name", "p0"));
-        Mockito.when(split.getProperty(Mockito.eq(com.amazonaws.athena.connectors.postgresql.PostGreSqlMetadataHandler.BLOCK_PARTITION_SCHEMA_COLUMN_NAME))).thenReturn("s0");
-        Mockito.when(split.getProperty(Mockito.eq(PostGreSqlMetadataHandler.BLOCK_PARTITION_COLUMN_NAME))).thenReturn("p0");
+        Mockito.when(split.getPropertiesMap().get(Mockito.eq(com.amazonaws.athena.connectors.postgresql.PostGreSqlMetadataHandler.BLOCK_PARTITION_SCHEMA_COLUMN_NAME))).thenReturn("s0");
+        Mockito.when(split.getPropertiesMap().get(Mockito.eq(PostGreSqlMetadataHandler.BLOCK_PARTITION_COLUMN_NAME))).thenReturn("p0");
 
         final long dateDays = TimeUnit.MILLISECONDS.toDays(Date.valueOf("2020-01-05").getTime());
         ValueSet valueSet = getSingleValueSet(dateDays);

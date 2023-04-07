@@ -281,12 +281,12 @@ public class Db2MetadataHandler extends JdbcMetadataHandler
             // Included partition information to split if the table is partitioned
             if (partInfo.contains(":::")) {
                 String[] partInfoAr = partInfo.split(":::");
-                splitBuilder = Split.newBuilder(spillLocation, makeEncryptionKey())
+                splitBuilder = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()
                         .add(PARTITIONING_COLUMN, partInfoAr[0])
                         .add(PARTITION_NUMBER, partInfoAr[1]);
             }
             else {
-                splitBuilder = Split.newBuilder(spillLocation, makeEncryptionKey())
+                splitBuilder = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()
                         .add(PARTITION_NUMBER, partInfo);
             }
             splits.add(splitBuilder.build());

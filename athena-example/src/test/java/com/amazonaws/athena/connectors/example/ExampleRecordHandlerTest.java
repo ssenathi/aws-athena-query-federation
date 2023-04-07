@@ -30,7 +30,6 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsResponse;
-import com.amazonaws.athena.connector.lambda.records.RecordResponse;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.s3.AmazonS3;
@@ -163,7 +162,7 @@ public class ExampleRecordHandlerTest
             assertTrue(rawResponse instanceof ReadRecordsResponse);
 
             ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-            logger.info("doReadRecordsNoSpill: rows[{}]", response.getRecordCount());
+            logger.info("doReadRecordsNoSpill: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
             assertTrue(response.getRecords().getRowCount() > 0);
             logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(response.getRecords(), 0));

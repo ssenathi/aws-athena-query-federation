@@ -111,7 +111,7 @@ public class HiveRecordHandlerTest
 
         Split split = Mockito.mock(Split.class);
         Mockito.when(split.getProperties()).thenReturn(Collections.singletonMap("partition", "p0"));
-        Mockito.when(split.getProperty(Mockito.eq("partition"))).thenReturn("p0");
+        Mockito.when(split.getPropertiesMap().get(Mockito.eq("partition"))).thenReturn("p0");
 
         Range range1a = Mockito.mock(Range.class, Mockito.RETURNS_DEEP_STUBS);
         Mockito.when(range1a.isSingleValue()).thenReturn(true);

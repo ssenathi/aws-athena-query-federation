@@ -51,7 +51,7 @@ public class MySqlQueryStringBuilder
         }
         tableName.append(quote(table));
 
-        String partitionName = split.getProperty(MySqlMetadataHandler.BLOCK_PARTITION_COLUMN_NAME);
+        String partitionName = split.getPropertiesMap().get(MySqlMetadataHandler.BLOCK_PARTITION_COLUMN_NAME);
 
         if (MySqlMetadataHandler.ALL_PARTITIONS.equals(partitionName)) {
             // No partitions

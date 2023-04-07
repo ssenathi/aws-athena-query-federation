@@ -228,11 +228,11 @@ public class DocDBMetadataHandler
     public GetSplitsResponse doGetSplits(BlockAllocator blockAllocator, GetSplitsRequest request)
     {
         //Every split must have a unique location if we wish to spill to avoid failures
-        SpillLocation spillLocation = makeSpillLocation(request);
+        SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
 
         //Since our connector does not support parallel reads we return a fixed split.
         return new GetSplitsResponse(request.getCatalogName(),
-                Split.newBuilder(spillLocation, makeEncryptionKey())
+                Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()
                         .add(DOCDB_CONN_STR, getConnStr(request))
                         .build());
     }

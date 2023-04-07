@@ -288,7 +288,7 @@ public class TeradataMetadataHandler extends JdbcMetadataHandler
 
             LOGGER.info("{}: Input partition is {}", getSplitsRequest.getQueryId(), locationReader.readText());
 
-            Split.Builder splitBuilder = Split.newBuilder(spillLocation, makeEncryptionKey())
+            Split.Builder splitBuilder = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()
                     .add(BLOCK_PARTITION_COLUMN_NAME, String.valueOf(locationReader.readText()));
 
             splits.add(splitBuilder.build());

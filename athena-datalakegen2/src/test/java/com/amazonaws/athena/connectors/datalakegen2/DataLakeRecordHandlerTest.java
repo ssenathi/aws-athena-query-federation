@@ -100,7 +100,7 @@ public class DataLakeRecordHandlerTest
         Schema schema = schemaBuilder.build();
 
         Split split = Mockito.mock(Split.class);
-        Mockito.when(split.getProperty(DataLakeGen2MetadataHandler.PARTITION_NUMBER)).thenReturn("0");
+        Mockito.when(split.getPropertiesMap().get(DataLakeGen2MetadataHandler.PARTITION_NUMBER)).thenReturn("0");
 
         ValueSet valueSet = getSingleValueSet("varcharTest");
         Constraints constraints = Mockito.mock(Constraints.class);

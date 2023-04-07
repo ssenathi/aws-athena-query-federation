@@ -103,7 +103,7 @@ public class DocDBRecordHandler
      */
     private MongoClient getOrCreateConn(Split split)
     {
-        String conStr = split.getProperty(DOCDB_CONN_STR);
+        String conStr = split.getPropertiesMap().get(DOCDB_CONN_STR);
         if (conStr == null) {
             throw new RuntimeException(DOCDB_CONN_STR + " Split property is null! Unable to create connection.");
         }

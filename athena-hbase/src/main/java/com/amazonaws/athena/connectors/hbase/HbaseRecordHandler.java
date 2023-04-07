@@ -116,11 +116,11 @@ public class HbaseRecordHandler
     {
         Schema projection = request.getSchema();
         Split split = request.getSplit();
-        String conStr = split.getProperty(HBASE_CONN_STR);
+        String conStr = split.getPropertiesMap().get(HBASE_CONN_STR);
         boolean isNative = projection.getCustomMetadata().get(HBASE_NATIVE_STORAGE_FLAG) != null;
 
         //setup the scan so that we only read the key range associated with the region represented by our Split.
-        Scan scan = new Scan(split.getProperty(START_KEY_FIELD).getBytes(), split.getProperty(END_KEY_FIELD).getBytes());
+        Scan scan = new Scan(split.getPropertiesMap().get(START_KEY_FIELD).getBytes(), split.getProperty(END_KEY_FIELD).getBytes());
 
         //attempts to push down a partial predicate using HBase Filters
         scan.setFilter(pushdownPredicate(isNative, request.getConstraints()));

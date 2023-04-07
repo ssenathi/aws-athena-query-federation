@@ -194,7 +194,7 @@ public class BigQueryMetadataHandler
         int constraintsSize = request.getConstraints().getSummary().size();
         if (constraintsSize > 0) {
             //Every split must have a unique location if we wish to spill to avoid failures
-            SpillLocation spillLocation = makeSpillLocation(request);
+            SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
 
             return new GetSplitsResponse(request.getCatalogName(), Split.newBuilder(spillLocation,
                     makeEncryptionKey()).build());
@@ -225,7 +225,7 @@ public class BigQueryMetadataHandler
                     offSet = offSet + totalPageCountLimit;
                 }
                 // Every split must have a unique location if we wish to spill to avoid failures
-                SpillLocation spillLocation = makeSpillLocation(request);
+                SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
                 // Create a new split (added to the splits set) that includes the domain and endpoint, and
                 // shard information (to be used later by the Record Handler).
                 Map<String, String> map = new HashMap<>();

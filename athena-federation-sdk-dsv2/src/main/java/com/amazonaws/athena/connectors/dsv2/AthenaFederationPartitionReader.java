@@ -79,8 +79,8 @@ public class AthenaFederationPartitionReader implements PartitionReader<Columnar
             ColumnVector[] columnVectors = records.getFieldVectors().stream()
                 .map(ArrowColumnVector::new)
                 .toArray(ColumnVector[]::new);
-            columnBatch = new ColumnarBatch(columnVectors, readResponse.getRecordCount());
-            return readResponse.getRecordCount() > 0;
+            columnBatch = new ColumnarBatch(columnVectors, readResponse.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
+            return readResponse.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() > 0;
         }
         catch (IOException ex) {
             // If we get an IOException, pass it through

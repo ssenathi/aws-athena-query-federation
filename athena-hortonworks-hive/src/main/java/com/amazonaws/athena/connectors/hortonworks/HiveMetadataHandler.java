@@ -216,7 +216,7 @@ public class HiveMetadataHandler extends JdbcMetadataHandler
             FieldReader locationReader = partitions.getFieldReader(HiveConstants.BLOCK_PARTITION_COLUMN_NAME);
             locationReader.setPosition(curPartition);
             SpillLocation spillLocation = makeSpillLocation(getSplitsRequest.getQueryId());
-            Split.Builder splitBuilder = Split.newBuilder(spillLocation, makeEncryptionKey())
+            Split.Builder splitBuilder = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()
                     .add(HiveConstants.BLOCK_PARTITION_COLUMN_NAME, String.valueOf(locationReader.readText()));
             splits.add(splitBuilder.build());
             if (splits.size() >= HiveConstants.MAX_SPLITS_PER_REQUEST) {

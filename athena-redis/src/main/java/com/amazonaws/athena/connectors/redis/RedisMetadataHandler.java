@@ -255,7 +255,7 @@ public class RedisMetadataHandler
             throw new RuntimeException("Unexpected number of partitions encountered.");
         }
 
-        Block partitions = request.getPartitions();
+        Block partitions = ProtobufMessageConverter.fromProtoBlock(allocator, request.getPartitions());
         String redisEndpoint = getValue(partitions, 0, REDIS_ENDPOINT_PROP);
         String redisValueType = getValue(partitions, 0, VALUE_TYPE_TABLE_PROP);
         boolean sslEnabled = Boolean.parseBoolean(getValue(partitions, 0, REDIS_SSL_FLAG));
@@ -351,9 +351,9 @@ public class RedisMetadataHandler
             }
 
             //Every split must have a unique location if we wish to spill to avoid failures
-            SpillLocation spillLocation = makeSpillLocation(request);
+            SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
 
-            Split split = Split.newBuilder(spillLocation, makeEncryptionKey())
+            Split split = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()
                     .add(KEY_PREFIX_TABLE_PROP, keyPrefix)
                     .add(KEY_TYPE, keyType.getId())
                     .add(VALUE_TYPE_TABLE_PROP, valueType)

@@ -186,8 +186,8 @@ public class GcsRecordHandlerTest
     {
         // Mocking split
         Split split = mock(Split.class);
-        when(split.getProperty(STORAGE_SPLIT_JSON)).thenReturn("[\"data.parquet\"]");
-        when(split.getProperty(FILE_FORMAT)).thenReturn("parquet");
+        when(split.getPropertiesMap().get(STORAGE_SPLIT_JSON)).thenReturn("[\"data.parquet\"]");
+        when(split.getPropertiesMap().get(FILE_FORMAT)).thenReturn("parquet");
 
         // Test readWithConstraint
         try (ReadRecordsRequest request = new ReadRecordsRequest(

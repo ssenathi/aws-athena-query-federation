@@ -263,13 +263,13 @@ public class SqlServerMetadataHandler extends JdbcMetadataHandler
             // Included partition information to split if the table is partitioned
             if (partInfo.contains(":::")) {
                 String[] partInfoAr = partInfo.split(":::");
-                splitBuilder = Split.newBuilder(spillLocation, makeEncryptionKey())
+                splitBuilder = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()
                         .add(PARTITION_NUMBER, partInfoAr[0])
                         .add(PARTITION_FUNCTION, partInfoAr[1])
                         .add(PARTITIONING_COLUMN, partInfoAr[2]);
             }
             else {
-                splitBuilder = Split.newBuilder(spillLocation, makeEncryptionKey())
+                splitBuilder = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()
                         .add(PARTITION_NUMBER, partInfo);
             }
             splits.add(splitBuilder.build());
