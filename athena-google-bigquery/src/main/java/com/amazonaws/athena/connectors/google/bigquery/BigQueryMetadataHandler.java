@@ -63,7 +63,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import static com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest.UNLIMITED_PAGE_SIZE_VALUE;
+import static com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE;
 import static com.amazonaws.athena.connectors.google.bigquery.BigQueryUtils.fixCaseForDatasetName;
 import static com.amazonaws.athena.connectors.google.bigquery.BigQueryUtils.fixCaseForTableName;
 import static com.amazonaws.athena.connectors.google.bigquery.BigQueryUtils.translateToArrowType;
@@ -105,7 +105,7 @@ public class BigQueryMetadataHandler
 
             logger.info("Found {} schemas!", schemas.size());
 
-            return new ListSchemasResponse(listSchemasRequest.getCatalogName(), schemas);
+            return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(schemas).build();
         }
         catch
         (Exception e) {

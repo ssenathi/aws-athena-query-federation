@@ -160,7 +160,7 @@ public class MetricsMetadataHandler
     @Override
     public ListSchemasResponse doListSchemaNames(BlockAllocator blockAllocator, ListSchemasRequest listSchemasRequest)
     {
-        return new ListSchemasResponse(listSchemasRequest.getCatalogName(), Collections.singletonList(SCHEMA_NAME));
+        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(Collections.singletonList(SCHEMA_NAME)).build();
     }
 
     /**

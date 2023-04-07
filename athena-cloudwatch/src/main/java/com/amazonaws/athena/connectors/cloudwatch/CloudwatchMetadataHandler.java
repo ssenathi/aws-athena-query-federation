@@ -63,7 +63,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
-import static com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest.UNLIMITED_PAGE_SIZE_VALUE;
+import static com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE;
 import static com.amazonaws.athena.connectors.cloudwatch.CloudwatchExceptionFilter.EXCEPTION_FILTER;
 
 /**
@@ -165,7 +165,7 @@ public class CloudwatchMetadataHandler
         }
         while (result.getNextToken() != null);
 
-        return new ListSchemasResponse(listSchemasRequest.getCatalogName(), schemas);
+        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(schemas).build();
     }
 
     /**

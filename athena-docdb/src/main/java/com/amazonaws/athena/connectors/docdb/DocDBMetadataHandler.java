@@ -146,7 +146,7 @@ public class DocDBMetadataHandler
                 schemas.add(itr.next());
             }
 
-            return new ListSchemasResponse(request.getCatalogName(), schemas);
+            return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(request.getCatalogName()).addAllSchemas(schemas).build();
         }
     }
 

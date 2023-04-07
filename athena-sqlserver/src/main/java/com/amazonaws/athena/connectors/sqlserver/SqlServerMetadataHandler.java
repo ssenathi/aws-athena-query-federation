@@ -462,7 +462,7 @@ public class SqlServerMetadataHandler extends JdbcMetadataHandler
     {
         try (Connection connection = getJdbcConnectionFactory().getConnection(getCredentialProvider())) {
             LOGGER.info("{}: List schema names for Catalog {}", listSchemasRequest.getQueryId(), listSchemasRequest.getCatalogName());
-            return new ListSchemasResponse(listSchemasRequest.getCatalogName(), listDatabaseNames(connection));
+            return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(listDatabaseNames(connection)).build();
         }
     }
 

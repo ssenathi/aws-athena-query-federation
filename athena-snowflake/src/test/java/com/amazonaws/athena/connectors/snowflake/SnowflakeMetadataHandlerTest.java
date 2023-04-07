@@ -23,7 +23,7 @@ import com.amazonaws.athena.connector.lambda.data.*;
 import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
-import com.amazonaws.athena.connector.lambda.metadata.*;
+import com.amazonaws.athena.connector.lambda.proto.metadata.*;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connectors.jdbc.TestBase;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionConfig;

@@ -126,7 +126,7 @@ public class NeptuneMetadataHandler extends GlueMetadataHandler
 
         Set<String> schemas = new HashSet<>();
         schemas.add(glueDBName);
-        return new ListSchemasResponse(request.getCatalogName(), schemas);
+        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(request.getCatalogName()).addAllSchemas(schemas).build();
     }
 
     /**

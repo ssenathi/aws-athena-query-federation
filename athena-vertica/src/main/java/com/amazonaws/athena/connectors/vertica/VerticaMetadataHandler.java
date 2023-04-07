@@ -30,7 +30,7 @@ import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
-import com.amazonaws.athena.connector.lambda.metadata.*;
+import com.amazonaws.athena.connector.lambda.proto.metadata.*;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connectors.vertica.query.QueryFactory;
 import com.amazonaws.athena.connectors.vertica.query.VerticaExportQueryBuilder;
@@ -147,7 +147,7 @@ public class VerticaMetadataHandler
                 }
             }
         }
-        return new ListSchemasResponse(request.getCatalogName(), schemas);
+        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(request.getCatalogName()).addAllSchemas(schemas).build();
     }
 
     /**

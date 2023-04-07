@@ -66,7 +66,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest.UNLIMITED_PAGE_SIZE_VALUE;
+import static com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE;
 import static com.amazonaws.athena.connectors.msk.AmazonMskConstants.MAX_RECORDS_IN_SPLIT;
 
 public class AmazonMskMetadataHandler extends MetadataHandler
@@ -140,7 +140,7 @@ public class AmazonMskMetadataHandler extends MetadataHandler
             // Concat the results from the current page
             allFilteredRegistries = Stream.concat(allFilteredRegistries, filteredRegistriesStream(currentResult.getRegistries().stream()));
         }
-        ListSchemasResponse result = new ListSchemasResponse(listSchemasRequest.getCatalogName(), allFilteredRegistries.collect(Collectors.toList()));
+        ListSchemasResponse result = ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(allFilteredRegistries.collect(Collectors.toList())).build();
         LOGGER.debug("doListSchemaNames result: {}", result);
         return result;
     }

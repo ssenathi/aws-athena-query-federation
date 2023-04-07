@@ -96,7 +96,7 @@ public class AwsCmdbMetadataHandler
     @Override
     public ListSchemasResponse doListSchemaNames(BlockAllocator blockAllocator, ListSchemasRequest listSchemasRequest)
     {
-        return new ListSchemasResponse(listSchemasRequest.getCatalogName(), schemas.keySet());
+        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName()).addAllSchemas(schemas.keySet()).build();
     }
 
     /**

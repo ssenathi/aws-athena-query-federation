@@ -54,7 +54,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest.UNLIMITED_PAGE_SIZE_VALUE;
+import static com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE;
 
 /**
  * This class is part of an tutorial that will walk you through how to build a connector for your
@@ -118,7 +118,7 @@ public class ExampleMetadataHandler
          *
          */
 
-        return new ListSchemasResponse(request.getCatalogName(), schemas);
+        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(request.getCatalogName()).addAllSchemas(schemas).build();
     }
 
     /**

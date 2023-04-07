@@ -107,7 +107,7 @@ public class TPCDSMetadataHandler
     public ListSchemasResponse doListSchemaNames(BlockAllocator allocator, ListSchemasRequest request)
     {
         logger.info("doListSchemaNames: enter - " + request);
-        return new ListSchemasResponse(request.getCatalogName(), SCHEMA_NAMES);
+        return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(request.getCatalogName()).addAllSchemas(SCHEMA_NAMES).build();
     }
 
     /**

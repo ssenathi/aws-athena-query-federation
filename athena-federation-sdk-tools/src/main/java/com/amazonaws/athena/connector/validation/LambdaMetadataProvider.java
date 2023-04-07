@@ -40,7 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Set;
 
-import static com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest.UNLIMITED_PAGE_SIZE_VALUE;
+import static com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE;
 import static com.amazonaws.athena.connector.validation.FederationServiceProvider.generateQueryId;
 import static com.amazonaws.athena.connector.validation.FederationServiceProvider.getService;
 

@@ -27,7 +27,7 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
-import com.amazonaws.athena.connector.lambda.metadata.*;
+import com.amazonaws.athena.connector.lambda.proto.metadata.*;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.athena.connectors.vertica.query.QueryFactory;
@@ -59,7 +59,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest.UNLIMITED_PAGE_SIZE_VALUE;
+import static com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE;
 import static org.junit.Assert.*;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;

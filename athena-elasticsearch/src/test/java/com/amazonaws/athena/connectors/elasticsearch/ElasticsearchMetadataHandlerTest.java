@@ -25,7 +25,7 @@ import com.amazonaws.athena.connector.lambda.data.BlockUtils;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
-import com.amazonaws.athena.connector.lambda.metadata.*;
+import com.amazonaws.athena.connector.lambda.proto.metadata.*;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
 import com.amazonaws.services.athena.AmazonAthena;
@@ -51,7 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.*;
 
-import static com.amazonaws.athena.connector.lambda.metadata.ListTablesRequest.UNLIMITED_PAGE_SIZE_VALUE;
+import static com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe.UNLIMITED_PAGE_SIZE_VALUE;
 import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.nullable;
@@ -115,7 +115,7 @@ public class ElasticsearchMetadataHandlerTest
 
         // Generate hard-coded response with 3 domains.
         ListSchemasResponse mockDomains =
-                new ListSchemasResponse("elasticsearch", ImmutableList.of("domain2", "domain3", "domain1"));
+                ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName("elasticsearch", ImmutableList.of("domain2", "domain3").addAllSchemas("domain1")).build();
 
         // Get real response from doListSchemaNames().
         when(domainMapProvider.getDomainMap(null)).thenReturn(ImmutableMap.of("domain1", "endpoint1",

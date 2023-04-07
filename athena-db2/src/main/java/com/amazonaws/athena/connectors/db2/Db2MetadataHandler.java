@@ -137,7 +137,7 @@ public class Db2MetadataHandler extends JdbcMetadataHandler
     {
         try (Connection connection = getJdbcConnectionFactory().getConnection(getCredentialProvider())) {
             LOGGER.info("{}: List schema names for Catalog {}", listSchemasRequest.getQueryId(), listSchemasRequest.getCatalogName());
-            return new ListSchemasResponse(listSchemasRequest.getCatalogName(), getSchemaList(connection, Db2Constants.QRY_TO_LIST_SCHEMAS));
+            return ListSchemasResponse.newBuilder().setType("ListSchemasResponse").setCatalogName(listSchemasRequest.getCatalogName(), getSchemaList(connection).addAllSchemas(Db2Constants.QRY_TO_LIST_SCHEMAS)).build();
         }
     }
 
