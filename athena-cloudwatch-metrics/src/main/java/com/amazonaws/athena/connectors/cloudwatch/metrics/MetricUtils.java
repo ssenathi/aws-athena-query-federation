@@ -19,13 +19,15 @@
  */
 package com.amazonaws.athena.connectors.cloudwatch.metrics;
 
-import com.amazonaws.athena.connector.lambda.proto.domain.Split;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ConstraintEvaluator;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
+import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.cloudwatch.model.Dimension;
 import com.amazonaws.services.cloudwatch.model.DimensionFilter;
 import com.amazonaws.services.cloudwatch.model.GetMetricDataRequest;
@@ -131,7 +133,7 @@ public class MetricUtils
      * @param readRecordsRequest The RecordReadRequest to make into a Cloudwatch Metrics Data request.
      * @return The Cloudwatch Metrics Data request that matches the requested read operation.
      */
-    protected static GetMetricDataRequest makeGetMetricDataRequest(ReadRecordsRequest readRecordsRequest)
+    protected static GetMetricDataRequest makeGetMetricDataRequest(BlockAllocator allocator, ReadRecordsRequest readRecordsRequest)
     {
         Split split = readRecordsRequest.getSplit();
         String serializedMetricStats = split.getPropertiesMap().get(MetricStatSerDe.SERIALIZED_METRIC_STATS_FIELD_NAME);

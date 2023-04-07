@@ -332,7 +332,7 @@ public class CloudwatchMetadataHandler
      */
     private int decodeContinuationToken(GetSplitsRequest request)
     {
-        if (request.hasContinuationToken() && Strings.isNullOrEmpty(request.getContinuationToken())) {
+        if (request.hasContinuationToken() && !Strings.isNullOrEmpty(request.getContinuationToken())) {
             return Integer.valueOf(request.getContinuationToken());
         }
 

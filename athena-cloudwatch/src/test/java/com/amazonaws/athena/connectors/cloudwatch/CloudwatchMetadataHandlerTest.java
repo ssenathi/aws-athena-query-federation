@@ -376,7 +376,7 @@ public class CloudwatchMetadataHandlerTest
         int numContinuations = 0;
         do {
             GetSplitsRequest.Builder reqBuilder = originalReq.toBuilder();
-            if (continuationToken != null) reqBuilder.setContinuationToken(continuationToken);
+            if (!Strings.isNullOrEmpty(continuationToken)) reqBuilder.setContinuationToken(continuationToken);
             GetSplitsRequest req = reqBuilder.build();
             logger.info("doGetSplits: req[{}]", req);
 
@@ -395,7 +395,7 @@ public class CloudwatchMetadataHandlerTest
                 numContinuations++;
             }
         }
-        while (Strings.isNullOrEmpty(continuationToken));
+        while (!Strings.isNullOrEmpty(continuationToken));
 
         assertTrue(numContinuations > 0);
 

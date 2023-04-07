@@ -162,7 +162,7 @@ public class TimestreamMetadataHandlerTest
             return new ListDatabasesResult().withDatabases(databases).withNextToken(newNextToken);
         });
 
-        ListSchemasRequest req = new ListSchemasRequest(identity, "queryId", "default");
+        ListSchemasRequest req = ListSchemasRequest.newBuilder().setIdentity(identity).setQueryId("queryId").setCatalogName("default").build();
         ListSchemasResponse res = handler.doListSchemaNames(allocator, req);
         logger.info("doListSchemaNames - {}", res.getSchemas());
 
