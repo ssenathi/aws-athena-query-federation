@@ -239,15 +239,15 @@ public class DynamoDBMetadataHandlerTest
         logger.info("doListTables - {}", res.getTablesList());
 
         List<com.amazonaws.athena.connector.lambda.proto.domain.TableName> expectedTables = 
-            tableNames.stream().map(table -> TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName(table)).map(ProtobufMessageConverter::toTableName).collect(Collectors.toList()).build();
-        expectedTables.add(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME));
-        expectedTables.add(ProtobufMessageConverter.toTableName(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table2"))).build();
-        expectedTables.add(ProtobufMessageConverter.toTableName(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table3"))).build();
-        expectedTables.add(ProtobufMessageConverter.toTableName(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table4"))).build();
-        expectedTables.add(ProtobufMessageConverter.toTableName(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table5"))).build();
-        expectedTables.add(ProtobufMessageConverter.toTableName(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table6"))).build();
-        expectedTables.add(ProtobufMessageConverter.toTableName(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table7"))).build();
-        expectedTables.add(ProtobufMessageConverter.toTableName(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table8"))).build();
+            tableNames.stream().map(table -> TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName(table).build()).collect(Collectors.toList());
+        expectedTables.add(TEST_TABLE_NAME);
+        expectedTables.add(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table2").build());
+        expectedTables.add(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table3").build());
+        expectedTables.add(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table4").build());
+        expectedTables.add(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table5").build());
+        expectedTables.add(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table6").build());
+        expectedTables.add(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table7").build());
+        expectedTables.add(TableName.newBuilder().setSchemaName(DEFAULT_SCHEMA).setTableName("test_table8").build());
 
         // there was a bug in these tests before - the ExampleMetadataHandler doesn't actually sort the tables if it has no pagination,
         // but the tests implied they were supposed to by comparing the objects. However, the equals method defined in the old Response class
@@ -266,7 +266,7 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+            .setTableName(TEST_TABLE_NAME)
             .build();
         GetTableResponse res = handler.doGetTable(allocator, req);
 
@@ -287,13 +287,13 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_2_NAME))
+            .setTableName(TEST_TABLE_2_NAME)
             .build();
         GetTableResponse res = handler.doGetTable(allocator, req);
 
         logger.info("doGetEmptyTable - {}", res.getSchema());
 
-        assertThat(res.getTableName(), equalTo(ProtobufMessageConverter.toTableName(TEST_TABLE_2_NAME)));
+        assertThat(res.getTableName(), equalTo(TEST_TABLE_2_NAME));
         assertThat(ProtobufMessageConverter.fromProtoSchema(allocator, res.getSchema()).getFields().size(), equalTo(2));
     }
 
@@ -307,13 +307,13 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_2_NAME))
+            .setTableName(TEST_TABLE_2_NAME)
             .build();
         GetTableResponse res = handler.doGetTable(allocator, req);
 
         logger.info("doGetTable - {}", res.getSchema());
 
-        assertThat(res.getTableName(), equalTo(ProtobufMessageConverter.toTableName(TEST_TABLE_2_NAME)));
+        assertThat(res.getTableName(), equalTo(TEST_TABLE_2_NAME));
     }
 
     @Test
@@ -329,7 +329,7 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtobufMessageConverter.toTableName(TableName.newBuilder().setSchemaName(TEST_CATALOG_NAME).setTableName(TEST_TABLE))).build()
+            .setTableName(TableName.newBuilder().setSchemaName(TEST_CATALOG_NAME).setTableName(TEST_TABLE).build())
             .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
             .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
             .build();
@@ -377,7 +377,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setTableName(TEST_TABLE_NAME)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
@@ -411,7 +411,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setTableName(TEST_TABLE_NAME)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
@@ -430,7 +430,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setTableName(TEST_TABLE_NAME)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
@@ -447,7 +447,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setTableName(TEST_TABLE_NAME)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
@@ -465,7 +465,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setTableName(TEST_TABLE_NAME)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
@@ -483,7 +483,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setTableName(TEST_TABLE_NAME)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
@@ -498,7 +498,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setTableName(TEST_TABLE_NAME)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
@@ -513,7 +513,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setTableName(TEST_TABLE_NAME)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
@@ -528,7 +528,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setTableName(TEST_TABLE_NAME)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
@@ -544,7 +544,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setTableName(TEST_TABLE_NAME)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(ImmutableMap.of())))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
@@ -567,7 +567,6 @@ public class DynamoDBMetadataHandlerTest
         logger.info("doGetSplits: req[{}]", req);
 
         GetSplitsResponse response = handler.doGetSplits(allocator, req);
-        assertThat(response.getType(), equalTo("GetSplitsResponse"));
         String continuationToken = response.getContinuationToken();
 
         logger.info("doGetSplits: continuationToken[{}] - numSplits[{}]", continuationToken, response.getSplitsList().size());
@@ -594,7 +593,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(TEST_TABLE_NAME))
+                .setTableName(TEST_TABLE_NAME)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SchemaBuilder.newBuilder().build()))
                 .build());
@@ -619,7 +618,6 @@ public class DynamoDBMetadataHandlerTest
         logger.info("doGetSplits: req[{}]", req);
 
         GetSplitsResponse response = handler.doGetSplits(allocator, req);
-        assertThat(response.getType(), equalTo("GetSplitsResponse"));
 
         String continuationToken = response.getContinuationToken();
 
@@ -680,7 +678,7 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtobufMessageConverter.toTableName(tableName))
+            .setTableName(tableName)
             .build();
         GetTableResponse getTableResponse = handler.doGetTable(allocator, getTableRequest);
         logger.info("validateSourceTableNamePropagation: GetTableResponse[{}]", getTableResponse);
@@ -692,7 +690,7 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setCatalogName(TEST_CATALOG_NAME)
             .setQueryId(TEST_QUERY_ID)
-            .setTableName(ProtobufMessageConverter.toTableName(tableName))
+            .setTableName(tableName)
             .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(ImmutableMap.of())))
             .setSchema(getTableResponse.getSchema())
             .build();
@@ -729,7 +727,7 @@ public class DynamoDBMetadataHandlerTest
             .setIdentity(PROTO_TEST_IDENTITY)
             .setQueryId(TEST_QUERY_ID)
             .setCatalogName(TEST_CATALOG_NAME)
-            .setTableName(ProtobufMessageConverter.toTableName(tableName))
+            .setTableName(tableName)
             .build();
         GetTableResponse getTableResponse = handler.doGetTable(allocator, getTableRequest);
         logger.info("validateSourceTableNamePropagation: GetTableResponse[{}]", getTableResponse);
@@ -749,7 +747,7 @@ public class DynamoDBMetadataHandlerTest
                 .setIdentity(PROTO_TEST_IDENTITY)
                 .setCatalogName(TEST_CATALOG_NAME)
                 .setQueryId(TEST_QUERY_ID)
-                .setTableName(ProtobufMessageConverter.toTableName(tableName))
+                .setTableName(tableName)
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(getTableResponse.getSchema())
                 .build();
