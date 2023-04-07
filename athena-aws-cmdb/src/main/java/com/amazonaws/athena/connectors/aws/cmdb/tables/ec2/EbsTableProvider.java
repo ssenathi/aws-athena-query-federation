@@ -83,7 +83,7 @@ public class EbsTableProvider
     @Override
     public GetTableResponse getTable(BlockAllocator blockAllocator, GetTableRequest getTableRequest)
     {
-        return new GetTableResponse(getTableRequest.getCatalogName(), getTableName(), SCHEMA);
+        return GetTableResponse.newBuilder().setCatalogName(getTableRequest.getCatalogName()).setTableName(getTableName()).setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SCHEMA)).build()
     }
 
     /**

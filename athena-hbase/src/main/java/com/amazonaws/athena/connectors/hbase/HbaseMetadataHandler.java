@@ -227,7 +227,7 @@ public class HbaseMetadataHandler
 
         Schema schema = schemaBuilder.build();
         logger.info("doGetTable: return {}", schema);
-        return new GetTableResponse(request.getCatalogName(), request.getTableName(), schema);
+        return GetTableResponse.newBuilder().setCatalogName(request.getCatalogName()).setTableName(request.getTableName()).setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schema)).build()
     }
 
     /**

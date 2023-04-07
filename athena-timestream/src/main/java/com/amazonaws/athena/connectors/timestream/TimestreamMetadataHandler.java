@@ -207,7 +207,7 @@ public class TimestreamMetadataHandler
             schema = schemaBuilder.build();
         }
 
-        return new GetTableResponse(request.getCatalogName(), request.getTableName(), schema);
+        return GetTableResponse.newBuilder().setCatalogName(request.getCatalogName()).setTableName(request.getTableName()).setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schema)).build()
     }
 
     /**

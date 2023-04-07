@@ -72,7 +72,7 @@ public class S3BucketsTableProvider
     @Override
     public GetTableResponse getTable(BlockAllocator blockAllocator, GetTableRequest getTableRequest)
     {
-        return new GetTableResponse(getTableRequest.getCatalogName(), getTableName(), SCHEMA);
+        return GetTableResponse.newBuilder().setCatalogName(getTableRequest.getCatalogName()).setTableName(getTableName()).setSchema(ProtobufMessageConverter.toProtoSchemaBytes(SCHEMA)).build()
     }
 
     /**
