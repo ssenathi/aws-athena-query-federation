@@ -193,7 +193,7 @@ public class JdbcMetadataHandlerTest
         Mockito.when(connection.getMetaData().getColumns("testCatalog", inputTableName.getSchemaName(), inputTableName.getTableName(), null)).thenReturn(resultSet);
 
         GetTableResponse getTableResponse = this.jdbcMetadataHandler.doGetTable(
-                this.blockAllocator, new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
+                this.blockAllocator, GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
 
         Assert.assertEquals(expected, getTableResponse.getSchema());
         Assert.assertEquals(inputTableName, getTableResponse.getTableName());
@@ -206,7 +206,7 @@ public class JdbcMetadataHandlerTest
     {
         TableName inputTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
 
-        this.jdbcMetadataHandler.doGetTable(this.blockAllocator, new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
+        this.jdbcMetadataHandler.doGetTable(this.blockAllocator, GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
     }
 
     @Test(expected = SQLException.class)
@@ -216,7 +216,7 @@ public class JdbcMetadataHandlerTest
         TableName inputTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Mockito.when(this.connection.getMetaData().getColumns(nullable(String.class), nullable(String.class), nullable(String.class), Mockito.isNull()))
                 .thenThrow(new SQLException());
-        this.jdbcMetadataHandler.doGetTable(this.blockAllocator, new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
+        this.jdbcMetadataHandler.doGetTable(this.blockAllocator, GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
     }
 
     @Test(expected = SQLException.class)

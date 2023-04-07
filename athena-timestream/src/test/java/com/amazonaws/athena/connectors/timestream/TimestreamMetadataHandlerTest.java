@@ -92,7 +92,7 @@ public class TimestreamMetadataHandlerTest
     private static final Logger logger = LoggerFactory.getLogger(TimestreamMetadataHandlerTest.class);
 
     private final String defaultSchema = "default";
-    private final FederatedIdentity identity = new FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList());
+    private final FederatedIdentity identity = FederatedIdentity.newBuilder().setArn("arn").setAccount("account").build();
     private TimestreamMetadataHandler handler;
     private BlockAllocator allocator;
 

@@ -93,7 +93,7 @@ public class TimestreamRecordHandlerTest
 {
     private static final Logger logger = LoggerFactory.getLogger(TimestreamRecordHandlerTest.class);
 
-    private static final FederatedIdentity IDENTITY = new FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList());
+    private static final FederatedIdentity IDENTITY = FederatedIdentity.newBuilder().setArn("arn").setAccount("account").build();
 
     private TimestreamRecordHandler handler;
     private BlockAllocator allocator;
@@ -296,7 +296,7 @@ public class TimestreamRecordHandlerTest
             int blockNum = 0;
             for (SpillLocation next : response.getRemoteBlocks()) {
                 S3SpillLocation spillLocation = (S3SpillLocation) next;
-                try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), response.getSchema())) {
+                try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
 
                     logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
                     // assertTrue(++blockNum < response.getRemoteBlocks().size() && block.getRowCount() > 10_000);

@@ -196,11 +196,11 @@ public class RedisMetadataHandler
         GetTableResponse response = super.doGetTable(blockAllocator, request);
 
         SchemaBuilder schemaBuilder = SchemaBuilder.newBuilder();
-        response.getSchema().getFields().forEach((Field field) ->
+        ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()).getFields().forEach((Field field) ->
                 schemaBuilder.addField(field.getName(), field.getType(), field.getChildren())
         );
 
-        response.getSchema().getCustomMetadata().entrySet().forEach((Map.Entry<String, String> meta) ->
+        ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()).getCustomMetadata().entrySet().forEach((Map.Entry<String, String> meta) ->
                 schemaBuilder.addMetadata(meta.getKey(), meta.getValue()));
 
         schemaBuilder.addField(KEY_COLUMN_NAME, Types.MinorType.VARCHAR.getType());

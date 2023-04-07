@@ -403,7 +403,7 @@ public class SqlServerMetadataHandlerTest
         Mockito.when(connection.getMetaData().getColumns("testCatalog", inputTableName.getSchemaName(), inputTableName.getTableName(), null)).thenReturn(resultSet);
         Mockito.when(connection.getCatalog()).thenReturn("testCatalog");
         GetTableResponse getTableResponse = this.sqlServerMetadataHandler.doGetTable(
-                blockAllocator, new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
+                blockAllocator, GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
         Assert.assertEquals(expected, getTableResponse.getSchema());
         Assert.assertEquals(inputTableName, getTableResponse.getTableName());
         Assert.assertEquals("testCatalog", getTableResponse.getCatalogName());

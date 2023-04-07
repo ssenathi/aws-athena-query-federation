@@ -163,7 +163,7 @@ public class GcsMetadataHandler
         GetTableResponse response = super.doGetTable(blockAllocator, request);
         //check whether schema added by user
         //return if schema present else fetch from files(dataset api)
-        if (response != null && response.getSchema() != null && checkGlueSchema(response)) {
+        if (response != null && ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()) != null && checkGlueSchema(response)) {
             return response;
         }
         else {
@@ -185,7 +185,7 @@ public class GcsMetadataHandler
      */
     private boolean checkGlueSchema(GetTableResponse response)
     {
-        return (response.getSchema().getFields().stream().count() - response.getPartitionColumns().stream().count()) > 0;
+        return (ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()).getFields().stream().count() - response.getPartitionColumns().stream().count()) > 0;
     }
 
     /**

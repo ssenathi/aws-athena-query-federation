@@ -133,7 +133,7 @@ public class LambdaMetadataProvider
     log.info("Submitting GetTableRequest with ID " + queryId);
 
     try (GetTableRequest request =
-                 new GetTableRequest(identity, queryId, catalog, tableName)) {
+                 GetTableRequest.newBuilder().setIdentity(identity).setQueryId(queryId).setCatalogName(catalog).setTableName(tableName)).build() {
       log.info("Submitting request: {}", request);
       GetTableResponse response = (GetTableResponse) getService(metadataFunction, identity, catalog).call(request);
       log.info("Received response: {}", response);

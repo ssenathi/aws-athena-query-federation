@@ -436,7 +436,7 @@ public class ElasticsearchRecordHandlerTest
             int blockNum = 0;
             for (SpillLocation next : response.getRemoteBlocks()) {
                 S3SpillLocation spillLocation = (S3SpillLocation) next;
-                try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), response.getSchema())) {
+                try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
                     logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
                     assertEquals(expectedDocuments.length, block.getRowCount());
                     for (int rowCount = 0; rowCount < block.getRowCount(); rowCount++) {

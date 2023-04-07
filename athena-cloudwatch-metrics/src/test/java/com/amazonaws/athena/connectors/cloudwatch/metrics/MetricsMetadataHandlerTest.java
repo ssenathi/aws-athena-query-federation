@@ -84,7 +84,7 @@ public class MetricsMetadataHandlerTest
     private static final Logger logger = LoggerFactory.getLogger(MetricsMetadataHandlerTest.class);
 
     private final String defaultSchema = "default";
-    private final FederatedIdentity identity = new FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList());
+    private final FederatedIdentity identity = FederatedIdentity.newBuilder().setArn("arn").setAccount("account").build();
 
     private MetricsMetadataHandler handler;
     private BlockAllocator allocator;
@@ -150,7 +150,7 @@ public class MetricsMetadataHandlerTest
     {
         logger.info("doGetMetricsTable - enter");
 
-        GetTableRequest metricsTableReq = new GetTableRequest(identity, "queryId", "default", TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metrics")).build();
+        GetTableRequest metricsTableReq = GetTableRequest.newBuilder().setIdentity(identity).setQueryId("queryId").setCatalogName("default").setTableName(TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metrics")).build().build();
         GetTableResponse metricsTableRes = handler.doGetTable(allocator, metricsTableReq);
         logger.info("doGetMetricsTable - {} {}", metricsTableRes.getTableName(), metricsTableRes.getSchema());
 

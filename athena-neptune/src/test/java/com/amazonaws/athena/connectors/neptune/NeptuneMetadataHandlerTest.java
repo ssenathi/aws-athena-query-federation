@@ -165,7 +165,7 @@ public class NeptuneMetadataHandlerTest extends TestBase {
         storageDescriptor.setColumns(columns);
         table.setStorageDescriptor(storageDescriptor);
 
-        GetTableRequest req = new GetTableRequest(IDENTITY, "queryId", "default", TableName.newBuilder().setSchemaName("schema1").setTableName("table1")).build();
+        GetTableRequest req = GetTableRequest.newBuilder().setIdentity(IDENTITY).setQueryId("queryId").setCatalogName("default").setTableName(TableName.newBuilder().setSchemaName("schema1").setTableName("table1")).build().build();
 
         GetTableResult getTableResult = new GetTableResult();
         getTableResult.setTable(table);

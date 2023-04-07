@@ -333,7 +333,7 @@ public class RedshiftMetadataHandlerTest
         Mockito.when(connection.getCatalog()).thenReturn("testCatalog");
 
         GetTableResponse getTableResponse = this.redshiftMetadataHandler.doGetTable(new BlockAllocatorImpl(),
-                new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
+                GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
 
         logger.info("Schema: {}", getTableResponse.getSchema());
 

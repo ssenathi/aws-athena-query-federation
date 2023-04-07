@@ -223,7 +223,7 @@ public class Db2MetadataHandlerTest extends TestBase {
 
         TableName inputTableName = TableName.newBuilder().setSchemaName("TESTSCHEMA").setTableName("TESTTABLE").build();
         GetTableResponse getTableResponse = this.db2MetadataHandler.doGetTable(
-                this.blockAllocator, new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
+                this.blockAllocator, GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
         Assert.assertEquals(expected, getTableResponse.getSchema());
         Assert.assertEquals(TableName.newBuilder().setSchemaName(schemaName, tableName)).setTableName(getTableResponse.getTableName()).build();
         Assert.assertEquals("testCatalog", getTableResponse.getCatalogName());
@@ -249,7 +249,7 @@ public class Db2MetadataHandlerTest extends TestBase {
         TableName inputTableName = TableName.newBuilder().setSchemaName(schemaName).setTableName(tableName).build();
         Mockito.when(this.connection.getMetaData().getColumns(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class)))
                 .thenThrow(new SQLException());
-        this.db2MetadataHandler.doGetTable(this.blockAllocator, new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
+        this.db2MetadataHandler.doGetTable(this.blockAllocator, GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
     }
 
     @Test(expected = SQLException.class)
@@ -271,7 +271,7 @@ public class Db2MetadataHandlerTest extends TestBase {
         TableName inputTableName = TableName.newBuilder().setSchemaName(schemaName).setTableName(tableName).build();
         Mockito.when(this.connection.getMetaData().getColumns(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class)))
                 .thenThrow(new SQLException());
-        this.db2MetadataHandler.doGetTable(this.blockAllocator, new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
+        this.db2MetadataHandler.doGetTable(this.blockAllocator, GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
     }
 
     @Test(expected = SQLException.class)
@@ -293,7 +293,7 @@ public class Db2MetadataHandlerTest extends TestBase {
         TableName inputTableName = TableName.newBuilder().setSchemaName(schemaName).setTableName(tableName).build();
         Mockito.when(this.connection.getMetaData().getColumns(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class)))
                 .thenThrow(new SQLException());
-        this.db2MetadataHandler.doGetTable(this.blockAllocator, new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
+        this.db2MetadataHandler.doGetTable(this.blockAllocator, GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
     }
 
     @Test(expected = SQLException.class)
@@ -315,7 +315,7 @@ public class Db2MetadataHandlerTest extends TestBase {
         TableName inputTableName = TableName.newBuilder().setSchemaName(schemaName).setTableName(tableName).build();
         Mockito.when(this.connection.getMetaData().getColumns(nullable(String.class), nullable(String.class), nullable(String.class), nullable(String.class)))
                 .thenThrow(new SQLException());
-        this.db2MetadataHandler.doGetTable(this.blockAllocator, new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
+        this.db2MetadataHandler.doGetTable(this.blockAllocator, GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
     }
 
     @Test

@@ -86,7 +86,7 @@ public class CloudwatchMetadataHandlerTest
 {
     private static final Logger logger = LoggerFactory.getLogger(CloudwatchMetadataHandlerTest.class);
 
-    private FederatedIdentity identity = new FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList());
+    private FederatedIdentity identity = FederatedIdentity.newBuilder().setArn("arn").setAccount("account").build();
     private CloudwatchMetadataHandler handler;
     private BlockAllocator allocator;
 
@@ -268,7 +268,7 @@ public class CloudwatchMetadataHandlerTest
             return result;
         });
 
-        GetTableRequest req = new GetTableRequest(identity, "queryId", "default", TableName.newBuilder().setSchemaName(expectedSchema).setTableName("table-9")).build();
+        GetTableRequest req = GetTableRequest.newBuilder().setIdentity(identity).setQueryId("queryId").setCatalogName("default").setTableName(TableName.newBuilder().setSchemaName(expectedSchema).setTableName("table-9")).build().build();
         GetTableResponse res = handler.doGetTable(allocator, req);
         logger.info("doGetTable - {} {}", res.getTableName(), res.getSchema());
 

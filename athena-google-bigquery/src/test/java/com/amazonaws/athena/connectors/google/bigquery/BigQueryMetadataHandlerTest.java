@@ -186,7 +186,7 @@ public class BigQueryMetadataHandlerTest
         assertNotNull(response);
 
         //Number of Fields
-        assertEquals(tableSchema.getFields().size(), response.getSchema().getFields().size());
+        assertEquals(tableSchema.getFields().size(), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()).getFields().size());
     }
 
     @Test

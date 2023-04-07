@@ -353,6 +353,6 @@ public class ExampleMetadataHandlerTest
 
     private static FederatedIdentity fakeIdentity()
     {
-        return new FederatedIdentity("arn", "account", Collections.emptyMap(), Collections.emptyList());
+        return FederatedIdentity.newBuilder().setArn("arn").setAccount("account").build();
     }
 }

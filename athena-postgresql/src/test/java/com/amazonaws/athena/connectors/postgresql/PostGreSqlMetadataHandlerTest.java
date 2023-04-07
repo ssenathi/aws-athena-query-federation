@@ -332,7 +332,7 @@ public class PostGreSqlMetadataHandlerTest
         Mockito.when(connection.getCatalog()).thenReturn("testCatalog");
 
         GetTableResponse getTableResponse = this.postGreSqlMetadataHandler.doGetTable(new BlockAllocatorImpl(),
-                new GetTableRequest(this.federatedIdentity, "testQueryId", "testCatalog", inputTableName));
+                GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
 
         logger.info("Schema: {}", getTableResponse.getSchema());
 

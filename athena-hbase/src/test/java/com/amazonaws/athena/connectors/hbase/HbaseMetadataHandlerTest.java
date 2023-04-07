@@ -206,7 +206,7 @@ public class HbaseMetadataHandlerTest
             return processor.scan(mockScanner);
         });
 
-        GetTableRequest req = new GetTableRequest(IDENTITY, QUERY_ID, DEFAULT_CATALOG, TABLE_NAME);
+        GetTableRequest req = GetTableRequest.newBuilder().setIdentity(IDENTITY).setQueryId(QUERY_ID).setCatalogName(DEFAULT_CATALOG).setTableName(TABLE_NAME).build();
         GetTableResponse res = handler.doGetTable(allocator, req);
         logger.info("doGetTable - {}", res);
 

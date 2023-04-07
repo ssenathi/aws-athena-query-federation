@@ -237,7 +237,7 @@ public class GcsMetadataHandlerTest
         Map<String, String> metadataSchema = new HashMap<>();
         metadataSchema.put("dataFormat", PARQUET);
         Schema schema = new Schema(asList(field), metadataSchema);
-        GetTableRequest getTableRequest = new GetTableRequest(federatedIdentity, QUERY_ID, "gcs", TableName.newBuilder().setSchemaName(SCHEMA_NAME).setTableName("testtable")).build();
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("gcs").setTableName(TableName.newBuilder().setSchemaName(SCHEMA_NAME).setTableName("testtable")).build().build();
         Table table = new Table();
         table.setName(TABLE_1);
         table.setDatabaseName(DATABASE_NAME);

@@ -335,7 +335,7 @@ public class DocDBRecordHandlerTest
             int blockNum = 0;
             for (SpillLocation next : response.getRemoteBlocks()) {
                 S3SpillLocation spillLocation = (S3SpillLocation) next;
-                try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), response.getSchema())) {
+                try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
 
                     logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
                     // assertTrue(++blockNum < response.getRemoteBlocks().size() && block.getRowCount() > 10_000);
@@ -389,7 +389,7 @@ public class DocDBRecordHandlerTest
         when(mockIterable.batchSize(anyInt())).thenReturn(mockIterable);
         when(mockIterable.iterator()).thenReturn(new StubbingCursor(documents.iterator()));
 
-        GetTableRequest req = new GetTableRequest(IDENTITY, QUERY_ID, DEFAULT_CATALOG, TABLE_NAME);
+        GetTableRequest req = GetTableRequest.newBuilder().setIdentity(IDENTITY).setQueryId(QUERY_ID).setCatalogName(DEFAULT_CATALOG).setTableName(TABLE_NAME).build();
         GetTableResponse res = mdHandler.doGetTable(allocator, req);
         logger.info("doGetTable - {}", res);
 

@@ -437,7 +437,7 @@ public class NeptuneRecordHandlerTest extends TestBase {
                         for (SpillLocation next : response.getRemoteBlocks()) {
                                 S3SpillLocation spillLocation = (S3SpillLocation) next;
                                 try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(),
-                                                response.getSchema())) {
+                                                ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
                                         logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++,
                                                         block.getRowCount());
 
