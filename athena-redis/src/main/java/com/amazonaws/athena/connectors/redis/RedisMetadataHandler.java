@@ -205,7 +205,7 @@ public class RedisMetadataHandler
 
         schemaBuilder.addField(KEY_COLUMN_NAME, Types.MinorType.VARCHAR.getType());
 
-        return GetTableResponse.newBuilder().setCatalogName(response.getCatalogName()).setTableName(response.getTableName()).setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schemaBuilder.build())).build()
+        return GetTableResponse.newBuilder().setCatalogName(response.getCatalogName()).setTableName(response.getTableName()).setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schemaBuilder.build())).build();
     }
 
     @Override

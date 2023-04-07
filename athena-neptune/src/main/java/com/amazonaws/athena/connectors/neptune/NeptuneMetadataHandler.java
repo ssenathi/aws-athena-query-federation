@@ -190,7 +190,7 @@ public class NeptuneMetadataHandler extends GlueMetadataHandler
             logger.warn("doGetTable: Unable to retrieve table[{}:{}] from AWS Glue.",
                     request.getTableName().getSchemaName(), request.getTableName().getTableName(), ex);
         }
-        return GetTableResponse.newBuilder().setCatalogName(request.getCatalogName()).setTableName(request.getTableName()).setSchema(ProtobufMessageConverter.toProtoSchemaBytes(tableSchema)).build()
+        return GetTableResponse.newBuilder().setCatalogName(request.getCatalogName()).setTableName(request.getTableName()).setSchema(ProtobufMessageConverter.toProtoSchemaBytes(tableSchema)).build();
     }
 
     /**
