@@ -82,7 +82,7 @@ public class S3BucketsTableProvider
      * @See TableProvider
      */
     @Override
-    public void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
+    public void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
     {
         for (Bucket next : amazonS3.listBuckets()) {
             toRow(next, spiller);

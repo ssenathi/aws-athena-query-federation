@@ -102,12 +102,12 @@ public class ImagesTableProvider
      * @See TableProvider
      */
     @Override
-    public void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
+    public void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
     {
         DescribeImagesRequest request = new DescribeImagesRequest();
 
-        ValueSet idConstraint = recordsRequest.getConstraints().getSummary().get("id");
-        ValueSet ownerConstraint = recordsRequest.getConstraints().getSummary().get("owner");
+        ValueSet idConstraint = ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()).getSummary().get("id");
+        ValueSet ownerConstraint = ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()).getSummary().get("owner");
         if (idConstraint != null && idConstraint.isSingleValue()) {
             request.setImageIds(Collections.singletonList(idConstraint.getSingleValue().toString()));
         }

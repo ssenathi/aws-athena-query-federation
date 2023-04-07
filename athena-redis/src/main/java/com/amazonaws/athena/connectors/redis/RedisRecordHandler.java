@@ -130,7 +130,7 @@ public class RedisRecordHandler
      * @see RecordHandler
      */
     @Override
-    protected void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
+    protected void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
     {
         Split split = recordsRequest.getSplit();
         ScanCursor keyCursor = null;

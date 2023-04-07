@@ -93,12 +93,12 @@ public class EbsTableProvider
      * @See TableProvider
      */
     @Override
-    public void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
+    public void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
     {
         boolean done = false;
         DescribeVolumesRequest request = new DescribeVolumesRequest();
 
-        ValueSet idConstraint = recordsRequest.getConstraints().getSummary().get("id");
+        ValueSet idConstraint = ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()).getSummary().get("id");
         if (idConstraint != null && idConstraint.isSingleValue()) {
             request.setVolumeIds(Collections.singletonList(idConstraint.getSingleValue().toString()));
         }

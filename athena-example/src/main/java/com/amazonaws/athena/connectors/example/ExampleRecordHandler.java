@@ -107,7 +107,7 @@ public class ExampleRecordHandler
      * ability to control Block size. The resulting increase in Block size may cause failures and reduced performance.
      */
     @Override
-    protected void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
+    protected void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
             throws IOException
     {
         logger.info("readWithConstraint: enter - " + recordsRequest.getSplit());

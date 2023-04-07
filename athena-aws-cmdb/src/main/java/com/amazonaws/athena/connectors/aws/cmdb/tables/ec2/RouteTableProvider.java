@@ -91,12 +91,12 @@ public class RouteTableProvider
      * @See TableProvider
      */
     @Override
-    public void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
+    public void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
     {
         boolean done = false;
         DescribeRouteTablesRequest request = new DescribeRouteTablesRequest();
 
-        ValueSet idConstraint = recordsRequest.getConstraints().getSummary().get("route_table_id");
+        ValueSet idConstraint = ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()).getSummary().get("route_table_id");
         if (idConstraint != null && idConstraint.isSingleValue()) {
             request.setRouteTableIds(Collections.singletonList(idConstraint.getSingleValue().toString()));
         }

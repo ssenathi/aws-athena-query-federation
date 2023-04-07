@@ -97,12 +97,12 @@ public class Ec2TableProvider
      * @See TableProvider
      */
     @Override
-    public void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
+    public void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
     {
         boolean done = false;
         DescribeInstancesRequest request = new DescribeInstancesRequest();
 
-        ValueSet idConstraint = recordsRequest.getConstraints().getSummary().get("instance_id");
+        ValueSet idConstraint = ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()).getSummary().get("instance_id");
         if (idConstraint != null && idConstraint.isSingleValue()) {
             request.setInstanceIds(Collections.singletonList(idConstraint.getSingleValue().toString()));
         }

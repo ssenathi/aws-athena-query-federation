@@ -86,9 +86,9 @@ public class S3ObjectsTableProvider
      * @See TableProvider
      */
     @Override
-    public void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
+    public void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
     {
-        ValueSet bucketConstraint = recordsRequest.getConstraints().getSummary().get("bucket_name");
+        ValueSet bucketConstraint = ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()).getSummary().get("bucket_name");
         String bucket;
         if (bucketConstraint != null && bucketConstraint.isSingleValue()) {
             bucket = bucketConstraint.getSingleValue().toString();

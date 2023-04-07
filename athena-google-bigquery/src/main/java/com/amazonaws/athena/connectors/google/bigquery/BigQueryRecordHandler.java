@@ -86,7 +86,7 @@ public class BigQueryRecordHandler
     }
 
     @Override
-    public void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
+    public void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
             throws Exception
     {
         List<QueryParameterValue> parameterValues = new ArrayList<>();

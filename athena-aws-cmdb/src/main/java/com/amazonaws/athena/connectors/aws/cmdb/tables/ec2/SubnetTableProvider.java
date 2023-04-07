@@ -90,11 +90,11 @@ public class SubnetTableProvider
      * @See TableProvider
      */
     @Override
-    public void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
+    public void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
     {
         DescribeSubnetsRequest request = new DescribeSubnetsRequest();
 
-        ValueSet idConstraint = recordsRequest.getConstraints().getSummary().get("id");
+        ValueSet idConstraint = ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()).getSummary().get("id");
         if (idConstraint != null && idConstraint.isSingleValue()) {
             request.setSubnetIds(Collections.singletonList(idConstraint.getSingleValue().toString()));
         }

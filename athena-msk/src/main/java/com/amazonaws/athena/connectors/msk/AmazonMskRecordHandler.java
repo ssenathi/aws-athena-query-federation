@@ -75,7 +75,7 @@ public class AmazonMskRecordHandler
      * @param queryStatusChecker - instance of {@link QueryStatusChecker}
      */
     @Override
-    public void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker) throws Exception
+    public void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker) throws Exception
     {
         // Taking the Split parameters in a readable pojo format.
         SplitParameters splitParameters = AmazonMskUtils.createSplitParam(recordsRequest.getSplit().getProperties());

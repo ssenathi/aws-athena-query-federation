@@ -149,7 +149,7 @@ public class MetricUtils
 
         dataRequest.withMetricDataQueries(metricDataQueries);
 
-        ValueSet timeConstraint = readRecordsRequest.getConstraints().getSummary().get(TIMESTAMP_FIELD);
+        ValueSet timeConstraint = ProtobufMessageConverter.fromProtoConstraints(allocator, readRecordsRequest.getConstraints()).getSummary().get(TIMESTAMP_FIELD);
         if (timeConstraint instanceof SortedRangeSet && !timeConstraint.isNullAllowed()) {
             //SortedRangeSet is how >, <, between is represented which are easiest and most common when
             //searching logs so we attempt to push that down here as an optimization. SQL can represent complex

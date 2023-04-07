@@ -94,17 +94,17 @@ public class SecurityGroupsTableProvider
      * @See TableProvider
      */
     @Override
-    public void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
+    public void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker)
     {
         boolean done = false;
         DescribeSecurityGroupsRequest request = new DescribeSecurityGroupsRequest();
 
-        ValueSet idConstraint = recordsRequest.getConstraints().getSummary().get("id");
+        ValueSet idConstraint = ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()).getSummary().get("id");
         if (idConstraint != null && idConstraint.isSingleValue()) {
             request.setGroupIds(Collections.singletonList(idConstraint.getSingleValue().toString()));
         }
 
-        ValueSet nameConstraint = recordsRequest.getConstraints().getSummary().get("name");
+        ValueSet nameConstraint = ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()).getSummary().get("name");
         if (nameConstraint != null && nameConstraint.isSingleValue()) {
             request.setGroupNames(Collections.singletonList(nameConstraint.getSingleValue().toString()));
         }

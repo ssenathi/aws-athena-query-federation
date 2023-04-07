@@ -84,5 +84,5 @@ public interface TableProvider
      *
      * @See RecordHandler
      */
-    void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker);
+    void readWithConstraint(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, QueryStatusChecker queryStatusChecker);
 }
