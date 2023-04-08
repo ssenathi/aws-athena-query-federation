@@ -98,7 +98,7 @@ public class NeptuneMetadataHandlerTest extends TestBase {
     @Test
     public void doListSchemaNames() {
         logger.info("doListSchemas - enter");
-        ListSchemasRequest req = new ListSchemasRequest(IDENTITY, "queryId", "default");
+        ListSchemasRequest req = ListSchemasRequest.newBuilder().setIdentity(IDENTITY).setQueryId("queryId").setCatalogName("default").build();
 
         ListSchemasResponse res = handler.doListSchemaNames(allocator, req);
         logger.info("doListSchemas - {}", res.getSchemas());

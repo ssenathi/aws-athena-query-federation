@@ -209,14 +209,9 @@ public class TimestreamRecordHandlerTest
                 .add("us-east-1a")
                 .add("us-east-1b").build());
 
-        S3SpillLocation splitLoc = S3SpillLocation.newBuilder()
-                .withBucket(UUID.randomUUID().toString())
-                .withSplitId(UUID.randomUUID().toString())
-                .withQueryId(UUID.randomUUID().toString())
-                .withIsDirectory(true)
-                .build();
+        SpillLocation splitLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString()).setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString()).setDirectory(true).build()
 
-        Split.Builder splitBuilder = Split.newBuilder(splitLoc, keyFactory.create());
+        Split.Builder splitBuilder = Split.newBuilder().setSpillLocation(splitLoc).setEncryptionKey(keyFactory.create());
 
         ReadRecordsRequest request = new ReadRecordsRequest(IDENTITY,
                 DEFAULT_CATALOG,
@@ -264,14 +259,9 @@ public class TimestreamRecordHandlerTest
                 .add("us-east-1a")
                 .add("us-east-1b").build());
 
-        S3SpillLocation splitLoc = S3SpillLocation.newBuilder()
-                .withBucket(UUID.randomUUID().toString())
-                .withSplitId(UUID.randomUUID().toString())
-                .withQueryId(UUID.randomUUID().toString())
-                .withIsDirectory(true)
-                .build();
+        SpillLocation splitLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString()).setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString()).setDirectory(true).build()
 
-        Split.Builder splitBuilder = Split.newBuilder(splitLoc, keyFactory.create());
+        Split.Builder splitBuilder = Split.newBuilder().setSpillLocation(splitLoc).setEncryptionKey(keyFactory.create());
 
         ReadRecordsRequest request = new ReadRecordsRequest(IDENTITY,
                 DEFAULT_CATALOG,
@@ -294,7 +284,7 @@ public class TimestreamRecordHandlerTest
 
             int blockNum = 0;
             for (SpillLocation next : response.getRemoteBlocksList()) {
-                S3SpillLocation spillLocation = (S3SpillLocation) next;
+                SpillLocation spillLocation = (SpillLocation) next;
                 try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
 
                     logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
@@ -333,12 +323,7 @@ public class TimestreamRecordHandlerTest
                         }
                 );
 
-        S3SpillLocation splitLoc = S3SpillLocation.newBuilder()
-                .withBucket(UUID.randomUUID().toString())
-                .withSplitId(UUID.randomUUID().toString())
-                .withQueryId(UUID.randomUUID().toString())
-                .withIsDirectory(true)
-                .build();
+        SpillLocation splitLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString()).setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString()).setDirectory(true).build()
 
         Split split = Split.newBuilder(splitLoc, null).build();
 
@@ -400,12 +385,7 @@ public class TimestreamRecordHandlerTest
                         }
                 );
 
-        S3SpillLocation splitLoc = S3SpillLocation.newBuilder()
-                .withBucket(UUID.randomUUID().toString())
-                .withSplitId(UUID.randomUUID().toString())
-                .withQueryId(UUID.randomUUID().toString())
-                .withIsDirectory(true)
-                .build();
+        SpillLocation splitLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString()).setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString()).setDirectory(true).build()
 
         Split split = Split.newBuilder(splitLoc, null)
                 .build();
@@ -459,14 +439,9 @@ public class TimestreamRecordHandlerTest
         constraintsMap.put("az", EquatableValueSet.newBuilder(allocator, Types.MinorType.VARCHAR.getType(), true, true)
                 .add("us-east-1a").build());
 
-        S3SpillLocation splitLoc = S3SpillLocation.newBuilder()
-                .withBucket(UUID.randomUUID().toString())
-                .withSplitId(UUID.randomUUID().toString())
-                .withQueryId(UUID.randomUUID().toString())
-                .withIsDirectory(true)
-                .build();
+        SpillLocation splitLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString()).setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString()).setDirectory(true).build()
 
-        Split.Builder splitBuilder = Split.newBuilder(splitLoc, keyFactory.create());
+        Split.Builder splitBuilder = Split.newBuilder().setSpillLocation(splitLoc).setEncryptionKey(keyFactory.create());
 
         ReadRecordsRequest request = new ReadRecordsRequest(IDENTITY,
                 DEFAULT_CATALOG,

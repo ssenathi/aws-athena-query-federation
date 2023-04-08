@@ -142,7 +142,7 @@ public class HbaseMetadataHandlerTest
 
         when(mockClient.listNamespaceDescriptors()).thenReturn(schemaNames);
 
-        ListSchemasRequest req = new ListSchemasRequest(IDENTITY, QUERY_ID, DEFAULT_CATALOG);
+        ListSchemasRequest req = ListSchemasRequest.newBuilder().setIdentity(IDENTITY).setQueryId(QUERY_ID).setCatalogName(DEFAULT_CATALOG).build();
         ListSchemasResponse res = handler.doListSchemaNames(allocator, req);
 
         logger.info("doListSchemas - {}", res.getSchemas());

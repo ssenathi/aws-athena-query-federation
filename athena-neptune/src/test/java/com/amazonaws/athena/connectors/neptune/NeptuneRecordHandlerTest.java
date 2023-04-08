@@ -376,7 +376,7 @@ public class NeptuneRecordHandlerTest extends TestBase {
         private void invokeAndAssert(Schema schemaPG, HashMap<String, ValueSet> constraintMap, Integer expectedRecordCount)
                         throws Exception {
 
-                S3SpillLocation spillLoc = S3SpillLocation.newBuilder().withBucket(UUID.randomUUID().toString())
+                SpillLocation spillLoc = SpillLocation.newBuilder().withBucket(UUID.randomUUID().toString())
                                 .withSplitId(UUID.randomUUID().toString()).withQueryId(UUID.randomUUID().toString())
                                 .withIsDirectory(true).build();
 
@@ -406,7 +406,7 @@ public class NeptuneRecordHandlerTest extends TestBase {
 
         @Test
         public void doReadRecordsSpill() throws Exception {
-                S3SpillLocation splitLoc = S3SpillLocation.newBuilder().withBucket(UUID.randomUUID().toString())
+                SpillLocation splitLoc = SpillLocation.newBuilder().withBucket(UUID.randomUUID().toString())
                                 .withSplitId(UUID.randomUUID().toString()).withQueryId(UUID.randomUUID().toString())
                                 .withIsDirectory(true).build();
 
@@ -420,7 +420,7 @@ public class NeptuneRecordHandlerTest extends TestBase {
                 buildGraphTraversal();
 
                 ReadRecordsRequest request = new ReadRecordsRequest(IDENTITY, DEFAULT_CATALOG, QUERY_ID, TABLE_NAME,
-                schemaPGVertexForRead, Split.newBuilder(splitLoc, keyFactory.create()).build(),
+                schemaPGVertexForRead, Split.newBuilder().setSpillLocation(splitLoc).setEncryptionKey(keyFactory.create()).build(),
                                 new Constraints(constraintsMap), 1_500_000L, // ~1.5MB so we should see some spill
                                 0L);
 
@@ -434,7 +434,7 @@ public class NeptuneRecordHandlerTest extends TestBase {
 
                         int blockNum = 0;
                         for (SpillLocation next : response.getRemoteBlocksList()) {
-                                S3SpillLocation spillLocation = (S3SpillLocation) next;
+                                SpillLocation spillLocation = (SpillLocation) next;
                                 try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(),
                                                 ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
                                         logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++,

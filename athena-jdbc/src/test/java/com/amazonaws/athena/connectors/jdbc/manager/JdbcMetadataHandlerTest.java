@@ -124,7 +124,7 @@ public class JdbcMetadataHandlerTest
         AtomicInteger rowNumber = new AtomicInteger(-1);
         ResultSet resultSet = mockResultSet(schema, values, rowNumber);
         Mockito.when(connection.getMetaData().getSchemas()).thenReturn(resultSet);
-        ListSchemasResponse listSchemasResponse = this.jdbcMetadataHandler.doListSchemaNames(this.blockAllocator, new ListSchemasRequest(this.federatedIdentity, "testQueryId", "testCatalog"));
+        ListSchemasResponse listSchemasResponse = this.jdbcMetadataHandler.doListSchemaNames(this.blockAllocator, ListSchemasRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog")).build();
         Assert.assertArrayEquals(expected, listSchemasResponse.getSchemas().toArray());
     }
 
@@ -224,7 +224,7 @@ public class JdbcMetadataHandlerTest
             throws Exception
     {
         Mockito.when(this.connection.getMetaData().getSchemas()).thenThrow(new SQLException());
-        this.jdbcMetadataHandler.doListSchemaNames(this.blockAllocator, new ListSchemasRequest(this.federatedIdentity, "testQueryId", "testCatalog"));
+        this.jdbcMetadataHandler.doListSchemaNames(this.blockAllocator, ListSchemasRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog")).build();
     }
 
     @Test(expected = SQLException.class)

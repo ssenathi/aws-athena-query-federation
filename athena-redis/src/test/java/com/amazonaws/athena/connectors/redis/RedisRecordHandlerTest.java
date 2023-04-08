@@ -216,14 +216,9 @@ public class RedisRecordHandlerTest
         when(mockSyncCommands.get(nullable(String.class)))
                 .thenAnswer((InvocationOnMock invocationOnMock) -> String.valueOf(value.getAndIncrement()));
 
-        S3SpillLocation splitLoc = S3SpillLocation.newBuilder()
-                .withBucket(UUID.randomUUID().toString())
-                .withSplitId(UUID.randomUUID().toString())
-                .withQueryId(UUID.randomUUID().toString())
-                .withIsDirectory(true)
-                .build();
+        SpillLocation splitLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString()).setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString()).setDirectory(true).build()
 
-        Split split = Split.newBuilder(splitLoc, keyFactory.create())
+        Split split = Split.newBuilder().setSpillLocation(splitLoc).setEncryptionKey(keyFactory.create())
                 .add(REDIS_ENDPOINT_PROP, endpoint)
                 .add(KEY_TYPE, KeyType.PREFIX.getId())
                 .add(KEY_PREFIX_TABLE_PROP, "key-*")
@@ -314,14 +309,9 @@ public class RedisRecordHandlerTest
         Mockito.lenient().when(mockSyncCommands.get(nullable(String.class)))
                 .thenAnswer((InvocationOnMock invocationOnMock) -> String.valueOf(value.getAndIncrement()));
 
-        S3SpillLocation splitLoc = S3SpillLocation.newBuilder()
-                .withBucket(UUID.randomUUID().toString())
-                .withSplitId(UUID.randomUUID().toString())
-                .withQueryId(UUID.randomUUID().toString())
-                .withIsDirectory(true)
-                .build();
+        SpillLocation splitLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString()).setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString()).setDirectory(true).build()
 
-        Split split = Split.newBuilder(splitLoc, keyFactory.create())
+        Split split = Split.newBuilder().setSpillLocation(splitLoc).setEncryptionKey(keyFactory.create())
                 .add(REDIS_ENDPOINT_PROP, endpoint)
                 .add(KEY_TYPE, KeyType.PREFIX.getId())
                 .add(KEY_PREFIX_TABLE_PROP, "key-*")
@@ -429,14 +419,9 @@ public class RedisRecordHandlerTest
         Mockito.lenient().when(mockSyncCommands.get(nullable(String.class)))
                 .thenAnswer((InvocationOnMock invocationOnMock) -> String.valueOf(value.getAndIncrement()));
 
-        S3SpillLocation splitLoc = S3SpillLocation.newBuilder()
-                .withBucket(UUID.randomUUID().toString())
-                .withSplitId(UUID.randomUUID().toString())
-                .withQueryId(UUID.randomUUID().toString())
-                .withIsDirectory(true)
-                .build();
+        SpillLocation splitLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString()).setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString()).setDirectory(true).build()
 
-        Split split = Split.newBuilder(splitLoc, keyFactory.create())
+        Split split = Split.newBuilder().setSpillLocation(splitLoc).setEncryptionKey(keyFactory.create())
                 .add(REDIS_ENDPOINT_PROP, endpoint)
                 .add(KEY_TYPE, KeyType.PREFIX.getId())
                 .add(KEY_PREFIX_TABLE_PROP, "key-*")

@@ -413,7 +413,7 @@ public class SnowflakeMetadataHandlerTest
     @Test(expected = RuntimeException.class)
     public void doListSchemaNames() throws Exception {
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
-        ListSchemasRequest listSchemasRequest = new ListSchemasRequest(federatedIdentity, "queryId", "testCatalog");
+        ListSchemasRequest listSchemasRequest = ListSchemasRequest.newBuilder().setIdentity(federatedIdentity).setQueryId("queryId").setCatalogName("testCatalog").build();
 
         Statement statement = Mockito.mock(Statement.class);
         Mockito.when(this.connection.createStatement()).thenReturn(statement);

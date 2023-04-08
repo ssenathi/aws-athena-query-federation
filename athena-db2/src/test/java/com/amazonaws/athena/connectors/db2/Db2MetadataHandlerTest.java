@@ -320,7 +320,7 @@ public class Db2MetadataHandlerTest extends TestBase {
 
     @Test
     public void doListSchemaNames() throws Exception {
-        ListSchemasRequest listSchemasRequest = new ListSchemasRequest(federatedIdentity, "queryId", "testCatalog");
+        ListSchemasRequest listSchemasRequest = ListSchemasRequest.newBuilder().setIdentity(federatedIdentity).setQueryId("queryId").setCatalogName("testCatalog").build();
 
         Statement statement = Mockito.mock(Statement.class);
         Mockito.when(this.connection.createStatement()).thenReturn(statement);

@@ -108,7 +108,7 @@ public class ExampleMetadataHandlerTest
         }
 
         logger.info("doListSchemas - enter");
-        ListSchemasRequest req = new ListSchemasRequest(fakeIdentity(), "queryId", "default");
+        ListSchemasRequest req = ListSchemasRequest.newBuilder().setIdentity(fakeIdentity()).setQueryId("queryId").setCatalogName("default").build();
         ListSchemasResponse res = handler.doListSchemaNames(allocator, req);
         logger.info("doListSchemas - {}", res.getSchemas());
         assertFalse(res.getSchemas().isEmpty());

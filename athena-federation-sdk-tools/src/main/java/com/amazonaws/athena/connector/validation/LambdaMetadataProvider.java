@@ -72,7 +72,7 @@ public class LambdaMetadataProvider
     log.info("Submitting ListSchemasRequest with ID " + queryId);
 
     try (ListSchemasRequest request =
-                 new ListSchemasRequest(identity, queryId, catalog)) {
+                 ListSchemasRequest.newBuilder().setIdentity(identity).setQueryId(queryId).setCatalogName(catalog)).build() {
       log.info("Submitting request: {}", request);
       ListSchemasResponse response = (ListSchemasResponse) getService(metadataFunction, identity, catalog).call(request);
       log.info("Received response: {}", response);

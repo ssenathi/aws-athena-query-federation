@@ -195,14 +195,9 @@ public class HbaseRecordHandlerTest
         constraintsMap.put("family1:col3", SortedRangeSet.copyOf(Types.MinorType.BIGINT.getType(),
                 ImmutableList.of(Range.equal(allocator, Types.MinorType.BIGINT.getType(), 1L)), false));
 
-        S3SpillLocation splitLoc = S3SpillLocation.newBuilder()
-                .withBucket(UUID.randomUUID().toString())
-                .withSplitId(UUID.randomUUID().toString())
-                .withQueryId(UUID.randomUUID().toString())
-                .withIsDirectory(true)
-                .build();
+        SpillLocation splitLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString()).setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString()).setDirectory(true).build()
 
-        Split.Builder splitBuilder = Split.newBuilder(splitLoc, keyFactory.create())
+        Split.Builder splitBuilder = Split.newBuilder().setSpillLocation(splitLoc).setEncryptionKey(keyFactory.create())
                 .add(HBASE_CONN_STR, "fake_con_str")
                 .add(START_KEY_FIELD, "fake_start_key")
                 .add(END_KEY_FIELD, "fake_end_key")
@@ -248,14 +243,9 @@ public class HbaseRecordHandlerTest
         constraintsMap.put("family1:col3", SortedRangeSet.copyOf(Types.MinorType.BIGINT.getType(),
                 ImmutableList.of(Range.greaterThan(allocator, Types.MinorType.BIGINT.getType(), 0L)), true));
 
-        S3SpillLocation splitLoc = S3SpillLocation.newBuilder()
-                .withBucket(UUID.randomUUID().toString())
-                .withSplitId(UUID.randomUUID().toString())
-                .withQueryId(UUID.randomUUID().toString())
-                .withIsDirectory(true)
-                .build();
+        SpillLocation splitLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString()).setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString()).setDirectory(true).build()
 
-        Split.Builder splitBuilder = Split.newBuilder(splitLoc, keyFactory.create())
+        Split.Builder splitBuilder = Split.newBuilder().setSpillLocation(splitLoc).setEncryptionKey(keyFactory.create())
                 .add(HBASE_CONN_STR, "fake_con_str")
                 .add(START_KEY_FIELD, "fake_start_key")
                 .add(END_KEY_FIELD, "fake_end_key")
@@ -283,7 +273,7 @@ public class HbaseRecordHandlerTest
 
             int blockNum = 0;
             for (SpillLocation next : response.getRemoteBlocksList()) {
-                S3SpillLocation spillLocation = (S3SpillLocation) next;
+                SpillLocation spillLocation = (SpillLocation) next;
                 try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
 
                     logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++, block.getRowCount());
