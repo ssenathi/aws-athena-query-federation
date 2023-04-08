@@ -21,10 +21,12 @@ package com.amazonaws.athena.connectors.redis;
 
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.Block;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
-import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
+import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connectors.redis.lettuce.RedisCommandsWrapper;
 import com.amazonaws.athena.connectors.redis.lettuce.RedisConnectionFactory;
 import com.amazonaws.athena.connectors.redis.lettuce.RedisConnectionWrapper;
@@ -138,7 +140,7 @@ public class RedisRecordHandler
         boolean isCluster = Boolean.parseBoolean(split.getPropertiesMap().get(REDIS_CLUSTER_FLAG));
         String dbNumber = split.getPropertiesMap().get(REDIS_DB_NUMBER);
         ValueType valueType = ValueType.fromId(split.getPropertiesMap().get(VALUE_TYPE_TABLE_PROP));
-        List<Field> fieldList = recordsRequest.getSchema().getFields().stream()
+        List<Field> fieldList = ProtobufMessageConverter.fromProtoSchema(allocator, recordsRequest.getSchema()).getFields().stream()
                 .filter((Field next) -> !KEY_COLUMN_NAME.equals(next.getName())).collect(Collectors.toList());
 
         RedisConnectionWrapper<String, String> connection = getOrCreateClient(split.getPropertiesMap().get(REDIS_ENDPOINT_PROP),
