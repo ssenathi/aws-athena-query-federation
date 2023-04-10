@@ -111,7 +111,7 @@ public class PostGreSqlRecordHandlerTest extends TestBase
         schemaBuilder.addField(FieldBuilder.newBuilder("partition_name", Types.MinorType.VARCHAR.getType()).build());
         Schema schema = schemaBuilder.build();
 
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         Mockito.when(split.getProperties()).thenReturn(ImmutableMap.of("partition_schema_name", "s0", "partition_name", "p0"));
         Mockito.when(split.getPropertiesMap().get(Mockito.eq(com.amazonaws.athena.connectors.postgresql.PostGreSqlMetadataHandler.BLOCK_PARTITION_SCHEMA_COLUMN_NAME))).thenReturn("s0");
         Mockito.when(split.getPropertiesMap().get(Mockito.eq(com.amazonaws.athena.connectors.postgresql.PostGreSqlMetadataHandler.BLOCK_PARTITION_COLUMN_NAME))).thenReturn("p0");
@@ -184,7 +184,7 @@ public class PostGreSqlRecordHandlerTest extends TestBase
         schemaBuilder.addField(FieldBuilder.newBuilder("partition_name", Types.MinorType.VARCHAR.getType()).build());
         Schema schema = schemaBuilder.build();
 
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         Mockito.when(split.getProperties()).thenReturn(ImmutableMap.of("partition_schema_name", "s0", "partition_name", "p0"));
         Mockito.when(split.getPropertiesMap().get(Mockito.eq(com.amazonaws.athena.connectors.postgresql.PostGreSqlMetadataHandler.BLOCK_PARTITION_SCHEMA_COLUMN_NAME))).thenReturn("s0");
         Mockito.when(split.getPropertiesMap().get(Mockito.eq(PostGreSqlMetadataHandler.BLOCK_PARTITION_COLUMN_NAME))).thenReturn("p0");

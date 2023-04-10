@@ -36,7 +36,7 @@ public class SqlServerQueryStringBuilderTest
     @Test
     public void testQueryBuilder()
     {
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         Mockito.when(split.getProperties()).thenReturn(Collections.singletonMap("partition", "p0"));
         Mockito.when(split.getPropertiesMap().get(Mockito.eq("partition"))).thenReturn("p0");
         SqlServerQueryStringBuilder builder = new SqlServerQueryStringBuilder("'");
@@ -49,7 +49,7 @@ public class SqlServerQueryStringBuilderTest
     {
         SqlServerQueryStringBuilder builder = new SqlServerQueryStringBuilder("'");
 
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         Mockito.when(split.getProperties()).thenReturn(Collections.singletonMap("partition", "0"));
         Mockito.when(split.getPropertiesMap().get(Mockito.eq("partition"))).thenReturn("0");
         Assert.assertEquals(new ArrayList<>(), builder.getPartitionWhereClauses(split));

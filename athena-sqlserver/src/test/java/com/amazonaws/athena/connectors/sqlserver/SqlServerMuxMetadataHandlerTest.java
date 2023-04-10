@@ -73,8 +73,7 @@ public class SqlServerMuxMetadataHandlerTest
     public void doListSchemaNames()
             throws Exception
     {
-        ListSchemasRequest listSchemasRequest = Mockito.mock(ListSchemasRequest.class);
-        Mockito.when(listSchemasRequest.getCatalogName()).thenReturn("fakedatabase");
+        ListSchemasRequest listSchemasRequest = ListSchemasRequest.newBuilder().setCatalogName("fakedatabase").build();
         this.jdbcMetadataHandler.doListSchemaNames(this.allocator, listSchemasRequest);
         Mockito.verify(this.sqlServerMetadataHandler, Mockito.times(1)).doListSchemaNames(Mockito.eq(this.allocator), Mockito.eq(listSchemasRequest));
     }
@@ -83,8 +82,7 @@ public class SqlServerMuxMetadataHandlerTest
     public void doListTables()
             throws Exception
     {
-        ListTablesRequest listTablesRequest = Mockito.mock(ListTablesRequest.class);
-        Mockito.when(listTablesRequest.getCatalogName()).thenReturn("fakedatabase");
+        ListTablesRequest listTablesRequest = ListTablesRequest.newBuilder().setCatalogName("fakedatabase").build();
         this.jdbcMetadataHandler.doListTables(this.allocator, listTablesRequest);
         Mockito.verify(this.sqlServerMetadataHandler, Mockito.times(1)).doListTables(Mockito.eq(this.allocator), Mockito.eq(listTablesRequest));
     }
@@ -93,8 +91,7 @@ public class SqlServerMuxMetadataHandlerTest
     public void doGetTable()
             throws Exception
     {
-        GetTableRequest getTableRequest = Mockito.mock(GetTableRequest.class);
-        Mockito.when(getTableRequest.getCatalogName()).thenReturn("fakedatabase");
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder().setCatalogName("fakedatabase").build();
         this.jdbcMetadataHandler.doGetTable(this.allocator, getTableRequest);
         Mockito.verify(this.sqlServerMetadataHandler, Mockito.times(1)).doGetTable(Mockito.eq(this.allocator), Mockito.eq(getTableRequest));
     }
@@ -103,9 +100,7 @@ public class SqlServerMuxMetadataHandlerTest
     public void doGetTableLayout()
             throws Exception
     {
-        GetTableLayoutRequest getTableLayoutRequest = Mockito.mock(GetTableLayoutRequest.class);
-        Mockito.when(getTableLayoutRequest.getTableName()).thenReturn(TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable")).build();
-        Mockito.when(getTableLayoutRequest.getCatalogName()).thenReturn("fakedatabase");
+        GetTableLayoutRequest getTableLayoutRequest = GetTableLayoutRequest.newBuilder().setCatalogName("fakedatabase").setTableName(TableName.newBuilder().setSchemaName("schemaName").setTableName("testTable").build()).build();
         this.jdbcMetadataHandler.doGetTableLayout(this.allocator, getTableLayoutRequest);
         Mockito.verify(this.sqlServerMetadataHandler, Mockito.times(1)).doGetTableLayout(Mockito.eq(this.allocator), Mockito.eq(getTableLayoutRequest));
     }
@@ -136,8 +131,7 @@ public class SqlServerMuxMetadataHandlerTest
     @Test
     public void doGetSplits()
     {
-        GetSplitsRequest getSplitsRequest = Mockito.mock(GetSplitsRequest.class);
-        Mockito.when(getSplitsRequest.getCatalogName()).thenReturn("fakedatabase");
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setCatalogName("fakedatabase").build();
         this.jdbcMetadataHandler.doGetSplits(this.allocator, getSplitsRequest);
         Mockito.verify(this.sqlServerMetadataHandler, Mockito.times(1)).doGetSplits(Mockito.eq(this.allocator), Mockito.eq(getSplitsRequest));
     }

@@ -34,7 +34,7 @@ public class SynapseQueryStringBuilderTest
     @Test
     public void testQueryBuilder()
     {
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         Mockito.when(split.getProperties()).thenReturn(Collections.singletonMap("partition", "p0"));
         Mockito.when(split.getPropertiesMap().get(Mockito.eq("partition"))).thenReturn("p0");
 
@@ -47,7 +47,7 @@ public class SynapseQueryStringBuilderTest
     @Test
     public void testGetPartitionWhereClauses()
     {
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         Mockito.when(split.getProperties()).thenReturn(Collections.singletonMap("partition", "p0"));
         Mockito.when(split.getPropertiesMap().get(Mockito.eq("partition"))).thenReturn("p0");
         Assert.assertEquals(new ArrayList<>(), builder.getPartitionWhereClauses(split));

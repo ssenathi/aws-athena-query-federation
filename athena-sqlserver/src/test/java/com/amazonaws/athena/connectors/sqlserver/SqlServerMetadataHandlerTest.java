@@ -413,8 +413,7 @@ public class SqlServerMetadataHandlerTest
     public void doListSchemaNames()
             throws Exception
     {
-        ListSchemasRequest listSchemasRequest = Mockito.mock(ListSchemasRequest.class);
-        Mockito.when(listSchemasRequest.getCatalogName()).thenReturn("fakedatabase");
+        ListSchemasRequest listSchemasRequest = ListSchemasRequest.newBuilder().setCatalogName("fakedatabase").build();
         Assert.assertEquals(new ListSchemasResponse("schemas", Collections.emptyList()).toString(),
                 sqlServerMetadataHandler.doListSchemaNames(this.allocator, listSchemasRequest).toString());
     }

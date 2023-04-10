@@ -76,10 +76,9 @@ public class SnowflakeMuxJdbcRecordHandlerTest
             throws Exception
     {
         BlockSpiller blockSpiller = Mockito.mock(BlockSpiller.class);
-        ReadRecordsRequest readRecordsRequest = Mockito.mock(ReadRecordsRequest.class);
-        Mockito.when(readRecordsRequest.getCatalogName()).thenReturn("snowflake");
-        this.jdbcRecordHandler.readWithConstraint(blockSpiller, readRecordsRequest, queryStatusChecker);
-        Mockito.verify(this.snowflakeRecordHandler, Mockito.times(1)).readWithConstraint(Mockito.eq(blockSpiller), Mockito.eq(readRecordsRequest), Mockito.eq(queryStatusChecker));
+        ReadRecordsRequest readRecordsRequest = ReadRecordsRequest.newBuilder().setCatalogName("snowflake").build();
+        this.jdbcRecordHandler.readWithConstraint(blockAllocator, blockSpiller, readRecordsRequest, queryStatusChecker);
+        Mockito.verify(this.snowflakeRecordHandler, Mockito.times(1)).readWithConstraint(Mockito.eq(blockAllocator), Mockito.eq(blockSpiller), Mockito.eq(readRecordsRequest), Mockito.eq(queryStatusChecker));
     }
 
     @Test(expected = RuntimeException.class)
@@ -87,22 +86,20 @@ public class SnowflakeMuxJdbcRecordHandlerTest
             throws Exception
     {
         BlockSpiller blockSpiller = Mockito.mock(BlockSpiller.class);
-        ReadRecordsRequest readRecordsRequest = Mockito.mock(ReadRecordsRequest.class);
-        Mockito.when(readRecordsRequest.getCatalogName()).thenReturn("unsupportedCatalog");
-        this.jdbcRecordHandler.readWithConstraint(blockSpiller, readRecordsRequest, queryStatusChecker);
+        ReadRecordsRequest readRecordsRequest = ReadRecordsRequest.newBuilder().setCatalogName("unsupportedCatalog").build();
+        this.jdbcRecordHandler.readWithConstraint(blockAllocator, blockSpiller, readRecordsRequest, queryStatusChecker);
     }
 
     @Test
     public void buildSplitSql()
             throws SQLException
     {
-        ReadRecordsRequest readRecordsRequest = Mockito.mock(ReadRecordsRequest.class);
-        Mockito.when(readRecordsRequest.getCatalogName()).thenReturn("snowflake");
+        ReadRecordsRequest readRecordsRequest = ReadRecordsRequest.newBuilder().setCatalogName("snowflake").build();
         Connection jdbcConnection = Mockito.mock(Connection.class);
         TableName tableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("tableName").build();
         Schema schema = Mockito.mock(Schema.class);
         Constraints constraints = Mockito.mock(Constraints.class);
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         this.jdbcRecordHandler.buildSplitSql(jdbcConnection, "snowflake", tableName, schema, constraints, split);
         Mockito.verify(this.snowflakeRecordHandler, Mockito.times(1)).buildSplitSql(Mockito.eq(jdbcConnection), Mockito.eq("snowflake"), Mockito.eq(tableName), Mockito.eq(schema), Mockito.eq(constraints), Mockito.eq(split));
     }

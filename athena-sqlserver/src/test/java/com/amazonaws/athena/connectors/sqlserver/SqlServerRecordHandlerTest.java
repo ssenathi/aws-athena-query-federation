@@ -100,7 +100,7 @@ public class SqlServerRecordHandlerTest
         schemaBuilder.addField(FieldBuilder.newBuilder("testCol4", Types.MinorType.VARCHAR.getType()).build());
         Schema schema = schemaBuilder.build();
 
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         Mockito.when(split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITION_FUNCTION)).thenReturn("pf");
         Mockito.when(split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITIONING_COLUMN)).thenReturn("testCol1");
         Mockito.when(split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITION_NUMBER)).thenReturn("1");

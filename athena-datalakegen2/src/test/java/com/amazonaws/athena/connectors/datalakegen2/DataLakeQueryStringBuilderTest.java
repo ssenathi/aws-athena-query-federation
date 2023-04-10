@@ -36,7 +36,7 @@ public class DataLakeQueryStringBuilderTest
     @Test
     public void testQueryBuilder()
     {
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         Mockito.when(split.getProperties()).thenReturn(Collections.singletonMap("partition", "p0"));
         Mockito.when(split.getPropertiesMap().get(Mockito.eq("partition"))).thenReturn("p0");
         DataLakeGen2QueryStringBuilder builder = new DataLakeGen2QueryStringBuilder("'");
@@ -49,7 +49,7 @@ public class DataLakeQueryStringBuilderTest
     {
         DataLakeGen2QueryStringBuilder builder = new DataLakeGen2QueryStringBuilder("'");
 
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         Mockito.when(split.getProperties()).thenReturn(Collections.singletonMap("partition", "p0"));
         Mockito.when(split.getPropertiesMap().get(Mockito.eq("partition"))).thenReturn("p0");
         Assert.assertEquals(new ArrayList<>(), builder.getPartitionWhereClauses(split));

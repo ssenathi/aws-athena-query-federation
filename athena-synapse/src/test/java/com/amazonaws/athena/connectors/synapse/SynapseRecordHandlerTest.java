@@ -100,7 +100,7 @@ public class SynapseRecordHandlerTest
         schemaBuilder.addField(FieldBuilder.newBuilder("testCol4", Types.MinorType.VARCHAR.getType()).build());
         Schema schema = schemaBuilder.build();
 
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         Mockito.when(split.getPropertiesMap().get(SynapseMetadataHandler.PARTITION_COLUMN)).thenReturn("id");
         Mockito.when(split.getPropertiesMap().get(SynapseMetadataHandler.PARTITION_BOUNDARY_FROM)).thenReturn("100000");
         Mockito.when(split.getPropertiesMap().get(SynapseMetadataHandler.PARTITION_BOUNDARY_TO)).thenReturn("300000");
@@ -134,7 +134,7 @@ public class SynapseRecordHandlerTest
         schemaBuilder.addField(FieldBuilder.newBuilder("partition", Types.MinorType.VARCHAR.getType()).build());
         Schema schema = schemaBuilder.build();
 
-        Split split = Mockito.mock(Split.class);
+        Split split = Split.newBuilder().build();
         Mockito.when(split.getProperties()).thenReturn(com.google.common.collect.ImmutableMap.of("PARTITION_BOUNDARY_FROM", "0", "PARTITION_NUMBER", "1", "PARTITION_COLUMN", "testCol1", "PARTITION_BOUNDARY_TO", "100000"));
         Mockito.when(split.getPropertiesMap().get(Mockito.eq("PARTITION_BOUNDARY_FROM"))).thenReturn("0");
         Mockito.when(split.getPropertiesMap().get(Mockito.eq("PARTITION_NUMBER"))).thenReturn("1");
