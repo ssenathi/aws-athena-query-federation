@@ -21,11 +21,13 @@ package com.amazonaws.athena.connectors.tpcds;
 
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.Block;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
+import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
 import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
-import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.athena.AmazonAthenaClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
@@ -112,7 +114,7 @@ public class TPCDSRecordHandler
         Results results = constructResults(table, session);
         Iterator<List<List<String>>> itr = results.iterator();
 
-        Map<Integer, CellWriter> writers = makeWriters(recordsRequest.getSchema(), table);
+        Map<Integer, CellWriter> writers = makeWriters(ProtobufMessageConverter.fromProtoSchema(allocator, recordsRequest.getSchema()), table);
         while (itr.hasNext() && queryStatusChecker.isQueryRunning()) {
             List<String> row = itr.next().get(0);
             spiller.writeRows((Block block, int numRow) -> {
