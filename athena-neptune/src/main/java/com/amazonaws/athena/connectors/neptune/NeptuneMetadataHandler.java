@@ -158,7 +158,7 @@ public class NeptuneMetadataHandler extends GlueMetadataHandler
             tables.add(TableName.newBuilder().setSchemaName(schemaName).setTableName(e.getName())).build();
         });
 
-        return new ListTablesResponse(request.getCatalogName(), tables, null);
+        return ListTablesResponse.newBuilder().setCatalogName(request.getCatalogName()).addAllTables(tables).build();
     }
 
     /**
