@@ -34,6 +34,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRespon
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connectors.jdbc.TestBase;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionConfig;
 import com.amazonaws.athena.connectors.jdbc.connection.JdbcConnectionFactory;
@@ -133,11 +134,11 @@ public class RedshiftMetadataHandlerTest
 
         GetTableLayoutResponse getTableLayoutResponse = this.redshiftMetadataHandler.doGetTableLayout(blockAllocator, getTableLayoutRequest);
 
-        Assert.assertEquals(values.length, getTableLayoutResponse.getPartitions().getRowCount());
+        Assert.assertEquals(values.length, ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getRowCount());
 
         List<String> expectedValues = new ArrayList<>();
-        for (int i = 0; i < getTableLayoutResponse.getPartitions().getRowCount(); i++) {
-            expectedValues.add(BlockUtils.rowToString(getTableLayoutResponse.getPartitions(), i));
+        for (int i = 0; i < ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getRowCount(); i++) {
+            expectedValues.add(BlockUtils.rowToString(ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()), i));
         }
         Assert.assertEquals(expectedValues, Arrays.asList("[partition_schema_name : s0], [partition_name : p0]", "[partition_schema_name : s1], [partition_name : p1]"));
 
@@ -145,7 +146,7 @@ public class RedshiftMetadataHandlerTest
         expectedSchemaBuilder.addField(FieldBuilder.newBuilder(PostGreSqlMetadataHandler.BLOCK_PARTITION_SCHEMA_COLUMN_NAME, org.apache.arrow.vector.types.Types.MinorType.VARCHAR.getType()).build());
         expectedSchemaBuilder.addField(FieldBuilder.newBuilder(PostGreSqlMetadataHandler.BLOCK_PARTITION_COLUMN_NAME, org.apache.arrow.vector.types.Types.MinorType.VARCHAR.getType()).build());
         Schema expectedSchema = expectedSchemaBuilder.build();
-        Assert.assertEquals(expectedSchema, getTableLayoutResponse.getPartitions().getSchema());
+        Assert.assertEquals(expectedSchema, ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getSchema());
         Assert.assertEquals(tableName, getTableLayoutResponse.getTableName());
 
         Mockito.verify(preparedStatement, Mockito.times(1)).setString(1, tableName.getSchemaName());
@@ -176,11 +177,11 @@ public class RedshiftMetadataHandlerTest
 
         GetTableLayoutResponse getTableLayoutResponse = this.redshiftMetadataHandler.doGetTableLayout(blockAllocator, getTableLayoutRequest);
 
-        Assert.assertEquals(1, getTableLayoutResponse.getPartitions().getRowCount());
+        Assert.assertEquals(1, ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getRowCount());
 
         List<String> expectedValues = new ArrayList<>();
-        for (int i = 0; i < getTableLayoutResponse.getPartitions().getRowCount(); i++) {
-            expectedValues.add(BlockUtils.rowToString(getTableLayoutResponse.getPartitions(), i));
+        for (int i = 0; i < ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getRowCount(); i++) {
+            expectedValues.add(BlockUtils.rowToString(ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()), i));
         }
         Assert.assertEquals(expectedValues, Collections.singletonList("[partition_schema_name : *], [partition_name : *]"));
 
@@ -188,7 +189,7 @@ public class RedshiftMetadataHandlerTest
         expectedSchemaBuilder.addField(FieldBuilder.newBuilder(PostGreSqlMetadataHandler.BLOCK_PARTITION_SCHEMA_COLUMN_NAME, org.apache.arrow.vector.types.Types.MinorType.VARCHAR.getType()).build());
         expectedSchemaBuilder.addField(FieldBuilder.newBuilder(PostGreSqlMetadataHandler.BLOCK_PARTITION_COLUMN_NAME, org.apache.arrow.vector.types.Types.MinorType.VARCHAR.getType()).build());
         Schema expectedSchema = expectedSchemaBuilder.build();
-        Assert.assertEquals(expectedSchema, getTableLayoutResponse.getPartitions().getSchema());
+        Assert.assertEquals(expectedSchema, ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getSchema());
         Assert.assertEquals(tableName, getTableLayoutResponse.getTableName());
 
         Mockito.verify(preparedStatement, Mockito.times(1)).setString(1, tableName.getSchemaName());
@@ -239,14 +240,14 @@ public class RedshiftMetadataHandlerTest
         GetTableLayoutResponse getTableLayoutResponse = this.redshiftMetadataHandler.doGetTableLayout(blockAllocator, getTableLayoutRequest);
 
         BlockAllocator splitBlockAllocator = new BlockAllocatorImpl();
-        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(getTableLayoutResponse.getPartitions()))).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))).setContinuationToken($8).build();
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).build();
         GetSplitsResponse getSplitsResponse = this.redshiftMetadataHandler.doGetSplits(splitBlockAllocator, getSplitsRequest);
 
         Set<Map<String, String>> expectedSplits = new HashSet<>();
         expectedSplits.add(ImmutableMap.of("partition_schema_name", "s0", "partition_name", "p0"));
         expectedSplits.add(ImmutableMap.of("partition_schema_name", "s1", "partition_name", "p1"));
-        Assert.assertEquals(expectedSplits.size(), getSplitsResponse.getSplits().size());
-        Set<Map<String, String>> actualSplits = getSplitsResponse.getSplits().stream().map(Split::getProperties).collect(Collectors.toSet());
+        Assert.assertEquals(expectedSplits.size(), getSplitsResponse.getSplitsList().size());
+        Set<Map<String, String>> actualSplits = getSplitsResponse.getSplitsList().stream().map(Split::getProperties).collect(Collectors.toSet());
         Assert.assertEquals(expectedSplits, actualSplits);
     }
 
@@ -276,13 +277,13 @@ public class RedshiftMetadataHandlerTest
         GetTableLayoutResponse getTableLayoutResponse = this.redshiftMetadataHandler.doGetTableLayout(blockAllocator, getTableLayoutRequest);
 
         BlockAllocator splitBlockAllocator = new BlockAllocatorImpl();
-        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(getTableLayoutResponse.getPartitions()))).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).setContinuationToken("1")).setContinuationToken($8).build();
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).setContinuationToken("1").build();
         GetSplitsResponse getSplitsResponse = this.redshiftMetadataHandler.doGetSplits(splitBlockAllocator, getSplitsRequest);
 
         Set<Map<String, String>> expectedSplits = new HashSet<>();
         expectedSplits.add(ImmutableMap.of("partition_schema_name", "s1", "partition_name", "p1"));
-        Assert.assertEquals(expectedSplits.size(), getSplitsResponse.getSplits().size());
-        Set<Map<String, String>> actualSplits = getSplitsResponse.getSplits().stream().map(Split::getProperties).collect(Collectors.toSet());
+        Assert.assertEquals(expectedSplits.size(), getSplitsResponse.getSplitsList().size());
+        Set<Map<String, String>> actualSplits = getSplitsResponse.getSplitsList().stream().map(Split::getProperties).collect(Collectors.toSet());
         Assert.assertEquals(expectedSplits, actualSplits);
     }
 
@@ -291,7 +292,7 @@ public class RedshiftMetadataHandlerTest
             throws Exception
     {
         logger.info("doGetTableWithArrayColumns - enter");
-
+        BlockAllocator blockAllocator = new BlockAllocatorImpl();
         String[] schema = {"DATA_TYPE", "COLUMN_NAME",  "COLUMN_SIZE", "DECIMAL_DIGITS", "TYPE_NAME"};
         Object[][] values = {
                 {Types.ARRAY, "bool_array", 0, 0, "_bool"},
@@ -333,7 +334,7 @@ public class RedshiftMetadataHandlerTest
         Mockito.when(connection.getCatalog()).thenReturn("testCatalog");
 
         GetTableResponse getTableResponse = this.redshiftMetadataHandler.doGetTable(new BlockAllocatorImpl(),
-                GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
+                GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName).build());
 
         logger.info("Schema: {}", getTableResponse.getSchema());
 

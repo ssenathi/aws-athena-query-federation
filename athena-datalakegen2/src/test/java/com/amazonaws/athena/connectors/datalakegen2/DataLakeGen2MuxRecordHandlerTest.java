@@ -64,7 +64,7 @@ public class DataLakeGen2MuxRecordHandlerTest
         this.jdbcConnectionFactory = Mockito.mock(JdbcConnectionFactory.class);
         DatabaseConnectionConfig databaseConnectionConfig = new DatabaseConnectionConfig("testCatalog", DataLakeGen2Constants.NAME,
                 "datalakegentwo://jdbc:sqlserver://hostname/${testSecret}", "testSecret");
-        this.jdbcRecordHandler = new DataLakeGen2MuxRecordHandler(this.amazonS3, this.secretsManager, this.athena, this.jdbcConnectionFactory, databaseConnectionConfig, this.recordHandlerMap, com.google.common.collect.ImmutableMap.of());
+        this.jdbcRecordHandler = new DataLakeGen2MuxRecordHandler(this.amazonS3, this.secretsManager, this.athena, this.jdbcConnectionFactory, databaseConnectionConfig, this.recordHandlerMap, com.google.common.collect.ImmutableMap.of("spill_bucket", "asdf_spill_bucket_loc"));
     }
 
     @Test

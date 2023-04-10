@@ -153,7 +153,7 @@ public class SqlServerMetadataHandlerTest
         SchemaBuilder expectedSchemaBuilder = SchemaBuilder.newBuilder();
         expectedSchemaBuilder.addField(FieldBuilder.newBuilder(sqlServerMetadataHandler.PARTITION_NUMBER, org.apache.arrow.vector.types.Types.MinorType.VARCHAR.getType()).build());
         Schema expectedSchema = expectedSchemaBuilder.build();
-        Assert.assertEquals(expectedSchema, getTableLayoutResponse.getPartitions().getSchema());
+        Assert.assertEquals(expectedSchema, ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getSchema());
         Assert.assertEquals(tableName, getTableLayoutResponse.getTableName());
 
         Mockito.verify(preparedStatement, Mockito.times(1)).setString(1, getTableLayoutRequest.getTableName().getSchemaName() + "." +
@@ -199,7 +199,7 @@ public class SqlServerMetadataHandlerTest
         SchemaBuilder expectedSchemaBuilder = SchemaBuilder.newBuilder();
         expectedSchemaBuilder.addField(FieldBuilder.newBuilder(sqlServerMetadataHandler.PARTITION_NUMBER, org.apache.arrow.vector.types.Types.MinorType.VARCHAR.getType()).build());
         Schema expectedSchema = expectedSchemaBuilder.build();
-        Assert.assertEquals(expectedSchema, getTableLayoutResponse.getPartitions().getSchema());
+        Assert.assertEquals(expectedSchema, ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getSchema());
         Assert.assertEquals(tableName, getTableLayoutResponse.getTableName());
 
         Mockito.verify(preparedStatement, Mockito.times(1)).setString(1, getTableLayoutRequest.getTableName().getSchemaName() + "." +

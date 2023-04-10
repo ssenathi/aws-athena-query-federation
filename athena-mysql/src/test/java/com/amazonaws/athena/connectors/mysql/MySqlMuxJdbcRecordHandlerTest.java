@@ -67,7 +67,7 @@ public class MySqlMuxJdbcRecordHandlerTest
         this.jdbcConnectionFactory = Mockito.mock(JdbcConnectionFactory.class);
         DatabaseConnectionConfig databaseConnectionConfig = new DatabaseConnectionConfig("testCatalog", "mysql",
                 "mysql://jdbc:mysql://hostname/${testSecret}", "testSecret");
-        this.jdbcRecordHandler = new MySqlMuxRecordHandler(this.amazonS3, this.secretsManager, this.athena, this.jdbcConnectionFactory, databaseConnectionConfig, this.recordHandlerMap, com.google.common.collect.ImmutableMap.of());
+        this.jdbcRecordHandler = new MySqlMuxRecordHandler(this.amazonS3, this.secretsManager, this.athena, this.jdbcConnectionFactory, databaseConnectionConfig, this.recordHandlerMap, com.google.common.collect.ImmutableMap.of("spill_bucket", "asdf_spill_bucket_loc"));
         this.blockAllocator = new BlockAllocatorImpl();
     }
 

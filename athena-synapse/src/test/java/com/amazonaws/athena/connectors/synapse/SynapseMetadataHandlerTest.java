@@ -139,7 +139,7 @@ public class SynapseMetadataHandlerTest
         SchemaBuilder expectedSchemaBuilder = SchemaBuilder.newBuilder();
         expectedSchemaBuilder.addField(FieldBuilder.newBuilder(SynapseMetadataHandler.PARTITION_NUMBER, org.apache.arrow.vector.types.Types.MinorType.VARCHAR.getType()).build());
         Schema expectedSchema = expectedSchemaBuilder.build();
-        Assert.assertEquals(expectedSchema, getTableLayoutResponse.getPartitions().getSchema());
+        Assert.assertEquals(expectedSchema, ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getSchema());
         Assert.assertEquals(tableName, getTableLayoutResponse.getTableName());
     }
 
@@ -175,7 +175,7 @@ public class SynapseMetadataHandlerTest
         SchemaBuilder expectedSchemaBuilder = SchemaBuilder.newBuilder();
         expectedSchemaBuilder.addField(FieldBuilder.newBuilder(SynapseMetadataHandler.PARTITION_NUMBER, org.apache.arrow.vector.types.Types.MinorType.VARCHAR.getType()).build());
         Schema expectedSchema = expectedSchemaBuilder.build();
-        Assert.assertEquals(expectedSchema, getTableLayoutResponse.getPartitions().getSchema());
+        Assert.assertEquals(expectedSchema, ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getSchema());
         Assert.assertEquals(tableName, getTableLayoutResponse.getTableName());
     }
 

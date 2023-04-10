@@ -71,7 +71,7 @@ public class HiveMuxRecordHandlerTest
         this.jdbcConnectionFactory = Mockito.mock(JdbcConnectionFactory.class);
         DatabaseConnectionConfig databaseConnectionConfig = new DatabaseConnectionConfig("testCatalog", HiveConstants.HIVE_NAME,
         		"hive2://jdbc:hive2://54.89.6.2:10000/authena;AuthMech=3;${testSecret}", "testSecret");
-        this.jdbcRecordHandler = new HiveMuxRecordHandler(this.amazonS3, this.secretsManager, this.athena, this.jdbcConnectionFactory, databaseConnectionConfig, this.recordHandlerMap, com.google.common.collect.ImmutableMap.of());
+        this.jdbcRecordHandler = new HiveMuxRecordHandler(this.amazonS3, this.secretsManager, this.athena, this.jdbcConnectionFactory, databaseConnectionConfig, this.recordHandlerMap, com.google.common.collect.ImmutableMap.of("spill_bucket", "asdf_spill_bucket_loc"));
     }
 
     @Test

@@ -311,7 +311,7 @@ public class RedshiftIntegTest extends IntegrationTestBase
         logger.info("----------------------------------------------------");
 
         JdbcTableUtils bdayTable = new JdbcTableUtils(lambdaFunctionName,
-                TableName.newBuilder().setSchemaName(redshiftDbName, redshiftTableBday), environmentVars, null).setTableName(REDSHIFT_NAME).build();
+                TableName.newBuilder().setSchemaName(redshiftDbName).setTableName(redshiftTableBday).build(), environmentVars, null, REDSHIFT_NAME);
         bdayTable.createTable("first_name varchar, last_name varchar, birthday date", databaseConnectionInfo);
         bdayTable.insertRow("'Joe', 'Schmoe', date('2002-05-05')", databaseConnectionInfo);
         bdayTable.insertRow("'Jane', 'Doe', date('2005-10-12')", databaseConnectionInfo);

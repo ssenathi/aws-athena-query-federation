@@ -20,6 +20,8 @@
 package com.amazonaws.athena.connectors.redshift;
 
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
 import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
@@ -51,6 +53,7 @@ public class RedshiftMuxJdbcRecordHandlerTest
     private AmazonAthena athena;
     private QueryStatusChecker queryStatusChecker;
     private JdbcConnectionFactory jdbcConnectionFactory;
+    private BlockAllocator blockAllocator;
 
     @Before
     public void setup()
@@ -64,7 +67,8 @@ public class RedshiftMuxJdbcRecordHandlerTest
         this.jdbcConnectionFactory = Mockito.mock(JdbcConnectionFactory.class);
         DatabaseConnectionConfig databaseConnectionConfig = new DatabaseConnectionConfig("testCatalog", "redshift",
                 "redshift://jdbc:redshift://hostname/${testSecret}", "testSecret");
-        this.jdbcRecordHandler = new RedshiftMuxRecordHandler(this.amazonS3, this.secretsManager, this.athena, this.jdbcConnectionFactory, databaseConnectionConfig, this.recordHandlerMap, com.google.common.collect.ImmutableMap.of());
+        this.jdbcRecordHandler = new RedshiftMuxRecordHandler(this.amazonS3, this.secretsManager, this.athena, this.jdbcConnectionFactory, databaseConnectionConfig, this.recordHandlerMap, com.google.common.collect.ImmutableMap.of("spill_bucket", "asdf_spill_bucket_loc"));
+        this.blockAllocator = new BlockAllocatorImpl();
     }
 
     @Test

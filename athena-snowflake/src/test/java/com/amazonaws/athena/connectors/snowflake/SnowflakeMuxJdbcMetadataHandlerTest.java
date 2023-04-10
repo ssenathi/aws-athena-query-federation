@@ -119,8 +119,7 @@ public class SnowflakeMuxJdbcMetadataHandlerTest
     public void getPartitions()
             throws Exception
     {
-        GetTableLayoutRequest getTableLayoutRequest = Mockito.mock(GetTableLayoutRequest.class);
-        Mockito.when(getTableLayoutRequest.getCatalogName()).thenReturn("fakedatabase");
+        GetTableLayoutRequest getTableLayoutRequest = GetTableLayoutRequest.newBuilder().setCatalogName("fakedatabase").build();
         this.jdbcMetadataHandler.getPartitions(Mockito.mock(BlockAllocator.class), Mockito.mock(BlockWriter.class), getTableLayoutRequest, queryStatusChecker);
         Mockito.verify(this.snowflakeMetadataHandler, Mockito.times(1)).getPartitions(nullable(BlockAllocator.class), nullable(BlockWriter.class), Mockito.eq(getTableLayoutRequest), Mockito.eq(queryStatusChecker));
     }

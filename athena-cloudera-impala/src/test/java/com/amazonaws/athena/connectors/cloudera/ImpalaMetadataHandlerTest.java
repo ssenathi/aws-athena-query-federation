@@ -129,7 +129,7 @@ public class ImpalaMetadataHandlerTest
         SchemaBuilder expectedSchemaBuilder = SchemaBuilder.newBuilder();
         expectedSchemaBuilder.addField(FieldBuilder.newBuilder("partition", org.apache.arrow.vector.types.Types.MinorType.VARCHAR.getType()).build());
         Schema expectedSchema = expectedSchemaBuilder.build();
-        Assert.assertEquals(expectedSchema, getTableLayoutResponse.getPartitions().getSchema());
+        Assert.assertEquals(expectedSchema, ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getSchema());
         Assert.assertEquals(tempTableName, getTableLayoutResponse.getTableName());
     }
 
@@ -170,7 +170,7 @@ public class ImpalaMetadataHandlerTest
        SchemaBuilder expectedSchemaBuilder = SchemaBuilder.newBuilder();
        expectedSchemaBuilder.addField(FieldBuilder.newBuilder("partition", org.apache.arrow.vector.types.Types.MinorType.VARCHAR.getType()).build());
        Schema expectedSchema = expectedSchemaBuilder.build();
-       Assert.assertEquals(expectedSchema, getTableLayoutResponse.getPartitions().getSchema());
+       Assert.assertEquals(expectedSchema, ProtobufMessageConverter.fromProtoBlock(blockAllocator, getTableLayoutResponse.getPartitions()).getSchema());
        Assert.assertEquals(tempTableName, getTableLayoutResponse.getTableName());
     }
 

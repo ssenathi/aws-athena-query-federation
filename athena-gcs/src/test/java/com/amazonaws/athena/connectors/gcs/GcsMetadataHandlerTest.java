@@ -285,9 +285,7 @@ public class GcsMetadataHandlerTest
         GetTableResult getTableResult = new GetTableResult();
         getTableResult.setTable(table);
         PowerMockito.when(awsGlue.getTable(any())).thenReturn(getTableResult);
-        GetTableLayoutRequest getTableLayoutRequest = Mockito.mock(GetTableLayoutRequest.class);
-        Mockito.when(getTableLayoutRequest.getTableName()).thenReturn(TableName.newBuilder().setSchemaName(DATABASE_NAME).setTableName(TABLE_1)).build();
-        Mockito.when(getTableLayoutRequest.getCatalogName()).thenReturn(CATALOG_NAME);
+        GetTableLayoutRequest getTableLayoutRequest = GetTableLayoutRequest.newBuilder().setCatalogName(CATALOG_NAME).setTableName(TableName.newBuilder().setSchemaName(DATABASE_NAME).setTableName(TABLE_1).build()).build();
         Mockito.when(getTableLayoutRequest.getSchema()).thenReturn(schema);
         Constraints constraints = new Constraints(createSummaryWithLValueRangeEqual("year", new ArrowType.Utf8(), 2000));
         Mockito.when(getTableLayoutRequest.getConstraints()).thenReturn(constraints);

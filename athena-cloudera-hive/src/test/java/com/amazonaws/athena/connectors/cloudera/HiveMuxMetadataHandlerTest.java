@@ -124,9 +124,7 @@ public class HiveMuxMetadataHandlerTest
     public void doGetTableLayout()
             throws Exception
     {
-        GetTableLayoutRequest getTableLayoutRequest = Mockito.mock(GetTableLayoutRequest.class);
-        Mockito.when(getTableLayoutRequest.getTableName()).thenReturn(TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable")).build();
-        Mockito.when(getTableLayoutRequest.getCatalogName()).thenReturn("metaHive");
+        GetTableLayoutRequest getTableLayoutRequest = GetTableLayoutRequest.newBuilder().setCatalogName("metaHive").setTableName(TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build()).build();
         this.jdbcMetadataHandler.doGetTableLayout(this.allocator, getTableLayoutRequest);
         Mockito.verify(this.hiveMetadataHandler, Mockito.times(1)).doGetTableLayout(Mockito.eq(this.allocator), Mockito.eq(getTableLayoutRequest));
     }
@@ -149,8 +147,7 @@ public class HiveMuxMetadataHandlerTest
     public void getPartitions()
             throws Exception
     {
-        GetTableLayoutRequest getTableLayoutRequest = Mockito.mock(GetTableLayoutRequest.class);
-        Mockito.when(getTableLayoutRequest.getCatalogName()).thenReturn("metaHive");
+        GetTableLayoutRequest getTableLayoutRequest = GetTableLayoutRequest.newBuilder().setCatalogName("metaHive").build();
         this.jdbcMetadataHandler.getPartitions(Mockito.mock(BlockAllocator.class), Mockito.mock(BlockWriter.class), getTableLayoutRequest, queryStatusChecker);
         Mockito.verify(this.hiveMetadataHandler, Mockito.times(1)).getPartitions(nullable(BlockAllocator.class), nullable(BlockWriter.class), Mockito.eq(getTableLayoutRequest), Mockito.eq(queryStatusChecker));
     }
