@@ -110,7 +110,7 @@ public class VerticaMetadataHandlerTest extends TestBase
         this.connection = Mockito.mock(Connection.class, Mockito.RETURNS_DEEP_STUBS);
         this.secretsManager = Mockito.mock(AWSSecretsManager.class);
         this.athena = Mockito.mock(AmazonAthena.class);
-        this.federatedIdentity = Mockito.mock(FederatedIdentity.class);
+        this.federatedIdentity = FederatedIdentity.newBuilder().build();
         this.databaseMetaData = Mockito.mock(DatabaseMetaData.class);
         this.tableName = Mockito.mock(TableName.class);
         this.schema = Mockito.mock(Schema.class);

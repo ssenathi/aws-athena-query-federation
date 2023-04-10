@@ -81,8 +81,7 @@ public class ImpalaMuxMetadataHandlerTest
     public void doListSchemaNames()
             throws Exception
     {
-        ListSchemasRequest listSchemasRequest = Mockito.mock(ListSchemasRequest.class);
-        Mockito.when(listSchemasRequest.getCatalogName()).thenReturn("metaImpala");
+        ListSchemasRequest listSchemasRequest = ListSchemasRequest.newBuilder().setCatalogName("metaImpala").build();
         this.jdbcMetadataHandler.doListSchemaNames(this.allocator, listSchemasRequest);
         Mockito.verify(this.impalaMetadataHandler, Mockito.times(1)).doListSchemaNames(Mockito.eq(this.allocator), Mockito.eq(listSchemasRequest));
     }
@@ -91,8 +90,7 @@ public class ImpalaMuxMetadataHandlerTest
     public void doListTables()
             throws Exception
     {
-        ListTablesRequest listTablesRequest = Mockito.mock(ListTablesRequest.class);
-        Mockito.when(listTablesRequest.getCatalogName()).thenReturn("metaImpala");
+        ListTablesRequest listTablesRequest = ListTablesRequest.newBuilder().setCatalogName("metaImpala").build();
         this.jdbcMetadataHandler.doListTables(this.allocator, listTablesRequest);
         Mockito.verify(this.impalaMetadataHandler, Mockito.times(1)).doListTables(Mockito.eq(this.allocator), Mockito.eq(listTablesRequest));
     }
@@ -101,8 +99,7 @@ public class ImpalaMuxMetadataHandlerTest
     public void doGetTable()
             throws Exception
     {
-        GetTableRequest getTableRequest = Mockito.mock(GetTableRequest.class);
-        Mockito.when(getTableRequest.getCatalogName()).thenReturn("metaImpala");
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder().setCatalogName("metaImpala").build();
         this.jdbcMetadataHandler.doGetTable(this.allocator, getTableRequest);
         Mockito.verify(this.impalaMetadataHandler, Mockito.times(1)).doGetTable(Mockito.eq(this.allocator), Mockito.eq(getTableRequest));
     }
@@ -155,15 +152,14 @@ public class ImpalaMuxMetadataHandlerTest
     {
         GetTableLayoutRequest getTableLayoutRequest = Mockito.mock(GetTableLayoutRequest.class);
         Mockito.when(getTableLayoutRequest.getCatalogName()).thenReturn("metaImpala");
-        this.jdbcMetadataHandler.getPartitions(Mockito.mock(BlockWriter.class), getTableLayoutRequest, queryStatusChecker);
-        Mockito.verify(this.impalaMetadataHandler, Mockito.times(1)).getPartitions(nullable(BlockWriter.class), Mockito.eq(getTableLayoutRequest), Mockito.eq(queryStatusChecker));
+        this.jdbcMetadataHandler.getPartitions(Mockito.mock(BlockAllocator.class), Mockito.mock(BlockWriter.class), getTableLayoutRequest, queryStatusChecker);
+        Mockito.verify(this.impalaMetadataHandler, Mockito.times(1)).getPartitions(nullable(BlockAllocator.class), nullable(BlockWriter.class), Mockito.eq(getTableLayoutRequest), Mockito.eq(queryStatusChecker));
     }
 
     @Test
     public void doGetSplits()
     {
-        GetSplitsRequest getSplitsRequest = Mockito.mock(GetSplitsRequest.class);
-        Mockito.when(getSplitsRequest.getCatalogName()).thenReturn("metaImpala");
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setCatalogName("metaImpala").build();
         this.jdbcMetadataHandler.doGetSplits(this.allocator, getSplitsRequest);
         Mockito.verify(this.impalaMetadataHandler, Mockito.times(1)).doGetSplits(Mockito.eq(this.allocator), Mockito.eq(getSplitsRequest));
     }

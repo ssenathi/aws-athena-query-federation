@@ -122,8 +122,8 @@ public class SaphanaMuxJdbcMetadataHandlerTest {
     {
         GetTableLayoutRequest getTableLayoutRequest = Mockito.mock(GetTableLayoutRequest.class);
         Mockito.when(getTableLayoutRequest.getCatalogName()).thenReturn("fakedatabase");
-        this.jdbcMetadataHandler.getPartitions(Mockito.mock(BlockWriter.class), getTableLayoutRequest, queryStatusChecker);
-        Mockito.verify(this.saphanaMetadataHandler, Mockito.times(1)).getPartitions(nullable(BlockWriter.class), Mockito.eq(getTableLayoutRequest), Mockito.eq(queryStatusChecker));
+        this.jdbcMetadataHandler.getPartitions(Mockito.mock(BlockAllocator.class), Mockito.mock(BlockWriter.class), getTableLayoutRequest, queryStatusChecker);
+        Mockito.verify(this.saphanaMetadataHandler, Mockito.times(1)).getPartitions(nullable(BlockAllocator.class), nullable(BlockWriter.class), Mockito.eq(getTableLayoutRequest), Mockito.eq(queryStatusChecker));
     }
 
     @Test

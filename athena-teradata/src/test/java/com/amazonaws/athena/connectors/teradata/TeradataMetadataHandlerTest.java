@@ -72,7 +72,7 @@ public class TeradataMetadataHandlerTest
         this.athena = Mockito.mock(AmazonAthena.class);
         Mockito.when(this.secretsManager.getSecretValue(Mockito.eq(new GetSecretValueRequest().withSecretId("testSecret")))).thenReturn(new GetSecretValueResult().withSecretString("{\"username\": \"testUser\", \"password\": \"testPassword\"}"));
         this.teradataMetadataHandler = new TeradataMetadataHandler(databaseConnectionConfig, this.secretsManager, this.athena, this.jdbcConnectionFactory, com.google.common.collect.ImmutableMap.of("partitioncount", "1000"));
-        this.federatedIdentity = Mockito.mock(FederatedIdentity.class);
+        this.federatedIdentity = FederatedIdentity.newBuilder().build();
         this.blockAllocator = Mockito.mock(BlockAllocator.class);
     }
 
@@ -310,7 +310,7 @@ public class TeradataMetadataHandlerTest
         GetTableResponse getTableResponse = this.teradataMetadataHandler.doGetTable(
                 this.blockAllocator, GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName)).build();
 
-        Assert.assertEquals(expected, getTableResponse.getSchema());
+        Assert.assertEquals(expected, ProtobufMessageConverter.fromProtoSchema(blockAllocator, getTableResponse.getSchema()));
         Assert.assertEquals(inputTableName, getTableResponse.getTableName());
         Assert.assertEquals("testCatalog", getTableResponse.getCatalogName());
     }
