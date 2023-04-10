@@ -215,9 +215,9 @@ public class GcsMetadataHandlerTest
                         .withParameters(ImmutableMap.of(CLASSIFICATION_GLUE_TABLE_PARAM, PARQUET))));
         getTablesResult.setTableList(tableList);
         PowerMockito.when(awsGlue.getTables(any())).thenReturn(getTablesResult);
-        ListTablesRequest listTablesRequest = new ListTablesRequest(federatedIdentity, QUERY_ID, CATALOG, SCHEMA_NAME, TEST_TOKEN, 50);
+        ListTablesRequest listTablesRequest = ListTablesRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName(CATALOG).setSchemaName(SCHEMA_NAME).setNextToken(TEST_TOKEN).setPageSize(50).build();
         ListTablesResponse tableNamesResponse = gcsMetadataHandler.doListTables(blockAllocator, listTablesRequest);
-        assertEquals(2, tableNamesResponse.getTables().size());
+        assertEquals(2, tableNamesResponse.getTablesList().size());
     }
 
     @Test(expected = RuntimeException.class)

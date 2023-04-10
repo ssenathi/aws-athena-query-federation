@@ -168,7 +168,7 @@ public class LambdaMetadataProvider
     log.info("Submitting GetTableLayoutRequest with ID " + queryId);
 
     try (GetTableLayoutRequest request =
-                 new GetTableLayoutRequest(identity, queryId, catalog, tableName, constraints, schema, partitionCols)) {
+                 GetTableLayoutRequest.newBuilder().setIdentity(identity).setQueryId(queryId).setCatalogName(catalog).setTableName(tableName).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schema)).addAllPartitionCols(partitionCols)).build() {
       log.info("Submitting request: {}", request);
       GetTableLayoutResponse response = (GetTableLayoutResponse) getService(metadataFunction, identity, catalog).call(request);
       log.info("Received response: {}", response);

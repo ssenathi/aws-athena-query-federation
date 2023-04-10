@@ -83,15 +83,7 @@ public class AthenaFederationBatch implements Batch
                 try {
                     return metadataHandler.doGetSplits(
                         blockAllocator,
-                        new GetSplitsRequest(
-                            layoutReq.getIdentity(),
-                            layoutReq.getQueryId(),
-                            layoutReq.getCatalogName(),
-                            layoutReq.getTableName(),
-                            layoutResponse.getPartitions(),
-                            new ArrayList<String>(layoutReq.getPartitionCols()),
-                            layoutReq.getConstraints(),
-                            continuationToken));
+                        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(layoutReq.getIdentity()).setQueryId(layoutReq.getQueryId()).setCatalogName(layoutReq.getCatalogName()).setTableName(layoutReq.getTableName()).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(layoutResponse.getPartitions()))).addAllPartitionCols(new ArrayList<String>(layoutReq.getPartitionCols())).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(layoutReq.getConstraints())).setContinuationToken(continuationToken))).setContinuationToken($8).build();;
                 }
                 catch (Exception ex) {
                     // We have to catch and rethrow as unchecked because we are inside of a lambda

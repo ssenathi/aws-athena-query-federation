@@ -27,6 +27,7 @@ import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.proto.metadata.*;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.AWSGlueClientBuilder;
 import com.amazonaws.services.glue.model.GetSchemaResult;
@@ -138,7 +139,7 @@ public class KafkaMetadataHandlerTest {
         ListSchemasRequest listSchemasRequest = ListSchemasRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("default").build();
         ListSchemasResponse listSchemasResponse = kafkaMetadataHandler.doListSchemaNames(blockAllocator, listSchemasRequest);
 
-        assertEquals(new ArrayList(com.google.common.collect.ImmutableList.of("Asdf")), new ArrayList(listSchemasResponse.getSchemas()));
+        assertEquals(new ArrayList(com.google.common.collect.ImmutableList.of("Asdf")), new ArrayList(listSchemasResponse.getSchemasList()));
     }
 
     @Test(expected = RuntimeException.class)
@@ -176,9 +177,9 @@ public class KafkaMetadataHandlerTest {
         PowerMockito.when(AWSGlueClientBuilder.defaultClient()).thenReturn(awsGlue);
         PowerMockito.when(awsGlue.getSchema(any())).thenReturn(getSchemaResult);
         PowerMockito.when(awsGlue.getSchemaVersion(any())).thenReturn(getSchemaVersionResult);
-        GetTableRequest getTableRequest = GetTableRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("kafka").setTableName(TableName.newBuilder().setSchemaName("default").setTableName("testtable")).build().build();
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("kafka").setTableName(TableName.newBuilder().setSchemaName("default").setTableName("testtable")).build();
         GetTableResponse getTableResponse = kafkaMetadataHandler.doGetTable(blockAllocator, getTableRequest);
-        assertEquals(1, getTableResponse.getSchema().getFields().size());
+        assertEquals(1, ProtobufMessageConverter.fromProtoSchema(blockAllocator, getTableResponse.getSchema()).getFields().size());
     }
 
     @Test
@@ -208,33 +209,14 @@ public class KafkaMetadataHandlerTest {
         PowerMockito.when(AWSGlueClientBuilder.defaultClient()).thenReturn(awsGlue);
         PowerMockito.when(awsGlue.getSchema(any())).thenReturn(getSchemaResult);
         PowerMockito.when(awsGlue.getSchemaVersion(any())).thenReturn(getSchemaVersionResult);
-
-        GetSplitsRequest request = new GetSplitsRequest(
-                federatedIdentity,
-                QUERY_ID,
-                "kafka",
-                TableName.newBuilder().setSchemaName("default").setTableName("testTopic").build(),
-                Mockito.mock(Block.class),
-                new ArrayList<>(),
-                Mockito.mock(Constraints.class),
-                null 
-        );
+        GetSplitsRequest request = GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("kafka").setTableName(TableName.newBuilder().setSchemaName("default").setTableName("testTopic").build()).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(Mockito.mock(Block.class)))).addAllPartitionCols(new ArrayList<>()).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(Mockito.mock(Constraints.class)))).setContinuationToken($8).build();;
 
         GetSplitsResponse response = kafkaMetadataHandler.doGetSplits(blockAllocator, request);
-        assertEquals(1000, response.getSplits().size());
+        assertEquals(1000, response.getSplitsList().size());
         assertEquals("1000", response.getContinuationToken());
-        request = new GetSplitsRequest(
-                federatedIdentity,
-                QUERY_ID,
-                "kafka",
-                TableName.newBuilder().setSchemaName("default").setTableName("testTopic").build(),
-                Mockito.mock(Block.class),
-                new ArrayList<>(),
-                Mockito.mock(Constraints.class),
-                response.getContinuationToken()
-        );
+        request = GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("kafka").setTableName(TableName.newBuilder().setSchemaName("default").setTableName("testTopic").build()).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(Mockito.mock(Block.class)))).addAllPartitionCols(new ArrayList<>()).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(Mockito.mock(Constraints.class))).setContinuationToken(response.getContinuationToken())).setContinuationToken($8).build();;
         response = kafkaMetadataHandler.doGetSplits(blockAllocator, request);
-        assertEquals(500, response.getSplits().size());
+        assertEquals(500, response.getSplitsList().size());
         assertNull(response.getContinuationToken());
     }
 }

@@ -22,11 +22,11 @@ package com.amazonaws.athena.connectors.elasticsearch;
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockWriter;
-import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
+import com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler;
+import com.amazonaws.athena.connector.lambda.metadata.glue.GlueFieldLexer;
 import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation;
-import com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
@@ -36,8 +36,8 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
-import com.amazonaws.athena.connector.lambda.metadata.glue.GlueFieldLexer;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -185,7 +184,7 @@ public class ElasticsearchMetadataHandler
                         continue;
                     }
 
-                    indices.add(TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName(index)).build();
+                    indices.add(TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName(index).build());
                 }
             }
             catch (IOException error) {
@@ -196,7 +195,7 @@ public class ElasticsearchMetadataHandler
             throw new RuntimeException("Error processing request to list indices: " + error.getMessage(), error);
         }
 
-        return new ListTablesResponse(request.getCatalogName(), indices, null);
+        return ListTablesResponse.newBuilder().setCatalogName(request.getCatalogName()).addAllTables(indices).build();
     }
 
     /**
@@ -222,7 +221,7 @@ public class ElasticsearchMetadataHandler
         // Look at GLUE catalog first.
         try {
             if (awsGlue != null) {
-                schema = super.doGetTable(allocator, request).getSchema();
+                schema = ProtobufMessageConverter.fromProtoSchema(allocator, super.doGetTable(allocator, request).getSchema());
                 logger.info("doGetTable: Retrieved schema for table[{}] from AWS Glue.", request.getTableName());
             }
         }
@@ -253,9 +252,12 @@ public class ElasticsearchMetadataHandler
                         index + "): " + error.getMessage(), error);
             }
         }
-
-        return new GetTableResponse(request.getCatalogName(), request.getTableName(),
-                (schema == null) ? SchemaBuilder.newBuilder().build() : schema, Collections.emptySet());
+        
+        GetTableResponse.Builder builder = GetTableResponse.newBuilder().setCatalogName(request.getCatalogName()).setTableName(request.getTableName());
+        if (schema != null) {
+            builder.setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schema));
+        }
+        return builder.build();
     }
 
     /**
@@ -305,8 +307,7 @@ public class ElasticsearchMetadataHandler
                     SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
                     // Create a new split (added to the splits set) that includes the domain and endpoint, and
                     // shard information (to be used later by the Record Handler).
-                    splits.add(new Split(spillLocation, makeEncryptionKey(), ImmutableMap
-                            .of(domain, endpoint, SHARD_KEY, SHARD_VALUE + shardId.toString())));
+                    splits.add(Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).putAllProperties(ImmutableMap.of(domain, endpoint, SHARD_KEY, SHARD_VALUE + shardId.toString())).build());
                 }
             }
             catch (IOException error) {
@@ -318,7 +319,7 @@ public class ElasticsearchMetadataHandler
                     index + "): " + error.getMessage(), error);
         }
 
-        return new GetSplitsResponse(request.getCatalogName(), splits);
+        return GetSplitsResponse.newBuilder().setCatalogName(request.getCatalogName()).addAllSplits(splits).build();
     }
 
     /**

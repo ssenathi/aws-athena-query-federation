@@ -434,14 +434,7 @@ public class TimestreamMetadataHandlerTest
         Block partitions = BlockUtils.newBlock(allocator, "partition_id", Types.MinorType.INT.getType(), 0);
 
         String continuationToken = null;
-        GetSplitsRequest originalReq = new GetSplitsRequest(identity,
-                "query-id",
-                defaultSchema,
-                TableName.newBuilder().setSchemaName("database1").setTableName("table1").build(),
-                partitions,
-                partitionCols,
-                new Constraints(new HashMap<>()),
-                null);
+        GetSplitsRequest originalReq = GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(identity).setQueryId("query-id").setCatalogName(defaultSchema).setTableName(TableName.newBuilder().setSchemaName("database1").setTableName("table1").build()).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(partitions))).addAllPartitionCols(partitionCols).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(new HashMap<>())).setContinuationToken($8).build();;
 
         GetSplitsRequest req = new GetSplitsRequest(originalReq, continuationToken);
 
@@ -457,7 +450,7 @@ public class TimestreamMetadataHandlerTest
                 new Object[] {continuationToken, response.getSplits().size()});
 
         assertTrue("Continuation criteria violated", response.getSplits().size() == 1);
-        assertTrue("Continuation criteria violated", response.getContinuationToken() == null);
+        assertFalse("Continuation criteria violated", response.hasContinuationToken());
 
         logger.info("doGetSplits - exit");
     }
