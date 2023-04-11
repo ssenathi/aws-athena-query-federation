@@ -22,12 +22,14 @@ package com.amazonaws.athena.connectors.gcs;
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.ThrottlingInvoker;
 import com.amazonaws.athena.connector.lambda.data.Block;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
 import com.amazonaws.athena.connector.lambda.data.FieldResolver;
+import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
 import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
-import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.athena.AmazonAthenaClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
@@ -110,12 +112,12 @@ public class GcsRecordHandler
      * @param queryStatusChecker A QueryStatusChecker that you can use to stop doing work for a query that has already terminated
      */
     @Override
-    protected void readWithConstraint(BlockSpiller spiller, ReadRecordsRequest recordsRequest,
+    protected void readWithConstraint(BlockAllocator blockAllocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest,
                                       QueryStatusChecker queryStatusChecker) throws Exception
     {
         invoker.setBlockSpiller(spiller);
         TableName tableInfo = recordsRequest.getTableName();
-        Schema schema = recordsRequest.getSchema();
+        Schema schema = ProtobufMessageConverter.fromProtoSchema(blockAllocator, recordsRequest.getSchema());
         LOGGER.info("Reading records from the table {} under the schema {}", tableInfo.getTableName(), tableInfo.getSchemaName());
         Split split = recordsRequest.getSplit();
         List<String> fileList = new ObjectMapper()
@@ -127,7 +129,7 @@ public class GcsRecordHandler
             String uri = createUri(file);
             LOGGER.info("Retrieving records from the URL {} for the table {}.{}", uri, tableInfo.getSchemaName(), tableInfo.getTableName());
             Optional<String[]> selectedColumns =
-                getSchemaFromSource(uri, classification).map(schemaFromSource -> getSelectedColumnNames(schemaFromSource, recordsRequest.getSchema()));
+                getSchemaFromSource(uri, classification).map(schemaFromSource -> getSelectedColumnNames(schemaFromSource, schema));
             ScanOptions options = new ScanOptions(BATCH_SIZE, selectedColumns);
             try (
                     // DatasetFactory provides a way to inspect a Dataset potential schema before materializing it.
