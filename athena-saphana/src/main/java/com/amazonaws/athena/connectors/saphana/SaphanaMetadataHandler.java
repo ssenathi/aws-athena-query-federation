@@ -34,6 +34,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionConfig;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionInfo;
 import com.amazonaws.athena.connectors.jdbc.connection.GenericJdbcConnectionFactory;
@@ -203,8 +204,8 @@ public class SaphanaMetadataHandler extends JdbcMetadataHandler
             locationReader.setPosition(curPartition);
             SpillLocation spillLocation = makeSpillLocation(getSplitsRequest.getQueryId());
             LOGGER.debug("{}: Input partition is {}", getSplitsRequest.getQueryId(), locationReader.readText());
-            Split.Builder splitBuilder = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()
-                    .add(SaphanaConstants.BLOCK_PARTITION_COLUMN_NAME, String.valueOf(locationReader.readText()));
+            Split.Builder splitBuilder = Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey())
+                    .putProperties(SaphanaConstants.BLOCK_PARTITION_COLUMN_NAME, String.valueOf(locationReader.readText()));
             splits.add(splitBuilder.build());
             if (splits.size() >= SaphanaConstants.MAX_SPLITS_PER_REQUEST) {
                 //We exceeded the number of split we want to return in a single request, return and provide a continuation token.

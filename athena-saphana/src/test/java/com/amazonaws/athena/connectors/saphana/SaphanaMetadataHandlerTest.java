@@ -49,6 +49,7 @@ import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest;
@@ -221,7 +222,7 @@ public class SaphanaMetadataHandlerTest
         GetTableLayoutResponse getTableLayoutResponse = this.saphanaMetadataHandler.doGetTableLayout(blockAllocator, getTableLayoutRequest);
 
         BlockAllocator splitBlockAllocator = new BlockAllocatorImpl();
-        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(getTableLayoutResponse.getPartitions()))).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))).setContinuationToken($8).build();
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).build();
         GetSplitsResponse getSplitsResponse = this.saphanaMetadataHandler.doGetSplits(splitBlockAllocator, getSplitsRequest);
 
         Set<Map<String, String>> expectedSplits = new HashSet<>();
@@ -257,7 +258,7 @@ public class SaphanaMetadataHandlerTest
         GetTableLayoutResponse getTableLayoutResponse = this.saphanaMetadataHandler.doGetTableLayout(blockAllocator, getTableLayoutRequest);
 
         BlockAllocator splitBlockAllocator = new BlockAllocatorImpl();
-        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).setContinuationToken("1")).build();
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).setContinuationToken("1").build();
         GetSplitsResponse getSplitsResponse = this.saphanaMetadataHandler.doGetSplits(splitBlockAllocator, getSplitsRequest);
 
         Set<Map<String, String>> expectedSplits = new HashSet<>();
@@ -336,7 +337,7 @@ public class SaphanaMetadataHandlerTest
 
         GetTableLayoutResponse getTableLayoutResponse = this.saphanaMetadataHandler.doGetTableLayout(blockAllocator, getTableLayoutRequest);
         BlockAllocator splitBlockAllocator = new BlockAllocatorImpl();
-        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(getTableLayoutResponse.getPartitions()))).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))).setContinuationToken($8).build();
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).build();
         GetSplitsResponse getSplitsResponse = this.saphanaMetadataHandler.doGetSplits(splitBlockAllocator, getSplitsRequest);
 
         Set<Map<String, String>> expectedSplits = new HashSet<>();

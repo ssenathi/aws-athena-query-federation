@@ -20,11 +20,11 @@
  */
 package com.amazonaws.athena.connectors.saphana;
 
-import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
+import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connectors.jdbc.manager.JdbcSplitQueryBuilder;
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
