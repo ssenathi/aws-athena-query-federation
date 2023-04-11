@@ -33,6 +33,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionConfig;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionInfo;
 import com.amazonaws.athena.connectors.jdbc.connection.JdbcConnectionFactory;
@@ -108,7 +109,7 @@ public class HiveMetadataHandler extends JdbcMetadataHandler
      * @throws Exception An Exception should be thrown for database connection failures , query syntax errors and so on.
      **/
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest getTableLayoutRequest,
+    public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest getTableLayoutRequest,
                               QueryStatusChecker queryStatusChecker)
             throws Exception
     {
@@ -220,11 +221,10 @@ public class HiveMetadataHandler extends JdbcMetadataHandler
                     .putProperties(HiveConstants.BLOCK_PARTITION_COLUMN_NAME, String.valueOf(locationReader.readText()));
             splits.add(splitBuilder.build());
             if (splits.size() >= HiveConstants.MAX_SPLITS_PER_REQUEST) {
-                return new GetSplitsResponse(getSplitsRequest.getCatalogName(), splits,
-                        encodeContinuationToken(curPartition));
+                return GetSplitsResponse.newBuilder().setCatalogName(getSplitsRequest.getCatalogName()).addAllSplits(splits).setContinuationToken(encodeContinuationToken(curPartition)).build();
             }
         }
-        return GetSplitsResponse.newBuilder().setType("GetSplitsResponse").setCatalogName(getSplitsRequest.getCatalogName()).addAllSplits(splits).build();
+        return GetSplitsResponse.newBuilder().setCatalogName(getSplitsRequest.getCatalogName()).addAllSplits(splits).build();
     }
     private int decodeContinuationToken(GetSplitsRequest request)
     {
@@ -253,9 +253,8 @@ public class HiveMetadataHandler extends JdbcMetadataHandler
     {
         try (Connection connection = getJdbcConnectionFactory().getConnection(getCredentialProvider())) {
             Schema partitionSchema = getPartitionSchema(getTableRequest.getCatalogName());
-            return new GetTableResponse(getTableRequest.getCatalogName(), getTableRequest.getTableName(),
-                    getSchema(connection, getTableRequest.getTableName(), partitionSchema),
-                    partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet()));
+            return GetTableResponse.newBuilder().setCatalogName(getTableRequest.getCatalogName()).setTableName(getTableRequest.getTableName()).setSchema(ProtobufMessageConverter.toProtoSchemaBytes(getSchema(connection, getTableRequest.getTableName(), partitionSchema)))
+                .addAllPartitionColumns(partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet())).build();
         }
     }
 

@@ -24,6 +24,7 @@ import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.proto.metadata.*;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connectors.jdbc.TestBase;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionConfig;
 import com.amazonaws.athena.connectors.jdbc.connection.JdbcConnectionFactory;
@@ -104,8 +105,11 @@ public class HiveMetadataHandlerTest
         TableName tempTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.hiveMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = new HashSet<>(Arrays.asList("partition"));
-        GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId",
-                "testCatalogName",tempTableName, constraints, partitionSchema, partitionCols);
+        GetTableLayoutRequest getTableLayoutRequest = GetTableLayoutRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatlogName")
+            .setTableName(tempTableName).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))
+            .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(partitionSchema))
+            .addAllPartitionCols(partitionCols)
+            .build();
         String value2 = "case_date=01-01-2000/case_number=0/case_instance=89898989/case_location=__HIVE_DEFAULT_PARTITION__";
         String value3 = "case_date=02-01-2000/case_number=1/case_instance=89898990/case_location=Hyderabad";
         String[] columns2 = {"Partition"};
@@ -154,8 +158,11 @@ public class HiveMetadataHandlerTest
         TableName tempTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.hiveMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = new HashSet<>(Arrays.asList("partition"));
-        GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId",
-                "testCatalogName",tempTableName, constraints, partitionSchema, partitionCols);
+        GetTableLayoutRequest getTableLayoutRequest = GetTableLayoutRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatlogName")
+            .setTableName(tempTableName).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))
+            .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(partitionSchema))
+            .addAllPartitionCols(partitionCols)
+            .build();
         String[] columns2 = {"Partition"};
         int[] types2 = {Types.VARCHAR};
         Object[][] values1 = {};
@@ -215,8 +222,11 @@ public class HiveMetadataHandlerTest
         TableName tempTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build();
         Schema partitionSchema = this.hiveMetadataHandler.getPartitionSchema("testCatalogName");
         Set<String> partitionCols = new HashSet<>(Arrays.asList("partition"));
-        GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId",
-                "testCatalogName",tempTableName, constraints, partitionSchema, partitionCols);
+        GetTableLayoutRequest getTableLayoutRequest = GetTableLayoutRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatlogName")
+            .setTableName(tempTableName).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))
+            .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(partitionSchema))
+            .addAllPartitionCols(partitionCols)
+            .build();
         String value2 = "case_date=01-01-2000/case_number=0/case_instance=89898989/case_location=__HIVE_DEFAULT_PARTITION__";
         String value3 = "case_date=02-01-2000/case_number=1/case_instance=89898990/case_location=Hyderabad";
         String[] columns2 = {"Partition"};
@@ -252,14 +262,15 @@ public class HiveMetadataHandlerTest
         Set<String> partitionCols = partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet());
 
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
-        GetTableLayoutRequest getTableLayoutRequest = new GetTableLayoutRequest(this.federatedIdentity, "testQueryId", "testCatalogName",
-                tableName, constraints, partitionSchema, partitionCols);
-
+        GetTableLayoutRequest getTableLayoutRequest = GetTableLayoutRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatlogName")
+            .setTableName(tableName).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))
+            .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(partitionSchema))
+            .addAllPartitionCols(partitionCols)
+            .build();
         GetTableLayoutResponse getTableLayoutResponse = this.hiveMetadataHandler.doGetTableLayout(blockAllocator, getTableLayoutRequest);
 
-        GetSplitsRequest getSplitsRequest = new GetSplitsRequest(this.federatedIdentity, "testQueryId",
-                "testCatalogName", tableName, getTableLayoutResponse.getPartitions(),
-                new ArrayList<>(partitionCols), constraints, "1");
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName")
+            .setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(partitionCols).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).setContinuationToken("1").build();
 
         Integer splitRequestToken=0;
         if (getSplitsRequest.hasContinuationToken()) {
