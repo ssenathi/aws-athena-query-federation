@@ -23,10 +23,12 @@ package com.amazonaws.athena.connectors.google.bigquery;
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.ThrottlingInvoker;
 import com.amazonaws.athena.connector.lambda.data.Block;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
-import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.athena.AmazonAthenaClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
@@ -100,7 +102,7 @@ public class BigQueryRecordHandler
 
         logger.debug("Got Request with constraints: {}", recordsRequest.getConstraints());
         sqlToExecute = BigQuerySqlUtils.buildSqlFromSplit(TableName.newBuilder().setSchemaName(datasetName).setTableName(tableName).build(),
-                recordsRequest.getSchema(), recordsRequest.getConstraints(), recordsRequest.getSplit(), parameterValues);
+                ProtobufMessageConverter.fromProtoSchema(allocator, recordsRequest.getSchema()), ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()), recordsRequest.getSplit(), parameterValues);
         logger.debug("Executing SQL Query: {} for Split: {}", sqlToExecute, recordsRequest.getSplit());
         QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(sqlToExecute).setUseLegacySql(false).setPositionalParameters(parameterValues).build();
         Job queryJob;
@@ -143,7 +145,7 @@ public class BigQueryRecordHandler
             logger.info("Got interrupted waiting for Big Query to finish the query.");
             Thread.currentThread().interrupt();
         }
-        outputResults(spiller, recordsRequest, result);
+        outputResults(allocator, spiller, recordsRequest, result);
     }
 
     /**
@@ -153,7 +155,7 @@ public class BigQueryRecordHandler
      * @param recordsRequest The {@link ReadRecordsRequest} provided when readWithConstraints() is called.
      * @param result         The {@link TableResult} provided by {@link BigQuery} client after a query has completed executing.
      */
-    private void outputResults(BlockSpiller spiller, ReadRecordsRequest recordsRequest, TableResult result)
+    private void outputResults(BlockAllocator allocator, BlockSpiller spiller, ReadRecordsRequest recordsRequest, TableResult result)
     {
         logger.info("Inside outputResults: ");
         String timeStampColsList = Objects.toString(ProtobufMessageConverter.fromProtoSchema(allocator, recordsRequest.getSchema()).getCustomMetadata().get("timeStampCols"), "");

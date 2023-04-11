@@ -89,7 +89,7 @@ public class AmazonMskMetadataHandlerTest {
     public void setUp() {
         MockitoAnnotations.initMocks(this);
         blockAllocator = new BlockAllocatorImpl();
-        federatedIdentity = Mockito.mock(FederatedIdentity.class);
+        federatedIdentity = FederatedIdentity.newBuilder().build();
         partitions = Mockito.mock(Block.class);
         partitionCols = Mockito.mock(List.class);
         constraints = Mockito.mock(Constraints.class);

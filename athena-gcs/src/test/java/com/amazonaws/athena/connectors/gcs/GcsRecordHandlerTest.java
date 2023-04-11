@@ -131,7 +131,7 @@ public class GcsRecordHandlerTest
     {
         System.setProperty("aws.region", "us-east-1");
         LOGGER.info("Starting init.");
-        federatedIdentity = Mockito.mock(FederatedIdentity.class);
+        federatedIdentity = FederatedIdentity.newBuilder().build();
         BlockAllocator allocator = new BlockAllocatorImpl();
         amazonS3 = mock(AmazonS3.class);
         mockS3Client();

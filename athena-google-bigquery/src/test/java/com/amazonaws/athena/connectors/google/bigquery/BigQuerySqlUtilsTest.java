@@ -84,8 +84,6 @@ public class BigQuerySqlUtilsTest
         constraintMap.put("booleanRange", booleanRangeSet);
         constraintMap.put("integerInRange", integerInRangeSet);
 
-        Mockito.when(split.getProperties()).thenReturn(Collections.emptyMap());
-
         final List<QueryParameterValue> expectedParameterValues = ImmutableList.of(QueryParameterValue.int64(10), QueryParameterValue.int64(20),
                 QueryParameterValue.string("a_low"), QueryParameterValue.string("z_high"),
                 QueryParameterValue.bool(true),

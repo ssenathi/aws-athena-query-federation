@@ -171,7 +171,7 @@ public class GcsMetadataHandlerTest
         PowerMockito.when(AWSGlueClientBuilder.defaultClient()).thenReturn(awsGlue);
         gcsMetadataHandler = new GcsMetadataHandler(new LocalKeyFactory(), secretsManager, athena, "spillBucket", "spillPrefix", awsGlue, allocator, com.google.common.collect.ImmutableMap.of());
         blockAllocator = new BlockAllocatorImpl();
-        federatedIdentity = Mockito.mock(FederatedIdentity.class);
+        federatedIdentity = FederatedIdentity.newBuilder().build();
     }
 
     @Test

@@ -27,6 +27,7 @@ import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.proto.metadata.*;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.google.api.gax.paging.Page;
 import com.google.cloud.bigquery.*;
 import org.junit.After;
@@ -71,7 +72,8 @@ public class BigQueryMetadataHandlerTest
     private Job job;
     private JobStatus jobStatus;
 
-    private java.util.HashMap<String, String> configOptions = new HashMap();
+    // some tests directly put to this map, others need it set first (because the map is ultimately accessed before the test execution in constructors)
+    private java.util.Map<String, String> configOptions = new HashMap<>(com.google.common.collect.ImmutableMap.of("spill_bucket", "asdf_bucket_loc"));
 
     @Before
     public void setUp() throws InterruptedException {
@@ -79,7 +81,7 @@ public class BigQueryMetadataHandlerTest
         MockitoAnnotations.initMocks(this);
         bigQueryMetadataHandler = new BigQueryMetadataHandler(configOptions);
         blockAllocator = new BlockAllocatorImpl();
-        federatedIdentity = Mockito.mock(FederatedIdentity.class);
+        federatedIdentity = FederatedIdentity.newBuilder().build();;
         job = mock(Job.class);
         jobStatus = mock(JobStatus.class);
         when(bigQuery.create(nullable(JobInfo.class), any())).thenReturn(job);
@@ -105,12 +107,11 @@ public class BigQueryMetadataHandlerTest
         when(bigQuery.listDatasets(nullable(String.class), nullable(BigQuery.DatasetListOption.class))).thenReturn(datasetPage);
 
         //This will test case insenstivity
-        ListSchemasRequest request = new ListSchemasRequest(federatedIdentity,
-                QUERY_ID, BigQueryTestUtils.PROJECT_1_NAME.toLowerCase());
+        ListSchemasRequest request = ListSchemasRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName(BigQueryTestUtils.PROJECT_1_NAME.toLowerCase()).build();
         ListSchemasResponse schemaNames = bigQueryMetadataHandler.doListSchemaNames(blockAllocator, request);
 
         assertNotNull(schemaNames);
-        assertEquals("Schema count does not match!", numDatasets, schemaNames.getSchemas().size());
+        assertEquals("Schema count does not match!", numDatasets, schemaNames.getSchemasList().size());
     }
 
     @Test
@@ -131,9 +132,7 @@ public class BigQueryMetadataHandlerTest
                         datasetName, numTables));
 
         //This will test case insenstivity
-        ListTablesRequest listTablesRequest = new ListTablesRequest(federatedIdentity,
-                QUERY_ID, BigQueryTestUtils.PROJECT_1_NAME.toLowerCase(),
-                datasetName, null, UNLIMITED_PAGE_SIZE_VALUE);
+        ListTablesRequest listTablesRequest = ListTablesRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName(BigQueryTestUtils.PROJECT_1_NAME.toLowerCase()).setSchemaName(datasetName).setPageSize(UNLIMITED_PAGE_SIZE_VALUE).build();
 
         // This commented out line was used when the wrong UNLIMITED_PAGE_SIZE_VALUE was set, which
         // triggered a method invocation to the same name but different signature.
@@ -142,7 +141,7 @@ public class BigQueryMetadataHandlerTest
         when(bigQuery.listTables(nullable(DatasetId.class))).thenReturn(tablesPage);
         ListTablesResponse tableNames = bigQueryMetadataHandler.doListTables(blockAllocator, listTablesRequest);
         assertNotNull(tableNames);
-        assertEquals("Schema count does not match!", numTables, tableNames.getTables().size());
+        assertEquals("Schema count does not match!", numTables, tableNames.getTablesList().size());
     }
 
     @Test
@@ -177,16 +176,13 @@ public class BigQueryMetadataHandlerTest
         when(bigQuery.getTable(nullable(TableId.class))).thenReturn(table);
 
         //Make the call
-        GetTableRequest getTableRequest = new GetTableRequest(federatedIdentity,
-                QUERY_ID, BigQueryTestUtils.PROJECT_1_NAME,
-                TableName.newBuilder().setSchemaName(datasetName).setTableName(tableName)).build();
-
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName(BigQueryTestUtils.PROJECT_1_NAME).setTableName(TableName.newBuilder().setSchemaName(datasetName).setTableName(tableName)).build();
         GetTableResponse response = bigQueryMetadataHandler.doGetTable(blockAllocator, getTableRequest);
 
         assertNotNull(response);
 
         //Number of Fields
-        assertEquals(tableSchema.getFields().size(), ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()).getFields().size());
+        assertEquals(tableSchema.getFields().size(), ProtobufMessageConverter.fromProtoSchema(blockAllocator, response.getSchema()).getFields().size());
     }
 
     @Test
@@ -196,9 +192,11 @@ public class BigQueryMetadataHandlerTest
         BlockAllocator blockAllocator = new BlockAllocatorImpl();
         configOptions.put("concurrencyLimit", "10");
 
-        GetSplitsRequest request = new GetSplitsRequest(federatedIdentity,
-                QUERY_ID, CATALOG, TABLE_NAME,
-                mock(Block.class), Collections.<String>emptyList(), new Constraints(new HashMap<>()), null);
+        GetSplitsRequest request = GetSplitsRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName(CATALOG)
+            .setTableName(TABLE_NAME)
+            .setPartitions(com.amazonaws.athena.connector.lambda.proto.data.Block.newBuilder().build())
+            .build();
+
         // added schema with integer column countCol
         List<Field> testSchemaFields = Arrays.asList(Field.of("countCol", LegacySQLTypeName.INTEGER));
         com.google.cloud.bigquery.Schema tableSchema = Schema.of(testSchemaFields);
@@ -229,8 +227,7 @@ public class BigQueryMetadataHandlerTest
                 new BigQueryPage<>(BigQueryTestUtils.getDatasetList(BigQueryTestUtils.PROJECT_1_NAME, numDatasets));
         when(bigQuery.listDatasets(nullable(String.class))).thenReturn(datasetPage);
 
-        ListSchemasRequest request = new ListSchemasRequest(federatedIdentity,
-                QUERY_ID, BigQueryTestUtils.PROJECT_1_NAME.toLowerCase());
+        ListSchemasRequest request = ListSchemasRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName(BigQueryTestUtils.PROJECT_1_NAME.toLowerCase()).build();
         when(bigQueryMetadataHandler.doListSchemaNames(blockAllocator, request)).thenThrow(new BigQueryExceptions.TooManyTablesException());
         ListSchemasResponse schemaNames = bigQueryMetadataHandler.doListSchemaNames(blockAllocator, request);
         assertEquals(null, schemaNames);

@@ -24,10 +24,10 @@ import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockWriter;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
+import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
 import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.proto.domain.spill.SpillLocation;
-import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
@@ -37,6 +37,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.google.api.gax.paging.Page;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.Dataset;
@@ -133,18 +134,21 @@ public class BigQueryMetadataHandler
                     if (tables.size() > BigQueryConstants.MAX_RESULTS) {
                         throw new BigQueryExceptions.TooManyTablesException();
                     }
-                    tables.add(TableName.newBuilder().setSchemaName(listTablesRequest.getSchemaName()).setTableName(table.getTableId().getTable())).build();
+                    tables.add(TableName.newBuilder().setSchemaName(listTablesRequest.getSchemaName()).setTableName(table.getTableId().getTable()).build());
                 }
             }
             else {
                 Page<Table> response = bigQuery.listTables(datasetId,
                         BigQuery.TableListOption.pageToken(listTablesRequest.getNextToken()), BigQuery.TableListOption.pageSize(listTablesRequest.getPageSize()));
                 for (Table table : response.getValues()) {
-                    tables.add(TableName.newBuilder().setSchemaName(listTablesRequest.getSchemaName()).setTableName(table.getTableId().getTable())).build();
+                    tables.add(TableName.newBuilder().setSchemaName(listTablesRequest.getSchemaName()).setTableName(table.getTableId().getTable()).build());
                 }
                 nextToken = response.getNextPageToken();
             }
-            return new ListTablesResponse(listTablesRequest.getCatalogName(), tables, nextToken);
+            if (nextToken == null) {
+                return ListTablesResponse.newBuilder().setCatalogName(listTablesRequest.getCatalogName()).addAllTables(tables).build();
+            }
+            return ListTablesResponse.newBuilder().setCatalogName(listTablesRequest.getCatalogName()).addAllTables(tables).setNextToken(nextToken).build();
         }
         catch
         (Exception e) {
@@ -191,13 +195,11 @@ public class BigQueryMetadataHandler
     @Override
     public GetSplitsResponse doGetSplits(BlockAllocator allocator, GetSplitsRequest request) throws IOException, InterruptedException
     {
-        int constraintsSize = ProtobufMessageConverter.fromProtoConstraints(allocator, request.getSchema()).getFields().size();
+        int constraintsSize = ProtobufMessageConverter.fromProtoConstraints(allocator, request.getConstraints()).getSummary().size();
         if (constraintsSize > 0) {
             //Every split must have a unique location if we wish to spill to avoid failures
             SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
-
-            return new GetSplitsResponse(request.getCatalogName(), Split.newBuilder(spillLocation,
-                    makeEncryptionKey()).build());
+            return GetSplitsResponse.newBuilder().setCatalogName(request.getCatalogName()).addSplits(Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).build()).build();
         }
         else {
             String projectName = BigQueryUtils.getProjectName(request.getCatalogName(), configOptions);
@@ -230,9 +232,9 @@ public class BigQueryMetadataHandler
                 // shard information (to be used later by the Record Handler).
                 Map<String, String> map = new HashMap<>();
                 map.put(Long.toString(totalPageCountLimit), Long.toString(offSet));
-                splits.add(new Split(spillLocation, makeEncryptionKey(), map));
+                splits.add(Split.newBuilder().setSpillLocation(spillLocation).setEncryptionKey(makeEncryptionKey()).putAllProperties(map).build());
             }
-            return new GetSplitsResponse(request.getCatalogName(), splits);
+            return GetSplitsResponse.newBuilder().setCatalogName(request.getCatalogName()).addAllSplits(splits).build();
         }
     }
 
@@ -255,7 +257,7 @@ public class BigQueryMetadataHandler
         SchemaBuilder schemaBuilder = SchemaBuilder.newBuilder();
         List<String> timeStampColsList = new ArrayList<>();
 
-        for (Field field : ProtobufMessageConverter.fromProtoSchema(allocator, tableDefinition.getSchema()).getFields()) {
+        for (Field field : tableDefinition.getSchema().getFields()) {
             if (field.getType().getStandardType().toString().equals("TIMESTAMP")) {
                 timeStampColsList.add(field.getName());
             }
