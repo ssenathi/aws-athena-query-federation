@@ -103,7 +103,7 @@ public class SynapseRecordHandler extends JdbcRecordHandler
                 Map<String, String> partitionValues = readRecordsRequest.getSplit().getProperties();
 
                 GeneratedRowWriter.RowWriterBuilder rowWriterBuilder = GeneratedRowWriter.newBuilder(readRecordsRequest.getConstraints());
-                for (Field next : readRecordsRequest.getSchema().getFields()) {
+                for (Field next : ProtobufMessageConverter.fromProtoSchema(allocator, readRecordsRequest.getSchema()).getFields()) {
                     if (next.getType() instanceof ArrowType.List) {
                         rowWriterBuilder.withFieldWriterFactory(next.getName(), makeFactory(next));
                     }

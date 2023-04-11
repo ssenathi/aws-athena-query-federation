@@ -28,6 +28,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.glue.AWSGlue;
 import com.amazonaws.services.glue.model.Column;
@@ -86,7 +87,7 @@ public class NeptuneMetadataHandlerTest extends TestBase {
         allocator = new BlockAllocatorImpl();
         handler = new NeptuneMetadataHandler(glue,neptuneConnection,
                 new LocalKeyFactory(), mock(AWSSecretsManager.class), mock(AmazonAthena.class), "spill-bucket",
-                "spill-prefix", com.google.common.collect.ImmutableMap.of());
+                "spill-prefix", com.google.common.collect.ImmutableMap.of("glue_database_name", "asdf_db"));
         logger.info("setUpBefore - exit");
     }
 
@@ -126,8 +127,7 @@ public class NeptuneMetadataHandlerTest extends TestBase {
         GetTablesResult tableResult = new GetTablesResult();
         tableResult.setTableList(tables);
 
-        ListTablesRequest req = new ListTablesRequest(IDENTITY, "queryId", "default",
-                "default", null, UNLIMITED_PAGE_SIZE_VALUE);
+        ListTablesRequest req = ListTablesRequest.newBuilder().setIdentity(IDENTITY).setQueryId("queryId").setCatalogName("default").setSchemaName("default").setPageSize(UNLIMITED_PAGE_SIZE_VALUE).build();
         when(glue.getTables(nullable(GetTablesRequest.class))).thenReturn(tableResult);
 
         ListTablesResponse res = handler.doListTables(allocator, req);

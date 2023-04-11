@@ -143,7 +143,7 @@ public class ExampleRecordHandler
             return;
         }
 
-        GeneratedRowWriter.RowWriterBuilder builder = GeneratedRowWriter.newBuilder(recordsRequest.getConstraints());
+        GeneratedRowWriter.RowWriterBuilder builder = GeneratedRowWriter.newBuilder(ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()));
 
         /**
          * TODO: Add extractors for each field to our RowWRiterBuilder, the RowWriterBuilder will then 'generate'

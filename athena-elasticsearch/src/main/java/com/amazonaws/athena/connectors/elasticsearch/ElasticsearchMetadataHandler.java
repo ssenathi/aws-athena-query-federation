@@ -221,7 +221,7 @@ public class ElasticsearchMetadataHandler
         // Look at GLUE catalog first.
         try {
             if (awsGlue != null) {
-                schema = ProtobufMessageConverter.fromProtoSchema(allocator, super.doGetTable(allocator, request).getSchema());
+                schema = ProtobufMessageConverter.fromProtoSchema(allocator, ProtobufMessageConverter.fromProtoSchema(allocator, super.doGetTable(allocator, request).getSchema()));
                 logger.info("doGetTable: Retrieved schema for table[{}] from AWS Glue.", request.getTableName());
             }
         }

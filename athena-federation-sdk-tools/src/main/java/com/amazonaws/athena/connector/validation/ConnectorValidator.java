@@ -223,18 +223,18 @@ public class ConnectorValidator
     checkState(table.equals(returnedTableName), "Returned table name did not match the requested table name!"
                                                         + " Expected " + toQualifiedTableName(table)
                                                         + " but found " + toQualifiedTableName(returnedTableName));
-    List<String> notLower = tableResponse.getSchema().getFields()
+    List<String> notLower = ProtobufMessageConverter.fromProtoSchema(allocator, tableResponse.getSchema()).getFields()
                                     .stream()
                                     .map(Field::getName)
                                     .filter(f -> !f.equals(f.toLowerCase()))
                                     .collect(Collectors.toList());
     checkState(notLower.isEmpty(),
                              "All returned columns must be lowercase! Found these non-lowercase columns: " + notLower);
-    checkState(tableResponse.getSchema().getFields()
+    checkState(ProtobufMessageConverter.fromProtoSchema(allocator, tableResponse.getSchema()).getFields()
                        .stream().map(Field::getName)
                        .anyMatch(f -> !tableResponse.getPartitionColumns().contains(f)),
                              "Table must have at least one non-partition column!");
-    Set<String> fields = tableResponse.getSchema().getFields().stream().map(Field::getName).collect(Collectors.toSet());
+    Set<String> fields = ProtobufMessageConverter.fromProtoSchema(allocator, tableResponse.getSchema()).getFields().stream().map(Field::getName).collect(Collectors.toSet());
     Sets.SetView<String> difference = Sets.difference(tableResponse.getPartitionColumns(), fields);
     checkState(difference.isEmpty(), "Table column list must include all partition columns! "
                                              + "Found these partition columns which are not in the table's fields: "
@@ -319,7 +319,7 @@ public class ConnectorValidator
                        + " This can happen if the table is empty but could also indicate an issue."
                        + " Please populate the table or specify a different table.");
     log.info("Discovered columns: "
-                     + records.getSchema().getFields()
+                     + ProtobufMessageConverter.fromProtoSchema(allocator, records.getSchema()).getFields()
                                .stream()
                                .map(f -> f.getName() + ":" + f.getType().getTypeID())
                                .collect(Collectors.toList()));

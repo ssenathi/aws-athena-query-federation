@@ -156,13 +156,13 @@ public class BigQueryRecordHandler
     private void outputResults(BlockSpiller spiller, ReadRecordsRequest recordsRequest, TableResult result)
     {
         logger.info("Inside outputResults: ");
-        String timeStampColsList = Objects.toString(recordsRequest.getSchema().getCustomMetadata().get("timeStampCols"), "");
+        String timeStampColsList = Objects.toString(ProtobufMessageConverter.fromProtoSchema(allocator, recordsRequest.getSchema()).getCustomMetadata().get("timeStampCols"), "");
         logger.info("timeStampColsList: " + timeStampColsList);
         if (result != null) {
             for (FieldValueList row : result.iterateAll()) {
                 spiller.writeRows((Block block, int rowNum) -> {
                     boolean isMatched = true;
-                    for (Field field : recordsRequest.getSchema().getFields()) {
+                    for (Field field : ProtobufMessageConverter.fromProtoSchema(allocator, recordsRequest.getSchema()).getFields()) {
                         FieldValue fieldValue = row.get(field.getName());
                         Object val = getObjectFromFieldValue(field.getName(), fieldValue,
                                 field.getFieldType().getType(), timeStampColsList.contains(field.getName()));

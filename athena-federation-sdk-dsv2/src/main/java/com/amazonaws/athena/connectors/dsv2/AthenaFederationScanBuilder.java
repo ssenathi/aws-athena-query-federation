@@ -88,7 +88,7 @@ public class AthenaFederationScanBuilder implements ScanBuilder, SupportsPushDow
             getTableResponse.getPartitionColumns().stream()
         ).collect(Collectors.toSet());
 
-        List<Field> updatedFields = getTableResponse.getSchema().getFields().stream()
+        List<Field> updatedFields = ProtobufMessageConverter.fromProtoSchema(allocator, getTableResponse.getSchema()).getFields().stream()
             .filter(field -> fieldsToKeep.contains(field.getName()))
             .collect(Collectors.toList());
 

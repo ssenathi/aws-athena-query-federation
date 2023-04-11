@@ -191,7 +191,7 @@ public class BigQueryMetadataHandler
     @Override
     public GetSplitsResponse doGetSplits(BlockAllocator allocator, GetSplitsRequest request) throws IOException, InterruptedException
     {
-        int constraintsSize = request.getConstraints().getSummary().size();
+        int constraintsSize = ProtobufMessageConverter.fromProtoConstraints(allocator, request.getSchema()).getFields().size();
         if (constraintsSize > 0) {
             //Every split must have a unique location if we wish to spill to avoid failures
             SpillLocation spillLocation = makeSpillLocation(request.getQueryId());
@@ -255,7 +255,7 @@ public class BigQueryMetadataHandler
         SchemaBuilder schemaBuilder = SchemaBuilder.newBuilder();
         List<String> timeStampColsList = new ArrayList<>();
 
-        for (Field field : tableDefinition.getSchema().getFields()) {
+        for (Field field : ProtobufMessageConverter.fromProtoSchema(allocator, tableDefinition.getSchema()).getFields()) {
             if (field.getType().getStandardType().toString().equals("TIMESTAMP")) {
                 timeStampColsList.add(field.getName());
             }

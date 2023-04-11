@@ -43,6 +43,7 @@ import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsResponse;
 import com.amazonaws.athena.connector.lambda.proto.records.RemoteReadRecordsResponse;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
 import com.amazonaws.athena.connector.lambda.security.LocalKeyFactory;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -51,6 +52,8 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
 import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.google.common.io.ByteStreams;
+import com.google.protobuf.Message;
+
 import org.apache.arrow.vector.types.Types;
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.tinkerpop.gremlin.driver.Client;
@@ -376,17 +379,17 @@ public class NeptuneRecordHandlerTest extends TestBase {
         private void invokeAndAssert(Schema schemaPG, HashMap<String, ValueSet> constraintMap, Integer expectedRecordCount)
                         throws Exception {
 
-                SpillLocation spillLoc = SpillLocation.newBuilder().withBucket(UUID.randomUUID().toString())
-                                .withSplitId(UUID.randomUUID().toString()).withQueryId(UUID.randomUUID().toString())
-                                .withIsDirectory(true).build();
+                SpillLocation spillLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString())
+                                .setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString())
+                                .setDirectory(true).build();
 
                 allocator = new BlockAllocatorImpl();
 
                 buildGraphTraversal();
 
-                ReadRecordsRequest request = new ReadRecordsRequest(IDENTITY, DEFAULT_CATALOG, QUERY_ID, TABLE_NAME,
-                schemaPG, Split.newBuilder(spillLoc, null).build(), new Constraints(constraintMap),
-                                100_000_000_000L, 100_000_000_000L);
+                ReadRecordsRequest request = ReadRecordsRequest.newBuilder().setIdentity(IDENTITY).setCatalogName(DEFAULT_CATALOG).setQueryId(QUERY_ID).setTableName(TABLE_NAME)
+                    .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schemaPG)).setSplit(Split.newBuilder().setSpillLocation(spillLoc))
+                    .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintMap))).setMaxBlockSize(100_000_000_000L).setMaxInlineBlockSize(100_000_000_000L).build();
 
                 Message rawResponse = handler.doReadRecords(allocator, request);
                 assertTrue(rawResponse instanceof ReadRecordsResponse);
@@ -394,7 +397,7 @@ public class NeptuneRecordHandlerTest extends TestBase {
                 ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
                 assertTrue(ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() == expectedRecordCount);
 
-                logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()));
+                logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()), 0));
         }
 
         @Test
@@ -406,9 +409,9 @@ public class NeptuneRecordHandlerTest extends TestBase {
 
         @Test
         public void doReadRecordsSpill() throws Exception {
-                SpillLocation splitLoc = SpillLocation.newBuilder().withBucket(UUID.randomUUID().toString())
-                                .withSplitId(UUID.randomUUID().toString()).withQueryId(UUID.randomUUID().toString())
-                                .withIsDirectory(true).build();
+                SpillLocation splitLoc = SpillLocation.newBuilder().setBucket(UUID.randomUUID().toString())
+                                .setKey(UUID.randomUUID().toString() + "/" + UUID.randomUUID().toString())
+                                .setDirectory(true).build();
 
                 allocator = new BlockAllocatorImpl();
 
@@ -419,30 +422,27 @@ public class NeptuneRecordHandlerTest extends TestBase {
 
                 buildGraphTraversal();
 
-                ReadRecordsRequest request = new ReadRecordsRequest(IDENTITY, DEFAULT_CATALOG, QUERY_ID, TABLE_NAME,
-                schemaPGVertexForRead, Split.newBuilder().setSpillLocation(splitLoc).setEncryptionKey(keyFactory.create()).build(),
-                                new Constraints(constraintsMap), 1_500_000L, // ~1.5MB so we should see some spill
-                                0L);
+                ReadRecordsRequest request = ReadRecordsRequest.newBuilder().setIdentity(IDENTITY).setCatalogName(DEFAULT_CATALOG).setQueryId(QUERY_ID).setTableName(TABLE_NAME)
+                    .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(schemaPGVertexForRead)).setSplit(Split.newBuilder().setSpillLocation(splitLoc).setEncryptionKey(keyFactory.create()))
+                    .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap))).setMaxBlockSize(1_500_000L).setMaxInlineBlockSize(0L).build();
 
                 Message rawResponse = handler.doReadRecords(allocator, request);
                 assertTrue(rawResponse instanceof RemoteReadRecordsResponse);
+                RemoteReadRecordsResponse response = (RemoteReadRecordsResponse) rawResponse;
+                logger.info("doReadRecordsSpill: remoteBlocks[{}]", response.getRemoteBlocksList().size());
 
-                try (RemoteReadRecordsResponse response = (RemoteReadRecordsResponse) rawResponse) {
-                        logger.info("doReadRecordsSpill: remoteBlocks[{}]", response.getRemoteBlocksList().size());
+                assertTrue(response.getRemoteBlocksList().size() == 1);
 
-                        assertTrue(response.getRemoteBlocksList().size() == 1);
+                int blockNum = 0;
+                for (SpillLocation next : response.getRemoteBlocksList()) {
+                        SpillLocation spillLocation = (SpillLocation) next;
+                        try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(),
+                                        ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
+                                logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++,
+                                                block.getRowCount());
 
-                        int blockNum = 0;
-                        for (SpillLocation next : response.getRemoteBlocksList()) {
-                                SpillLocation spillLocation = (SpillLocation) next;
-                                try (Block block = spillReader.read(spillLocation, response.getEncryptionKey(),
-                                                ProtobufMessageConverter.fromProtoSchema(allocator, response.getSchema()))) {
-                                        logger.info("doReadRecordsSpill: blockNum[{}] and recordCount[{}]", blockNum++,
-                                                        block.getRowCount());
-
-                                        logger.info("doReadRecordsSpill: {}", BlockUtils.rowToString(block, 0));
-                                        assertNotNull(BlockUtils.rowToString(block, 0));
-                                }
+                                logger.info("doReadRecordsSpill: {}", BlockUtils.rowToString(block, 0));
+                                assertNotNull(BlockUtils.rowToString(block, 0));
                         }
                 }
         }

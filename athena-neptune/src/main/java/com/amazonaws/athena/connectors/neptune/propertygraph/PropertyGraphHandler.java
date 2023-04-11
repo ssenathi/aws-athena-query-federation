@@ -21,6 +21,7 @@ package com.amazonaws.athena.connectors.neptune.propertygraph;
 
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.Block;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
 import com.amazonaws.athena.connector.lambda.data.writers.GeneratedRowWriter;
 import com.amazonaws.athena.connector.lambda.domain.predicate.EquatableValueSet;
@@ -28,6 +29,7 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.Range;
 import com.amazonaws.athena.connector.lambda.domain.predicate.SortedRangeSet;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connectors.neptune.NeptuneConnection;
 import com.amazonaws.athena.connectors.neptune.NeptuneRecordHandler;
 import com.amazonaws.athena.connectors.neptune.propertygraph.Enums.TableSchemaMetaType;
@@ -99,6 +101,7 @@ public class PropertyGraphHandler
      */
 
     public void executeQuery(
+        BlockAllocator allocator,
         ReadRecordsRequest recordsRequest,
         QueryStatusChecker queryStatusChecker,
         BlockSpiller spiller,
@@ -110,9 +113,9 @@ public class PropertyGraphHandler
         GraphTraversalSource graphTraversalSource = neptuneConnection.getTraversalSource(client);
         GraphTraversal graphTraversal = null;
         String labelName = recordsRequest.getTableName().getTableName();
-        GeneratedRowWriter.RowWriterBuilder builder = GeneratedRowWriter.newBuilder(recordsRequest.getConstraints());
-        String type = recordsRequest.getSchema().getCustomMetadata().get("componenttype");
-        String glabel = recordsRequest.getSchema().getCustomMetadata().get("glabel");
+        GeneratedRowWriter.RowWriterBuilder builder = GeneratedRowWriter.newBuilder(ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()));
+        String type = ProtobufMessageConverter.fromProtoSchema(allocator, recordsRequest.getSchema()).getCustomMetadata().get("componenttype");
+        String glabel = ProtobufMessageConverter.fromProtoSchema(allocator, recordsRequest.getSchema()).getCustomMetadata().get("glabel");
         TableSchemaMetaType tableSchemaMetaType = TableSchemaMetaType.valueOf(type.toUpperCase());
 
         logger.debug("readWithConstraint: schema type is " + tableSchemaMetaType.toString());
@@ -126,10 +129,10 @@ public class PropertyGraphHandler
             switch (tableSchemaMetaType) {
                 case VERTEX:
                     graphTraversal = graphTraversalSource.V().hasLabel(labelName);
-                    getQueryPartForContraintsMap(graphTraversal, recordsRequest);
+                    getQueryPartForContraintsMap(allocator, graphTraversal, recordsRequest);
                     graphTraversal = graphTraversal.valueMap().with(WithOptions.tokens);
 
-                    for (final Field nextField : recordsRequest.getSchema().getFields()) {
+                    for (final Field nextField : ProtobufMessageConverter.fromProtoSchema(allocator, recordsRequest.getSchema()).getFields()) {
                         VertexRowWriter.writeRowTemplate(builder, nextField, configOptions);
                     }
 
@@ -137,10 +140,10 @@ public class PropertyGraphHandler
 
                 case EDGE:
                     graphTraversal = graphTraversalSource.E().hasLabel(labelName);
-                    getQueryPartForContraintsMap(graphTraversal, recordsRequest);
+                    getQueryPartForContraintsMap(allocator, graphTraversal, recordsRequest);
                     graphTraversal = graphTraversal.elementMap();
 
-                    for (final Field nextField : recordsRequest.getSchema().getFields()) {
+                    for (final Field nextField : ProtobufMessageConverter.fromProtoSchema(allocator, recordsRequest.getSchema()).getFields()) {
                         EdgeRowWriter.writeRowTemplate(builder, nextField, configOptions);
                     }
 
@@ -176,10 +179,10 @@ public class PropertyGraphHandler
      * 
      * @return A Gremlin Query Part equivalent to Contraint.
      */
-    public GraphTraversal getQueryPartForContraintsMap(GraphTraversal traversal,
+    public GraphTraversal getQueryPartForContraintsMap(BlockAllocator allocator, GraphTraversal traversal,
             final ReadRecordsRequest recordsRequest) 
             {
-        final Map<String, ValueSet> hashMap = recordsRequest.getConstraints().getSummary();
+        final Map<String, ValueSet> hashMap = ProtobufMessageConverter.fromProtoConstraints(allocator, recordsRequest.getConstraints()).getSummary();
         if (hashMap.size() == 0) {
             return traversal;
         }
