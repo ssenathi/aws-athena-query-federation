@@ -21,6 +21,8 @@
 package com.amazonaws.athena.connectors.cloudera;
 
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
 import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
@@ -55,6 +57,7 @@ public class HiveMuxRecordHandlerTest
     private AmazonAthena athena;
     private QueryStatusChecker queryStatusChecker;
     private JdbcConnectionFactory jdbcConnectionFactory;
+    private BlockAllocator blockAllocator;
     @BeforeClass
     public static void dataSetUP() {
         System.setProperty("aws.region", "us-west-2");
@@ -72,6 +75,7 @@ public class HiveMuxRecordHandlerTest
         DatabaseConnectionConfig databaseConnectionConfig = new DatabaseConnectionConfig("testCatalog", HiveConstants.HIVE_NAME,
         		"hive2://jdbc:hive2://54.89.6.2:10000/authena;AuthMech=3;${testSecret}", "testSecret");
         this.jdbcRecordHandler = new HiveMuxRecordHandler(this.amazonS3, this.secretsManager, this.athena, this.jdbcConnectionFactory, databaseConnectionConfig, this.recordHandlerMap, com.google.common.collect.ImmutableMap.of("spill_bucket", "asdf_spill_bucket_loc"));
+        this.blockAllocator = new BlockAllocatorImpl();
     }
 
     @Test
