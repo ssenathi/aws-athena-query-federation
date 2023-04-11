@@ -34,6 +34,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRespon
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connectors.jdbc.TestBase;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionConfig;
 import com.amazonaws.athena.connectors.jdbc.connection.JdbcConnectionFactory;
@@ -166,7 +167,7 @@ public class DataLakeGen2MetadataHandlerTest
         GetTableLayoutResponse getTableLayoutResponse = this.dataLakeGen2MetadataHandler.doGetTableLayout(blockAllocator, getTableLayoutRequest);
 
         BlockAllocator splitBlockAllocator = new BlockAllocatorImpl();
-        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(getTableLayoutResponse.getPartitions()))).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))).setContinuationToken($8).build();
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).build();
         GetSplitsResponse getSplitsResponse = this.dataLakeGen2MetadataHandler.doGetSplits(splitBlockAllocator, getSplitsRequest);
 
         Set<Map<String, String>> expectedSplits = new HashSet<>();

@@ -20,6 +20,8 @@
 package com.amazonaws.athena.connectors.datalakegen2;
 
 import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
+import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.data.BlockSpiller;
 import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
@@ -51,6 +53,7 @@ public class DataLakeGen2MuxRecordHandlerTest
     private AmazonAthena athena;
     private QueryStatusChecker queryStatusChecker;
     private JdbcConnectionFactory jdbcConnectionFactory;
+    private BlockAllocator blockAllocator;
 
     @Before
     public void setup()
@@ -65,6 +68,7 @@ public class DataLakeGen2MuxRecordHandlerTest
         DatabaseConnectionConfig databaseConnectionConfig = new DatabaseConnectionConfig("testCatalog", DataLakeGen2Constants.NAME,
                 "datalakegentwo://jdbc:sqlserver://hostname/${testSecret}", "testSecret");
         this.jdbcRecordHandler = new DataLakeGen2MuxRecordHandler(this.amazonS3, this.secretsManager, this.athena, this.jdbcConnectionFactory, databaseConnectionConfig, this.recordHandlerMap, com.google.common.collect.ImmutableMap.of("spill_bucket", "asdf_spill_bucket_loc"));
+        this.blockAllocator = new BlockAllocatorImpl();
     }
 
     @Test

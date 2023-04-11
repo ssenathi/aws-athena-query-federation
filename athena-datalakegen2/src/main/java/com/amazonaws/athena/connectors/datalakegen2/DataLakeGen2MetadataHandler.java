@@ -33,6 +33,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionConfig;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionInfo;
 import com.amazonaws.athena.connectors.jdbc.connection.JdbcConnectionFactory;
@@ -122,7 +123,7 @@ public class DataLakeGen2MetadataHandler extends JdbcMetadataHandler
      * @throws Exception
      */
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest getTableLayoutRequest,
+    public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest getTableLayoutRequest,
                               QueryStatusChecker queryStatusChecker)
     {
         LOGGER.info("{}: Schema {}, table {}", getTableLayoutRequest.getQueryId(), getTableLayoutRequest.getTableName().getSchemaName(),
@@ -144,8 +145,8 @@ public class DataLakeGen2MetadataHandler extends JdbcMetadataHandler
 
         // Always create single split
         Set<Split> splits = new HashSet<>();
-        splits.add(Split.newBuilder(makeSpillLocation(getSplitsRequest.getQueryId()), makeEncryptionKey())
-                .add(PARTITION_NUMBER, "0").build());
+        splits.add(Split.newBuilder().setSpillLocation(makeSpillLocation(getSplitsRequest.getQueryId())).setEncryptionKey(makeEncryptionKey())
+                .putProperties(PARTITION_NUMBER, "0").build());
         return GetSplitsResponse.newBuilder().setType("GetSplitsResponse").setCatalogName(getSplitsRequest.getCatalogName()).addAllSplits(splits).build();
     }
 
