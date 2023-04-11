@@ -31,8 +31,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class HiveQueryStringBuilderTest
 {
 	
-	@Mock
-	Split split;
+	Split split = Split.newBuilder().build();
 	
 	@Test
 	public void testQueryBuilder()

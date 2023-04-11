@@ -23,7 +23,6 @@ import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 @SuppressWarnings("deprecation")
@@ -31,8 +30,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 public class ImpalaQueryStringBuilderTest
 {
 	
-	@Mock
-	Split split;
+	Split split = Split.newBuilder().build();
 	
 	@Test
 	public void testQueryBuilder()
