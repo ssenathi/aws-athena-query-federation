@@ -63,10 +63,10 @@ public class SqlServerQueryStringBuilder extends JdbcSplitQueryBuilder
         LOGGER.debug("PARTITION_FUNCTION: {}", split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITION_FUNCTION));
         LOGGER.debug("PARTITIONING_COLUMN: {}", split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITIONING_COLUMN));
 
-        if (split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITION_NUMBER) != null && !split.getProperty(SqlServerMetadataHandler.PARTITION_NUMBER).equals("0")) {
+        if (split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITION_NUMBER) != null && !split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITION_NUMBER).equals("0")) {
             LOGGER.info("Fetching data using Partition");
             return Collections.singletonList(" $PARTITION." + split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITION_FUNCTION)
-                    + "(" + split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITIONING_COLUMN) + ") = " + split.getProperty(SqlServerMetadataHandler.PARTITION_NUMBER));
+                    + "(" + split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITIONING_COLUMN) + ") = " + split.getPropertiesMap().get(SqlServerMetadataHandler.PARTITION_NUMBER));
         }
         else {
             LOGGER.info("Fetching data without Partition");

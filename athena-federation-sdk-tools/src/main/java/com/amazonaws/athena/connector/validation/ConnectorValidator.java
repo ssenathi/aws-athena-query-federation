@@ -134,7 +134,7 @@ public class ConnectorValidator
                                                    null);
 
       if (!testConfig.isPlanningOnly()) {
-        readRecords(testConfig, table, schema, splitsResponse.getSplits());
+        readRecords(testConfig, table, schema, splitsResponse.getSplitsList());
       }
       else {
         log.info("Skipping record reading because the arguments indicated that only the planning should be validated.");
@@ -156,7 +156,7 @@ public class ConnectorValidator
                                  splitsResponse.getContinuationToken());
 
       if (!testConfig.isPlanningOnly()) {
-        readRecords(testConfig, table, schema, splitsResponse.getSplits());
+        readRecords(testConfig, table, schema, splitsResponse.getSplitsList());
       }
       else {
         log.info("Skipping record reading because the arguments indicated that only the planning should be validated.");
@@ -280,16 +280,16 @@ public class ConnectorValidator
                                             continuationToken,
                                             testConfig.getMetadataFunction(),
                                             testConfig.getIdentity());
-    log.info("Found " + splitsResponse.getSplits().size() + " splits in batch.");
+    log.info("Found " + splitsResponse.getSplitsList().size() + " splits in batch.");
     if (continuationToken == null) {
-      checkState(!splitsResponse.getSplits().isEmpty(),
+      checkState(!splitsResponse.getSplitsList().isEmpty(),
                                "Table " + toQualifiedTableName(table)
                          + " did not return any splits. This can happen if the table"
                          + " is empty but could also indicate an issue."
                          + " Please populate the table or specify a different table.");
     }
     else {
-      checkState(!splitsResponse.getSplits().isEmpty(),
+      checkState(!splitsResponse.getSplitsList().isEmpty(),
                                "Table " + toQualifiedTableName(table)
                          + " did not return any splits in the second batch despite returning"
                          + " a continuation token with the first batch.");

@@ -98,7 +98,7 @@ public class AthenaFederationBatch implements Batch
                 currentResponse != null;
                 currentResponse = getSplits.apply(currentResponse.getContinuationToken(), false)
             ) {
-                  Stream<AthenaFederationInputPartition> currentInputPartitions = currentResponse.getSplits().stream()
+                  Stream<AthenaFederationInputPartition> currentInputPartitions = currentResponse.getSplitsList().stream()
                       .map(split -> {
                           try {
                                return AthenaFederationInputPartition.fromReadRecordsRequest(
