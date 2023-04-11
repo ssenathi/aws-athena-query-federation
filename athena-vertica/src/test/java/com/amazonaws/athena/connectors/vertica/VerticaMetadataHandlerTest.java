@@ -43,6 +43,8 @@ import com.amazonaws.services.secretsmanager.AWSSecretsManager;
 import com.amazonaws.services.secretsmanager.model.GetSecretValueRequest;
 import com.amazonaws.services.secretsmanager.model.GetSecretValueResult;
 import com.google.common.collect.ImmutableList;
+
+import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.junit.After;
 import org.junit.Assert;
@@ -134,7 +136,7 @@ public class VerticaMetadataHandlerTest extends TestBase
                 "spill-prefix",
                 verticaSchemaUtils,
                 amazonS3,
-                com.google.common.collect.ImmutableMap.of());
+                com.google.common.collect.ImmutableMap.of("catalog_name", "asdf_connection_str", "export_bucket", "asdf_export_bucket_loc"));
         this.allocator =  new BlockAllocatorImpl();
         this.databaseMetaData = this.connection.getMetaData();
         verticaMetadataHandlerMocked = Mockito.spy(this.verticaMetadataHandler);
@@ -316,11 +318,26 @@ public class VerticaMetadataHandlerTest extends TestBase
             BlockUtils.setValue(partitions.getFieldVector("preparedStmt"), i, "test");
             BlockUtils.setValue(partitions.getFieldVector("queryId"), i, "123");
             BlockUtils.setValue(partitions.getFieldVector("awsRegionSql"), i, "us-west-2");
-            // logger.error("PREPARED STATEMENT FIELD VECTOR IS NOW {}", partitions.getFieldReader("preparedStmt").readText().toString());
-            logger.error("WROTE VALUES TO PARTITIONS, IS NOW {}", partitions.toString());
-
         }
-        logger.error("PARTITIONS RAW IS {}", partitions);
+        // There was a bug in this test where we weren't setting the row count on the block, so the readers didn't think it could read anything.
+        partitions.setRowCount(10);
+
+        // Everything commented out here was me testing out and understanding how our BlockUtils works.
+        // logger.error("FIRST ROW OF BLOCK IS {}", BlockUtils.rowToString(partitions, 0));
+        // logger.error("LAST ROW OF BLOCK IS {}", BlockUtils.rowToString(partitions, 9));
+        // Block partitionsCopy = allocator.createBlock(schema);
+        // BlockUtils.copyRows(partitions, partitionsCopy, 0, 9); //inclusive copy
+        // logger.error("FIRST ROW OF RAW COPY IS {}", BlockUtils.rowToString(partitionsCopy, 0));
+        // Block toAndFromProtoBlock = ProtobufMessageConverter.fromProtoBlock(allocator, ProtobufMessageConverter.toProtoBlock(partitions));
+        // logger.error("FIRST ROW OF PROTO COPY IS {}", BlockUtils.rowToString(toAndFromProtoBlock, 0));
+        // partitions.getFieldVectors().forEach(fv -> {
+        //     fv.setValueCount(10);
+        //     for (int i = 0; i < fv.getValueCount(); i++) {
+        //         // fv.get()
+        //     }
+        //     logger.error("ROW COUNT FOR FIELD VECTOR {} IS {}", fv.getName(), fv.getValueCount());
+        // });
+        
         List<S3ObjectSummary> s3ObjectSummariesList = new ArrayList<>();
         S3ObjectSummary s3ObjectSummary = new S3ObjectSummary();
         s3ObjectSummary.setBucketName("s3ExportBucket");
@@ -330,20 +347,19 @@ public class VerticaMetadataHandlerTest extends TestBase
         listObjectsRequestObj.setBucketName("s3ExportBucket");
         listObjectsRequestObj.setPrefix("queryId");
 
-
-        Mockito.when(verticaMetadataHandlerMocked.getS3ExportBucket()).thenReturn("testS3Bucket");
         Mockito.lenient().when(listObjectsRequest.withBucketName(nullable(String.class))).thenReturn(listObjectsRequestObj);
         Mockito.lenient().when(listObjectsRequest.withPrefix(nullable(String.class))).thenReturn(listObjectsRequestObj);
         Mockito.when(amazonS3.listObjects(nullable(ListObjectsRequest.class))).thenReturn(objectListing);
         Mockito.when(objectListing.getObjectSummaries()).thenReturn(s3ObjectSummariesList);
 
+        logger.error("ROW COUNT IS {}", partitions.getRowCount());
         GetSplitsRequest req = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("queryId").setCatalogName("catalog_name")
             .setTableName(TableName.newBuilder().setSchemaName("schema").setTableName("table_name").build())
             .setPartitions(ProtobufMessageConverter.toProtoBlock(partitions))
             .addAllPartitionCols(partitionCols)
             .build();
         logger.info("doGetSplits: req[{}]", req);
-        GetSplitsResponse response = verticaMetadataHandlerMocked.doGetSplits(allocator, req);
+        GetSplitsResponse response = verticaMetadataHandler.doGetSplits(allocator, req);
         String continuationToken = response.getContinuationToken();
 
         logger.info("doGetSplits: continuationToken[{}] - splits[{}]", continuationToken, response.getSplitsList());

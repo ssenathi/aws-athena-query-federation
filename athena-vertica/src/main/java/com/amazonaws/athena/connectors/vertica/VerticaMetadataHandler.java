@@ -297,7 +297,6 @@ public class VerticaMetadataHandler
 
         //get the SQL statement which was created in getPartitions
         Block partitions = ProtobufMessageConverter.fromProtoBlock(allocator, request.getPartitions());
-        logger.error("PARTITIONS IS {}", partitions);
         FieldReader fieldReaderPS = partitions.getFieldReader("preparedStmt");
         String sqlStatement  = fieldReaderPS.readText().toString();
         String catalogName = request.getCatalogName();
