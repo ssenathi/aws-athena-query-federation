@@ -261,7 +261,7 @@ public class Db2MetadataHandler extends JdbcMetadataHandler
         LOGGER.info("{}: Catalog {}, table {}", getSplitsRequest.getQueryId(), getSplitsRequest.getTableName().getSchemaName(), getSplitsRequest.getTableName().getTableName());
 
         int partitionContd = decodeContinuationToken(getSplitsRequest);
-        Block partitions = getSplitsRequest.getPartitions();
+        Block partitions = ProtobufMessageConverter.fromProtoBlock(blockAllocator, getSplitsRequest.getPartitions());
         SpillLocation spillLocation = makeSpillLocation(getSplitsRequest.getQueryId());
         Split.Builder splitBuilder;
         Set<Split> splits = new HashSet<>();

@@ -23,9 +23,9 @@ import com.amazonaws.athena.connector.lambda.QueryStatusChecker;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockWriter;
 import com.amazonaws.athena.connector.lambda.data.SchemaBuilder;
+import com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler;
 import com.amazonaws.athena.connector.lambda.proto.domain.Split;
 import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
-import com.amazonaws.athena.connector.lambda.handlers.GlueMetadataHandler;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
@@ -36,6 +36,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.security.EncryptionKeyFactory;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connectors.timestream.query.QueryFactory;
 import com.amazonaws.services.athena.AmazonAthena;
 import com.amazonaws.services.glue.AWSGlue;
@@ -141,7 +142,7 @@ public class TimestreamMetadataHandler
         ListTablesResult nextResult = tsMeta.listTables(listTablesRequest);
         List<com.amazonaws.services.timestreamwrite.model.Table> nextTables = nextResult.getTables();
         while (!nextTables.isEmpty()) {
-            nextTables.stream().forEach(next -> tableNames.add(TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName(next.getTableName()))).build();
+            nextTables.stream().forEach(next -> tableNames.add(TableName.newBuilder().setSchemaName(request.getSchemaName()).setTableName(next.getTableName()).build()));
             if (nextResult.getNextToken() != null && !nextResult.getNextToken().isEmpty()) {
                 listTablesRequest.setNextToken(nextResult.getNextToken());
                 nextResult = tsMeta.listTables(listTablesRequest);
@@ -152,7 +153,7 @@ public class TimestreamMetadataHandler
             }
         }
 
-        return new ListTablesResponse(request.getCatalogName(), tableNames, null);
+        return ListTablesResponse.newBuilder().setCatalogName(request.getCatalogName()).addAllTables(tableNames).build();
     }
 
     @Override
@@ -164,7 +165,7 @@ public class TimestreamMetadataHandler
         Schema schema = null;
         try {
             if (glue != null) {
-                schema = super.doGetTable(blockAllocator, request, TABLE_FILTER).getSchema();
+                schema = ProtobufMessageConverter.fromProtoSchema(blockAllocator, super.doGetTable(blockAllocator, request, TABLE_FILTER).getSchema());
                 logger.info("doGetTable: Retrieved schema for table[{}] from AWS Glue.", request.getTableName());
             }
         }
@@ -216,7 +217,7 @@ public class TimestreamMetadataHandler
      * @see GlueMetadataHandler
      */
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker
+    public void getPartitions(BlockAllocator blockAllocator, BlockWriter blockWriter, GetTableLayoutRequest request, QueryStatusChecker
             queryStatusChecker)
             throws Exception
     {
@@ -229,7 +230,7 @@ public class TimestreamMetadataHandler
     {
         //Since we do not support connector level parallelism for this source at the moment, we generate a single
         //basic split.
-        Split split = Split.newBuilder(makeSpillLocation(request), makeEncryptionKey()).build();
-        return new GetSplitsResponse(request.getCatalogName(), split);
+        Split split = Split.newBuilder().setSpillLocation(makeSpillLocation(request.getQueryId())).setEncryptionKey(makeEncryptionKey()).build();
+        return GetSplitsResponse.newBuilder().setCatalogName(request.getCatalogName()).addSplits(split).build();
     }
 }

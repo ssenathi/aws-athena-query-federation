@@ -196,7 +196,7 @@ public class SaphanaMetadataHandler extends JdbcMetadataHandler
         LOGGER.debug("{}: Catalog {}, table {}", getSplitsRequest.getQueryId(), getSplitsRequest.getTableName().getSchemaName(), getSplitsRequest.getTableName().getTableName());
         int partitionContd = decodeContinuationToken(getSplitsRequest);
         Set<Split> splits = new HashSet<>();
-        Block partitions = getSplitsRequest.getPartitions();
+        Block partitions = ProtobufMessageConverter.fromProtoBlock(blockAllocator, getSplitsRequest.getPartitions());
         // TODO consider splitting further depending on #rows or data size. Could use Hash key for splitting if no partitions.
         for (int curPartition = partitionContd; curPartition < partitions.getRowCount(); curPartition++) {
             FieldReader locationReader = partitions.getFieldReader(SaphanaConstants.BLOCK_PARTITION_COLUMN_NAME);

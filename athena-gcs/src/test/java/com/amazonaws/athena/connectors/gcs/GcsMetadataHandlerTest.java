@@ -237,7 +237,7 @@ public class GcsMetadataHandlerTest
         Map<String, String> metadataSchema = new HashMap<>();
         metadataSchema.put("dataFormat", PARQUET);
         Schema schema = new Schema(asList(field), metadataSchema);
-        GetTableRequest getTableRequest = GetTableRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("gcs").setTableName(TableName.newBuilder().setSchemaName(SCHEMA_NAME).setTableName("testtable")).build().build();
+        GetTableRequest getTableRequest = GetTableRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("gcs").setTableName(TableName.newBuilder().setSchemaName(SCHEMA_NAME).setTableName("testtable")).build();
         Table table = new Table();
         table.setName(TABLE_1);
         table.setDatabaseName(DATABASE_NAME);
@@ -256,7 +256,7 @@ public class GcsMetadataHandlerTest
         Whitebox.setInternalState(gcsMetadataHandler, storageMetadata, storageMetadata);
         PowerMockito.when(storageMetadata.buildTableSchema(any(), any())).thenReturn(schema);
         GetTableResponse res = gcsMetadataHandler.doGetTable(blockAllocator, getTableRequest);
-        Field expectedField = res.getSchema().findField("name");
+        Field expectedField = ProtobufMessageConverter.fromProtoSchema(allocator, res.getSchema()).findField("name");
         assertEquals(Types.MinorType.VARCHAR, Types.getMinorTypeForArrowType(expectedField.getType()));
     }
 
@@ -316,8 +316,8 @@ public class GcsMetadataHandlerTest
         );
         when(table.getPartitionKeys()).thenReturn(columns);
         GetSplitsResponse response = gcsMetadataHandler.doGetSplits(blockAllocator, request);
-        assertEquals(2, response.getSplits().size());
-        assertEquals(ImmutableList.of("2000", "2001"), response.getSplits().stream().map(split -> split.getProperties().get("year")).sorted().collect(Collectors.toList()));
+        assertEquals(2, response.getSplitsList().size());
+        assertEquals(ImmutableList.of("2000", "2001"), response.getSplitsList().stream().map(split -> split.getProperties().get("year")).sorted().collect(Collectors.toList()));
     }
 
     @Test
@@ -355,9 +355,9 @@ public class GcsMetadataHandlerTest
         );
         when(table.getPartitionKeys()).thenReturn(columns);
         GetSplitsResponse response = gcsMetadataHandler.doGetSplits(blockAllocator, request);
-        assertEquals(4, response.getSplits().size());
-        assertEquals(ImmutableList.of("2016", "2017", "2018", "2019"), response.getSplits().stream().map(split -> split.getProperties().get("yearCol")).sorted().collect(Collectors.toList()));
-        assertEquals(ImmutableList.of("1", "2", "3", "4"), response.getSplits().stream().map(split -> split.getProperties().get("monthCol")).sorted().collect(Collectors.toList()));
+        assertEquals(4, response.getSplitsList().size());
+        assertEquals(ImmutableList.of("2016", "2017", "2018", "2019"), response.getSplitsList().stream().map(split -> split.getProperties().get("yearCol")).sorted().collect(Collectors.toList()));
+        assertEquals(ImmutableList.of("1", "2", "3", "4"), response.getSplitsList().stream().map(split -> split.getProperties().get("monthCol")).sorted().collect(Collectors.toList()));
     }
 
     @Test(expected = RuntimeException.class)

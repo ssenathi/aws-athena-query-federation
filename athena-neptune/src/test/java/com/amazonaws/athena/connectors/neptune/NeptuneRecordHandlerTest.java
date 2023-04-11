@@ -388,13 +388,13 @@ public class NeptuneRecordHandlerTest extends TestBase {
                 schemaPG, Split.newBuilder(spillLoc, null).build(), new Constraints(constraintMap),
                                 100_000_000_000L, 100_000_000_000L);
 
-                RecordResponse rawResponse = handler.doReadRecords(allocator, request);
+                Message rawResponse = handler.doReadRecords(allocator, request);
                 assertTrue(rawResponse instanceof ReadRecordsResponse);
 
                 ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-                assertTrue(response.getRecords().getRowCount() == expectedRecordCount);
+                assertTrue(ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() == expectedRecordCount);
 
-                logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(response.getRecords(), 0));
+                logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()));
         }
 
         @Test
@@ -424,7 +424,7 @@ public class NeptuneRecordHandlerTest extends TestBase {
                                 new Constraints(constraintsMap), 1_500_000L, // ~1.5MB so we should see some spill
                                 0L);
 
-                RecordResponse rawResponse = handler.doReadRecords(allocator, request);
+                Message rawResponse = handler.doReadRecords(allocator, request);
                 assertTrue(rawResponse instanceof RemoteReadRecordsResponse);
 
                 try (RemoteReadRecordsResponse response = (RemoteReadRecordsResponse) rawResponse) {

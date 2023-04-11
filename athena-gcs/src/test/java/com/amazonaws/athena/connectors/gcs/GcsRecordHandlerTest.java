@@ -194,7 +194,7 @@ public class GcsRecordHandlerTest
                 federatedIdentity,
                 GcsTestUtils.PROJECT_1_NAME,
                 "queryId",
-                new TableName("dataset1", "table1"), // dummy table
+                TableName.newBuilder().setSchemaName("dataset1").setTableName("table1").build(), // dummy table
                 GcsTestUtils.getDatatypeTestSchema(),
                 split,
                 new Constraints(Collections.EMPTY_MAP),

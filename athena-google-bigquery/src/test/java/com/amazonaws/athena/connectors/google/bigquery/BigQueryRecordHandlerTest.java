@@ -162,7 +162,7 @@ public class BigQueryRecordHandlerTest
                 federatedIdentity,
                 BigQueryTestUtils.PROJECT_1_NAME,
                 "queryId",
-                new TableName("dataset1", "table1"),
+                TableName.newBuilder().setSchemaName("dataset1").setTableName("table1").build(),
                 BigQueryTestUtils.getBlockTestSchema(),
                 Split.newBuilder(S3SpillLocation.newBuilder()
                                 .withBucket(bucket)
@@ -231,7 +231,7 @@ public class BigQueryRecordHandlerTest
                 federatedIdentity,
                 BigQueryTestUtils.PROJECT_1_NAME,
                 "queryId",
-                new TableName("dataset1", "table1"),
+                TableName.newBuilder().setSchemaName("dataset1").setTableName("table1").build(),
                 testSchema,
                 Split.newBuilder(S3SpillLocation.newBuilder()
                                 .withBucket(bucket)

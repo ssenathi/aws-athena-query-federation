@@ -146,7 +146,7 @@ public class ExampleRecordHandlerTest
             ReadRecordsRequest request = new ReadRecordsRequest(fakeIdentity(),
                     "catalog",
                     "queryId-" + System.currentTimeMillis(),
-                    new TableName("schema", "table"),
+                    TableName.newBuilder().setSchemaName("schema").setTableName("table").build(),
                     schemaForRead,
                     Split.newBuilder(makeSpillLocation(), null)
                             .add("year", "2017")
@@ -158,14 +158,14 @@ public class ExampleRecordHandlerTest
                     100_000_000_000L
             );
 
-            RecordResponse rawResponse = handler.doReadRecords(allocator, request);
+            Message rawResponse = handler.doReadRecords(allocator, request);
             assertTrue(rawResponse instanceof ReadRecordsResponse);
 
             ReadRecordsResponse response = (ReadRecordsResponse) rawResponse;
-            logger.info("doReadRecordsNoSpill: rows[{}]", response.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
+            logger.info("doReadRecordsNoSpill: rows[{}]", ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
 
-            assertTrue(response.getRecords().getRowCount() > 0);
-            logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(response.getRecords(), 0));
+            assertTrue(ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() > 0);
+            logger.info("doReadRecordsNoSpill: {}", BlockUtils.rowToString(ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()));
         }
     }
 

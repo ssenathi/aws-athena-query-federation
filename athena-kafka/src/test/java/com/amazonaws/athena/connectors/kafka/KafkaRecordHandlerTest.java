@@ -244,7 +244,7 @@ public class KafkaRecordHandlerTest {
                 federatedIdentity,
                 "testCatalog",
                 "queryId",
-                new TableName("testSchema", "testTable"),
+                TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable").build(),
                 schema,
                 Split.newBuilder(S3SpillLocation.newBuilder()
                                 .withBucket("bucket")

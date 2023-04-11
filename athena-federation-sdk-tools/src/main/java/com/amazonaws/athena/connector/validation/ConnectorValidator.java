@@ -112,7 +112,7 @@ public class ConnectorValidator
        * DESCRIBE TABLE
        */
       final TableName table = testConfig.getTableId().isPresent()
-                                      ? new TableName(db, testConfig.getTableId().get())
+                                      ? TableName.newBuilder().setSchemaName(db).setTableName(testConfig.getTableId().get()).build()
                                       : getRandomElement(tables);
       log.info("Using table {}", toQualifiedTableName(table));
       logTestQuery("DESCRIBE " + toQualifiedTableName(table));

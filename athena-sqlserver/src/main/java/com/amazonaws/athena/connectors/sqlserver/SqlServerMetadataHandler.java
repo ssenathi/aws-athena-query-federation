@@ -250,7 +250,7 @@ public class SqlServerMetadataHandler extends JdbcMetadataHandler
         int partitionContd = decodeContinuationToken(getSplitsRequest);
         LOGGER.info("partitionContd: {}", partitionContd);
         Set<Split> splits = new HashSet<>();
-        Block partitions = getSplitsRequest.getPartitions();
+        Block partitions = ProtobufMessageConverter.fromProtoBlock(blockAllocator, getSplitsRequest.getPartitions());
 
         for (int curPartition = partitionContd; curPartition < partitions.getRowCount(); curPartition++) {
             FieldReader locationReader = partitions.getFieldReader(PARTITION_NUMBER);

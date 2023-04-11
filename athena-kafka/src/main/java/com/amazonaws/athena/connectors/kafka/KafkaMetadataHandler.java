@@ -191,7 +191,7 @@ public class KafkaMetadataHandler extends MetadataHandler
                 allTableNames.addAll(
                     currentResult.getSchemas().stream()
                         .map(schemaListItem -> schemaListItem.getSchemaName())
-                        .map(glueSchemaName -> new TableName(glueRegistryNameResolved, glueSchemaName))
+                        .map(glueSchemaName -> TableName.newBuilder().setSchemaName(glueRegistryNameResolved).setTableName(glueSchemaName)).build()
                         .collect(Collectors.toList())
                 );
                 if (allTableNames.size() > MAX_RESULTS) {
@@ -216,7 +216,7 @@ public class KafkaMetadataHandler extends MetadataHandler
         List<TableName> tableNames = listSchemasResultFromGlue.getSchemas()
             .stream()
             .map(schemaListItem -> schemaListItem.getSchemaName())
-            .map(glueSchemaName -> new TableName(glueRegistryNameResolved, glueSchemaName))
+            .map(glueSchemaName -> TableName.newBuilder().setSchemaName(glueRegistryNameResolved).setTableName(glueSchemaName)).build()
             .collect(Collectors.toList());
         // Pass through whatever token we got from Glue to the user
         ListTablesResponse result = new ListTablesResponse(

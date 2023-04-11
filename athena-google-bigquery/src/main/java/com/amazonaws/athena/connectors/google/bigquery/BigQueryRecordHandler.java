@@ -99,7 +99,7 @@ public class BigQueryRecordHandler
                 bigQueryClient);
 
         logger.debug("Got Request with constraints: {}", recordsRequest.getConstraints());
-        sqlToExecute = BigQuerySqlUtils.buildSqlFromSplit(new TableName(datasetName, tableName),
+        sqlToExecute = BigQuerySqlUtils.buildSqlFromSplit(TableName.newBuilder().setSchemaName(datasetName).setTableName(tableName).build(),
                 recordsRequest.getSchema(), recordsRequest.getConstraints(), recordsRequest.getSplit(), parameterValues);
         logger.debug("Executing SQL Query: {} for Split: {}", sqlToExecute, recordsRequest.getSplit());
         QueryJobConfiguration queryConfig = QueryJobConfiguration.newBuilder(sqlToExecute).setUseLegacySql(false).setPositionalParameters(parameterValues).build();

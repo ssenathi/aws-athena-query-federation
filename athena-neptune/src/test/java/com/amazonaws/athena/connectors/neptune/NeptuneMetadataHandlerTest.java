@@ -101,8 +101,8 @@ public class NeptuneMetadataHandlerTest extends TestBase {
         ListSchemasRequest req = ListSchemasRequest.newBuilder().setIdentity(IDENTITY).setQueryId("queryId").setCatalogName("default").build();
 
         ListSchemasResponse res = handler.doListSchemaNames(allocator, req);
-        logger.info("doListSchemas - {}", res.getSchemas());
-        assertFalse(res.getSchemas().isEmpty());
+        logger.info("doListSchemas - {}", res.getSchemasList());
+        assertFalse(res.getSchemasList().isEmpty());
         logger.info("doListSchemas - exit");
     }
 
@@ -132,8 +132,8 @@ public class NeptuneMetadataHandlerTest extends TestBase {
 
         ListTablesResponse res = handler.doListTables(allocator, req);
 
-        logger.info("doListTables - {}", res.getTables());
-        assertFalse(res.getTables().isEmpty());
+        logger.info("doListTables - {}", res.getTablesList());
+        assertFalse(res.getTablesList().isEmpty());
         logger.info("doListTables - exit");
     }
 
@@ -165,7 +165,7 @@ public class NeptuneMetadataHandlerTest extends TestBase {
         storageDescriptor.setColumns(columns);
         table.setStorageDescriptor(storageDescriptor);
 
-        GetTableRequest req = GetTableRequest.newBuilder().setIdentity(IDENTITY).setQueryId("queryId").setCatalogName("default").setTableName(TableName.newBuilder().setSchemaName("schema1").setTableName("table1")).build().build();
+        GetTableRequest req = GetTableRequest.newBuilder().setIdentity(IDENTITY).setQueryId("queryId").setCatalogName("default").setTableName(TableName.newBuilder().setSchemaName("schema1").setTableName("table1")).build();
 
         GetTableResult getTableResult = new GetTableResult();
         getTableResult.setTable(table);
@@ -174,7 +174,7 @@ public class NeptuneMetadataHandlerTest extends TestBase {
 
         GetTableResponse res = handler.doGetTable(allocator, req);
 
-        assertTrue(res.getSchema().getFields().size() > 0);
+        assertTrue(ProtobufMessageConverter.fromProtoSchema(allocator, res.getSchema()).getFields().size() > 0);
 
         logger.info("doGetTable - {}", res);
         logger.info("doGetTable - exit");

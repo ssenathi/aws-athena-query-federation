@@ -110,8 +110,8 @@ public class ExampleMetadataHandlerTest
         logger.info("doListSchemas - enter");
         ListSchemasRequest req = ListSchemasRequest.newBuilder().setIdentity(fakeIdentity()).setQueryId("queryId").setCatalogName("default").build();
         ListSchemasResponse res = handler.doListSchemaNames(allocator, req);
-        logger.info("doListSchemas - {}", res.getSchemas());
-        assertFalse(res.getSchemas().isEmpty());
+        logger.info("doListSchemas - {}", res.getSchemasList());
+        assertFalse(res.getSchemasList().isEmpty());
         logger.info("doListSchemas - exit");
     }
 
@@ -146,8 +146,7 @@ public class ExampleMetadataHandlerTest
 
         // Test first paginated request with pageSize: 2, nextToken: null
         logger.info("doListTables - Test first pagination request");
-        req = new ListTablesRequest(fakeIdentity(), "queryId", "default", "schema1",
-                null, 2);
+        req = ListTablesRequest.newBuilder().setIdentity(fakeIdentity()).setQueryId("queryId").setCatalogName("default").setSchemaName("schema1").setPageSize(2).build();
         expectedResponse = new ListTablesResponse("default",
                 new ImmutableList.Builder<TableName>()
                         .add(TableName.newBuilder().setSchemaName("schema1").setTableName("table1")).build()
@@ -189,8 +188,8 @@ public class ExampleMetadataHandlerTest
         GetTableRequest req = new GetTableRequest(fakeIdentity(), "queryId", "default",
                 TableName.newBuilder().setSchemaName("schema1").setTableName("table1")).build();
         GetTableResponse res = handler.doGetTable(allocator, req);
-        assertTrue(res.getSchema().getFields().size() > 0);
-        assertTrue(res.getSchema().getCustomMetadata().size() > 0);
+        assertTrue(ProtobufMessageConverter.fromProtoSchema(allocator, res.getSchema()).getFields().size() > 0);
+        assertTrue(ProtobufMessageConverter.fromProtoSchema(allocator, res.getSchema()).getCustomMetadata().size() > 0);
         logger.info("doGetTable - {}", res);
         logger.info("doGetTable - exit");
     }
@@ -246,7 +245,7 @@ public class ExampleMetadataHandlerTest
             res = handler.doGetTableLayout(allocator, req);
 
             logger.info("doGetTableLayout - {}", res);
-            Block partitions = res.getPartitions();
+            Block partitions = ProtobufMessageConverter.fromProtoBlock(blockAllocator, res.getPartitions());
             for (int row = 0; row < partitions.getRowCount() && row < 10; row++) {
                 logger.info("doGetTableLayout:{} {}", row, BlockUtils.rowToString(partitions, row));
             }
@@ -328,15 +327,15 @@ public class ExampleMetadataHandlerTest
             GetSplitsResponse response = (GetSplitsResponse) rawResponse;
             continuationToken = response.getContinuationToken();
 
-            logger.info("doGetSplits: continuationToken[{}] - splits[{}]", continuationToken, response.getSplits());
+            logger.info("doGetSplits: continuationToken[{}] - splits[{}]", continuationToken, response.getSplitsList());
 
-            for (Split nextSplit : response.getSplits()) {
+            for (Split nextSplit : response.getSplitsList()) {
                 assertNotNull(nextSplit.getProperty("year"));
                 assertNotNull(nextSplit.getProperty("month"));
                 assertNotNull(nextSplit.getProperty("day"));
             }
 
-            assertTrue(!response.getSplits().isEmpty());
+            assertTrue(!response.getSplitsList().isEmpty());
 
             if (continuationToken != null) {
                 numContinuations++;
