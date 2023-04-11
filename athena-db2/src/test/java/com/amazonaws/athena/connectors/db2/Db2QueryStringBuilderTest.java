@@ -44,9 +44,10 @@ public class Db2QueryStringBuilderTest {
     public void testGetPartitionWhereClauses()
     {
         Db2QueryStringBuilder builder = new Db2QueryStringBuilder("'");
-        Split split = Split.newBuilder().build();
-        Mockito.when(split.getPropertiesMap().get(Mockito.eq("PARTITION_NUMBER"))).thenReturn("0");
-        Mockito.when(split.getPropertiesMap().get(Mockito.eq("PARTITIONING_COLUMN"))).thenReturn("PC");
+        Split split = Split.newBuilder()
+            .putProperties("PARTITION_NUMBER", "0")
+            .putProperties("PARTITIONING_COLUMN", "PC")
+            .build();
         Assert.assertEquals(Arrays.asList(" DATAPARTITIONNUM(PC) = 0"), builder.getPartitionWhereClauses(split));
     }
 }

@@ -37,6 +37,7 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.ListSchemasResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.ListTablesResponse;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connectors.jdbc.TestBase;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionConfig;
 import com.amazonaws.athena.connectors.jdbc.connection.JdbcConnectionFactory;
@@ -127,7 +128,7 @@ public class Db2MetadataHandlerTest extends TestBase {
         GetTableLayoutResponse getTableLayoutResponse = this.db2MetadataHandler.doGetTableLayout(this.blockAllocator, getTableLayoutRequest);
 
         BlockAllocator splitBlockAllocator = new BlockAllocatorImpl();
-        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(getTableLayoutResponse.getPartitions()))).addAllPartitionCols(new ArrayList<>(cols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))).setContinuationToken($8).build();
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(cols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).build();
         GetSplitsResponse getSplitsResponse = this.db2MetadataHandler.doGetSplits(splitBlockAllocator, getSplitsRequest);
 
         Set<Map<String, String>> expectedSplits = new HashSet<>();
@@ -163,7 +164,7 @@ public class Db2MetadataHandlerTest extends TestBase {
         GetTableLayoutResponse getTableLayoutResponse = this.db2MetadataHandler.doGetTableLayout(this.blockAllocator, getTableLayoutRequest);
 
         BlockAllocator splitBlockAllocator = new BlockAllocatorImpl();
-        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(getTableLayoutResponse.getPartitions()))).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))).setContinuationToken($8).build();
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).build();
         GetSplitsResponse getSplitsResponse = this.db2MetadataHandler.doGetSplits(splitBlockAllocator, getSplitsRequest);
 
         Set<Map<String, String>> expectedSplits = com.google.common.collect.ImmutableSet.of(
@@ -225,7 +226,7 @@ public class Db2MetadataHandlerTest extends TestBase {
         GetTableResponse getTableResponse = this.db2MetadataHandler.doGetTable(
                 this.blockAllocator, GetTableRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalog").setTableName(inputTableName).build());
         Assert.assertEquals(expected, ProtobufMessageConverter.fromProtoSchema(blockAllocator, getTableResponse.getSchema()));
-        Assert.assertEquals(TableName.newBuilder().setSchemaName(schemaName, tableName)).setTableName(getTableResponse.getTableName()).build();
+        Assert.assertEquals(TableName.newBuilder().setSchemaName(schemaName).setTableName(tableName).build(), getTableResponse.getTableName());
         Assert.assertEquals("testCatalog", getTableResponse.getCatalogName());
     }
 
@@ -330,13 +331,13 @@ public class Db2MetadataHandlerTest extends TestBase {
 
         ListSchemasResponse listSchemasResponse = this.db2MetadataHandler.doListSchemaNames(this.blockAllocator, listSchemasRequest);
         String[] expectedSchemas = {"TESTSCHEMA", "testschema", "testSCHEMA"};
-        Assert.assertEquals(Arrays.toString(expectedSchemas), listSchemasResponse.getSchemas().toString());
+        Assert.assertEquals(Arrays.toString(expectedSchemas), listSchemasResponse.getSchemasList().toString());
     }
 
     @Test
     public void doListTables() throws Exception {
         String schemaName = "TESTSCHEMA";
-        ListTablesRequest listTablesRequest = ListTablesRequest.newBuilder().setIdentity(federatedIdentity).setQueryId("queryId").setCatalogName("testCatalog").setSchemaName(schemaName).setContinuationToken(null).setPageSize(0).build();
+        ListTablesRequest listTablesRequest = ListTablesRequest.newBuilder().setIdentity(federatedIdentity).setQueryId("queryId").setCatalogName("testCatalog").setSchemaName(schemaName).setPageSize(0).build();
 
         PreparedStatement stmt = Mockito.mock(PreparedStatement.class);
         Mockito.when(this.connection.prepareStatement(Db2Constants.QRY_TO_LIST_TABLES_AND_VIEWS)).thenReturn(stmt);
@@ -347,7 +348,7 @@ public class Db2MetadataHandlerTest extends TestBase {
         TableName[] expectedTables = {TableName.newBuilder().setSchemaName("TESTSCHEMA").setTableName("TESTTABLE").build(),
                 TableName.newBuilder().setSchemaName("TESTSCHEMA").setTableName("testtable").build(),
                 TableName.newBuilder().setSchemaName("TESTSCHEMA").setTableName("testTABLE").build()};
-        Assert.assertEquals(Arrays.toString(expectedTables), listTablesResponse.getTables().toString());
+        Assert.assertEquals(Arrays.toString(expectedTables), listTablesResponse.getTablesList().toString());
     }
 }
 

@@ -95,9 +95,9 @@ public class Db2RecordHandlerTest {
         schemaBuilder.addField(FieldBuilder.newBuilder("testCol4", Types.MinorType.VARCHAR.getType()).build());
         Schema schema = schemaBuilder.build();
 
-        Split split = Split.newBuilder().build();
-        Mockito.when(split.getPropertiesMap().get(Db2MetadataHandler.PARTITION_NUMBER)).thenReturn("0");
-
+        Split split = Split.newBuilder()
+            .putProperties(Db2MetadataHandler.PARTITION_NUMBER, "0")
+            .build();
         ValueSet valueSet = getSingleValueSet("varcharTest");
         Constraints constraints = Mockito.mock(Constraints.class);
         Mockito.when(constraints.getSummary()).thenReturn(new ImmutableMap.Builder<String, ValueSet>()
