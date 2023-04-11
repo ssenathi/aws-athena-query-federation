@@ -23,8 +23,7 @@ import com.amazonaws.athena.connector.lambda.data.Block;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocator;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsResponse;
-import com.amazonaws.athena.connector.lambda.serde.VersionedObjectMapperFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import org.apache.spark.sql.connector.read.PartitionReader;
 import org.apache.spark.sql.util.ArrowUtils;
 import org.apache.spark.sql.vectorized.ArrowColumnVector;
@@ -67,20 +66,17 @@ public class AthenaFederationPartitionReader implements PartitionReader<Columnar
         }
 
         try {
-            ObjectMapper objectMapper = VersionedObjectMapperFactory.create(blockAllocator);
-            // We do not want to close readResponse because we need `records` to be available
-            // even after this method is done.
             ReadRecordsResponse readResponse = (ReadRecordsResponse) federationAdapterDefinition
                 .getRecordHandler(federationAdapterDefinition.getFederationConfig(properties))
                 .doReadRecords(
                     blockAllocator,
-                    inputPartition.toReadRecordsRequest(objectMapper));
-            Block records = readResponse.getRecords();
+                    inputPartition.toReadRecordsRequest());
+            Block records = ProtobufMessageConverter.fromProtoBlock(blockAllocator, readResponse.getRecords());
             ColumnVector[] columnVectors = records.getFieldVectors().stream()
                 .map(ArrowColumnVector::new)
                 .toArray(ColumnVector[]::new);
-            columnBatch = new ColumnarBatch(columnVectors, readResponse.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount());
-            return readResponse.ProtobufMessageConverter.fromProtoBlock(allocator, response.getRecords()).getRowCount() > 0;
+            columnBatch = new ColumnarBatch(columnVectors, records.getRowCount());
+            return records.getRowCount() > 0;
         }
         catch (IOException ex) {
             // If we get an IOException, pass it through

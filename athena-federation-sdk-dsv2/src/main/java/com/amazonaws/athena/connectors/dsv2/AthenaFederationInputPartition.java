@@ -20,9 +20,8 @@
 package com.amazonaws.athena.connectors.dsv2;
 
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
-import com.amazonaws.athena.connector.lambda.request.FederationRequest;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.spark.sql.connector.read.InputPartition;
 
 public class AthenaFederationInputPartition implements InputPartition
@@ -34,13 +33,13 @@ public class AthenaFederationInputPartition implements InputPartition
         this.readRecordsRequestJsonString = readRecordsRequestJsonString;
     }
 
-    public static AthenaFederationInputPartition fromReadRecordsRequest(ReadRecordsRequest request, ObjectMapper objectMapper) throws JsonProcessingException
+    public static AthenaFederationInputPartition fromReadRecordsRequest(ReadRecordsRequest request) throws InvalidProtocolBufferException
     {
-        return new AthenaFederationInputPartition(objectMapper.writeValueAsString(request));
+        return new AthenaFederationInputPartition(ProtobufSerDe.PROTOBUF_JSON_PRINTER.print(request));
     }
 
-    public ReadRecordsRequest toReadRecordsRequest(ObjectMapper objectMapper) throws JsonProcessingException
+    public ReadRecordsRequest toReadRecordsRequest() throws InvalidProtocolBufferException
     {
-        return (ReadRecordsRequest) objectMapper.readValue(readRecordsRequestJsonString, FederationRequest.class);
+        return (ReadRecordsRequest) ProtobufSerDe.buildFromJson(readRecordsRequestJsonString, ReadRecordsRequest.newBuilder());
     }
 }

@@ -20,6 +20,7 @@
 package com.amazonaws.athena.connectors.dsv2;
 
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufUtils;
 import org.apache.spark.sql.connector.catalog.SupportsRead;
 import org.apache.spark.sql.connector.catalog.TableCapability;
 import org.apache.spark.sql.connector.expressions.Transform;
@@ -60,7 +61,7 @@ public class AthenaFederationTable implements SupportsRead
     @Override
     public String name()
     {
-        return getTableResponse.getTableName().getQualifiedTableName();
+        return ProtobufUtils.getQualifiedTableName(getTableResponse.getTableName());
     }
 
     @Override

@@ -19,9 +19,9 @@
  */
 package com.amazonaws.athena.connectors.dsv2;
 
-import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.handlers.MetadataHandler;
 import com.amazonaws.athena.connector.lambda.handlers.RecordHandler;
+import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
 import com.amazonaws.services.securitytoken.AWSSecurityTokenServiceClientBuilder;
 import com.amazonaws.services.securitytoken.model.GetCallerIdentityRequest;
@@ -83,11 +83,10 @@ public interface AthenaFederationAdapterDefinition
         // connectors other than the "account" field, which is used by the GlueMetadataHandler.
         // See these results:
         //    git grep "\(get\)\?[iI]dentity\(()\)\?\.get" | grep -v "examples" | grep -v "/serde/"
-        return new FederatedIdentity(
-            "AthenaFederationUnusedARN",
-            account,
-            com.google.common.collect.ImmutableMap.of(),
-            com.google.common.collect.ImmutableList.of());
+        return FederatedIdentity.newBuilder()
+            .setArn("AthenaFederationUnusedARN")
+            .setAccount(account)
+            .build();
     }
 
     public default String getQueryId(Map<String, String> configOptions)

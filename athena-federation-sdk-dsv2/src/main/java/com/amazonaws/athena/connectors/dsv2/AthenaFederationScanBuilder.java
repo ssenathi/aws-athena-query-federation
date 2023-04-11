@@ -25,8 +25,9 @@ import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.domain.predicate.ValueSet;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
-import com.amazonaws.athena.connector.lambda.serde.VersionedObjectMapperFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.apache.arrow.vector.types.pojo.Schema;
 import org.apache.spark.sql.connector.read.Scan;
@@ -85,15 +86,15 @@ public class AthenaFederationScanBuilder implements ScanBuilder, SupportsPushDow
         //    Field partitionCol = request.getSchema().findField(nextPartCol);
         Set<String> fieldsToKeep = Stream.concat(
             Arrays.stream(requiredSchema.fieldNames()),
-            getTableResponse.getPartitionColumns().stream()
+            getTableResponse.getPartitionColumnsList().stream()
         ).collect(Collectors.toSet());
 
-        List<Field> updatedFields = ProtobufMessageConverter.fromProtoSchema(allocator, getTableResponse.getSchema()).getFields().stream()
+        List<Field> updatedFields = ProtobufMessageConverter.fromProtoSchema(blockAllocator, getTableResponse.getSchema()).getFields().stream()
             .filter(field -> fieldsToKeep.contains(field.getName()))
             .collect(Collectors.toList());
 
         // Generate a new arrow schema using the pruned fields + existing metadata
-        Schema updatedArrowSchema = new Schema(updatedFields, getTableResponse.getSchema().getCustomMetadata());
+        Schema updatedArrowSchema = new Schema(updatedFields, ProtobufMessageConverter.fromProtoSchema(blockAllocator, getTableResponse.getSchema()).getCustomMetadata());
 
         logger.info("Pruned schema: {}  ----  Original schema: {}", updatedArrowSchema, getTableResponse.getSchema());
 
@@ -101,11 +102,12 @@ public class AthenaFederationScanBuilder implements ScanBuilder, SupportsPushDow
         sparkSchema = ArrowUtils.fromArrowSchema(updatedArrowSchema);
 
         // Update the captured getTableResponse
-        getTableResponse = new GetTableResponse(
-            getTableResponse.getCatalogName(),
-            getTableResponse.getTableName(),
-            updatedArrowSchema,
-            getTableResponse.getPartitionColumns());
+        getTableResponse = GetTableResponse.newBuilder()
+            .setCatalogName(getTableResponse.getCatalogName())
+            .setTableName(getTableResponse.getTableName())
+            .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(updatedArrowSchema))
+            .addAllPartitionColumns(getTableResponse.getPartitionColumnsList())
+            .build();
     }
 
     @Override
@@ -129,7 +131,7 @@ public class AthenaFederationScanBuilder implements ScanBuilder, SupportsPushDow
             }
             String columnName = filter.references()[0];
             try {
-                ValueSet valueSet = SparkFilterToAthenaFederationValueSet.convert(filter, getTableResponse.getSchema(), blockAllocator);
+                ValueSet valueSet = SparkFilterToAthenaFederationValueSet.convert(filter, ProtobufMessageConverter.fromProtoSchema(blockAllocator, getTableResponse.getSchema()), blockAllocator);
                 logger.info("Filter: {} compiled to ValueSet: {}", filter, valueSet);
                 constraintsMap.merge(columnName, valueSet, (existingValueSet, newValueSet) -> {
                     logger.info("Merging existingValueSet with newValueSet: {} && {}", existingValueSet, newValueSet);
@@ -169,21 +171,21 @@ public class AthenaFederationScanBuilder implements ScanBuilder, SupportsPushDow
         // constraints as necessary to pass into the various MetadataHandler
         // methods that it has to call.
         try {
-            ObjectMapper objectMapper = VersionedObjectMapperFactory.create(blockAllocator);
             Constraints constraints = new Constraints(constraintsMap);
-            GetTableLayoutRequest layoutReq = new GetTableLayoutRequest(
-                federationAdapterDefinition.getFederatedIdentity(properties),
-                federationAdapterDefinition.getQueryId(properties),
-                getTableResponse.getCatalogName(),
-                getTableResponse.getTableName(),
-                constraints,
-                getTableResponse.getSchema(),
-                getTableResponse.getPartitionColumns());
-            String getTableLayoutSerializedString = objectMapper.writeValueAsString(layoutReq);
+            GetTableLayoutRequest layoutReq = GetTableLayoutRequest.newBuilder()
+                .setIdentity(federationAdapterDefinition.getFederatedIdentity(properties))
+                .setQueryId(federationAdapterDefinition.getQueryId(properties))
+                .setCatalogName(getTableResponse.getCatalogName())
+                .setTableName(getTableResponse.getTableName())
+                .setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))
+                .setSchema(getTableResponse.getSchema())
+                .addAllPartitionCols(getTableResponse.getPartitionColumnsList())
+                .build();
+            String getTableLayoutSerializedString = ProtobufSerDe.PROTOBUF_JSON_PRINTER.print(layoutReq);
             String description = String.format("Generated from: --- %s --- %s ---", getTableResponse, constraints);
             return new AthenaFederationScan(federationAdapterDefinition, sparkSchema, getTableLayoutSerializedString, properties, description);
         }
-        catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+        catch (InvalidProtocolBufferException ex) {
             // We must rethrow unchecked because the underlying
             // ScanBuilder::build() interface does not declare any checked
             // exceptions.

@@ -23,6 +23,7 @@ import com.amazonaws.athena.connector.lambda.data.ArrowSchemaUtils;
 import com.amazonaws.athena.connector.lambda.data.BlockAllocatorImpl;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableResponse;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import org.apache.arrow.vector.types.TimeUnit;
 import org.apache.arrow.vector.types.pojo.ArrowType;
 import org.apache.arrow.vector.types.pojo.Field;
@@ -100,11 +101,12 @@ public abstract class AthenaFederationTableProvider implements TableProvider, At
 
         try (BlockAllocatorImpl blockAllocator = new BlockAllocatorImpl(ArrowUtils.rootAllocator())) {
             // NOTE: Nothing to close for both GetTableRequest and GetTableResponse
-            GetTableRequest getTableRequest = new GetTableRequest(
-                federationAdapterDefinition.getFederatedIdentity(properties),
-                federationAdapterDefinition.getQueryId(properties),
-                federationAdapterDefinition.getCatalogName(properties),
-                federationAdapterDefinition.getTableName(properties));
+            GetTableRequest getTableRequest = GetTableRequest.newBuilder()
+                .setIdentity(federationAdapterDefinition.getFederatedIdentity(properties))
+                .setQueryId(federationAdapterDefinition.getQueryId(properties))
+                .setCatalogName(federationAdapterDefinition.getCatalogName(properties))
+                .setTableName(federationAdapterDefinition.getTableName(properties))
+                .build();
 
             // doGetTable will return the table schema with the partition columns included as part of the schema.
             // Also the arrow table schema may contain metadata that needs to be passed on to other calls down the chain.
@@ -115,12 +117,13 @@ public abstract class AthenaFederationTableProvider implements TableProvider, At
                 .doGetTable(blockAllocator, (GetTableRequest) getTableRequest);
 
             // Convert the schema fields as necessary
-            Schema updatedSchema = convertSchemaMilliFieldsToMicro(getTableResponse.getSchema());
-            getTableResponse = new GetTableResponse(
-                getTableResponse.getCatalogName(),
-                getTableResponse.getTableName(),
-                updatedSchema,
-                getTableResponse.getPartitionColumns());
+            Schema updatedSchema = convertSchemaMilliFieldsToMicro(ProtobufMessageConverter.fromProtoSchema(blockAllocator, getTableResponse.getSchema()));
+            getTableResponse = GetTableResponse.newBuilder()
+                .setCatalogName(getTableResponse.getCatalogName())
+                .setTableName(getTableResponse.getTableName())
+                .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(updatedSchema))
+                .addAllPartitionColumns(getTableResponse.getPartitionColumnsList())
+                .build();
 
             return getTableResponse;
         }
@@ -136,7 +139,13 @@ public abstract class AthenaFederationTableProvider implements TableProvider, At
     {
         // NOTE: StructType does not contain any of the metadata that was embedded in the table response arrow schema.
         // Methods like pruneColumns() needs to be aware of this when it converts from StructType back into an arrow schema.
-        return ArrowUtils.fromArrowSchema(loadGetTableResponse(options.asCaseSensitiveMap()).getSchema());
+        try (BlockAllocatorImpl blockAllocator = new BlockAllocatorImpl(ArrowUtils.rootAllocator())) {
+            return ArrowUtils.fromArrowSchema(ProtobufMessageConverter.fromProtoSchema(blockAllocator, loadGetTableResponse(options.asCaseSensitiveMap()).getSchema()));
+        }
+        catch (Exception ex) {
+            // We have to rethrow as unchecked because the underlying interface does not declare any checked throws
+            throw new RuntimeException(ex);
+        }
     }
 
     @Override

@@ -26,15 +26,13 @@ import com.amazonaws.athena.connector.lambda.proto.metadata.GetSplitsResponse;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutRequest;
 import com.amazonaws.athena.connector.lambda.proto.metadata.GetTableLayoutResponse;
 import com.amazonaws.athena.connector.lambda.proto.records.ReadRecordsRequest;
-import com.amazonaws.athena.connector.lambda.request.FederationRequest;
-import com.amazonaws.athena.connector.lambda.serde.VersionedObjectMapperFactory;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufSerDe;
+import com.google.protobuf.InvalidProtocolBufferException;
 import org.apache.spark.sql.connector.read.Batch;
 import org.apache.spark.sql.connector.read.InputPartition;
 import org.apache.spark.sql.connector.read.PartitionReaderFactory;
 import org.apache.spark.sql.util.ArrowUtils;
 
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
@@ -69,9 +67,7 @@ public class AthenaFederationBatch implements Batch
         // Automatically close out this blockAllocator since the end result is a serialized ReadRecordsRequest
         // which does not require the allocated blocks to exist anymore.
         try (BlockAllocatorImpl blockAllocator = new BlockAllocatorImpl(ArrowUtils.rootAllocator())) {
-            ObjectMapper objectMapper = VersionedObjectMapperFactory.create(blockAllocator);
-            GetTableLayoutRequest layoutReq = (GetTableLayoutRequest) objectMapper.readValue(
-                getTableLayoutRequestSerialiedString, FederationRequest.class);
+            GetTableLayoutRequest layoutReq = (GetTableLayoutRequest) ProtobufSerDe.buildFromJson(getTableLayoutRequestSerialiedString, GetTableLayoutRequest.newBuilder());
             GetTableLayoutResponse layoutResponse = metadataHandler.doGetTableLayout(blockAllocator, layoutReq);
 
             // Lambda to get splits given a continuation token
@@ -83,7 +79,16 @@ public class AthenaFederationBatch implements Batch
                 try {
                     return metadataHandler.doGetSplits(
                         blockAllocator,
-                        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(layoutReq.getIdentity()).setQueryId(layoutReq.getQueryId()).setCatalogName(layoutReq.getCatalogName()).setTableName(layoutReq.getTableName()).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(layoutResponse.getPartitions()))).addAllPartitionCols(new ArrayList<String>(layoutReq.getPartitionCols())).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(layoutReq.getConstraints())).setContinuationToken(continuationToken))).setContinuationToken($8).build();;
+                        GetSplitsRequest.newBuilder()
+                            .setIdentity(layoutReq.getIdentity())
+                            .setQueryId(layoutReq.getQueryId())
+                            .setCatalogName(layoutReq.getCatalogName())
+                            .setTableName(layoutReq.getTableName())
+                            .setPartitions(layoutResponse.getPartitions())
+                            .addAllPartitionCols(layoutReq.getPartitionColsList())
+                            .setConstraints(layoutReq.getConstraints())
+                            .setContinuationToken(continuationToken)
+                            .build());
                 }
                 catch (Exception ex) {
                     // We have to catch and rethrow as unchecked because we are inside of a lambda
@@ -102,20 +107,20 @@ public class AthenaFederationBatch implements Batch
                       .map(split -> {
                           try {
                                return AthenaFederationInputPartition.fromReadRecordsRequest(
-                                  new ReadRecordsRequest(
-                                      layoutReq.getIdentity(),
-                                      layoutReq.getCatalogName(),
-                                      layoutReq.getQueryId(),
-                                      layoutReq.getTableName(),
-                                      layoutReq.getSchema(),
-                                      split,
-                                      layoutReq.getConstraints(),
-                                      // Setting both of these to be equal should disable spilling
-                                      blockSize,
-                                      blockSize),
-                                  objectMapper);
+                                    ReadRecordsRequest.newBuilder()
+                                        .setIdentity(layoutReq.getIdentity())
+                                        .setCatalogName(layoutReq.getCatalogName())
+                                        .setQueryId(layoutReq.getQueryId())
+                                        .setTableName(layoutReq.getTableName())
+                                        .setSchema(layoutReq.getSchema())
+                                        .setSplit(split)
+                                        .setConstraints(layoutReq.getConstraints())
+                                        // Setting both of these to be equal should disable spilling
+                                        .setMaxBlockSize(blockSize)
+                                        .setMaxInlineBlockSize(blockSize)
+                                        .build());
                           }
-                          catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+                          catch (InvalidProtocolBufferException ex) {
                               // Lambda is not allowed to throw a checked exception so we have to rethrow here as an unchecked
                               throw new RuntimeException(ex);
                           }
