@@ -300,19 +300,19 @@ public class SaphanaMetadataHandlerTest
     {
         TableName inputTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable@schemacase=upper&tablecase=upper").build();
         TableName tableName = saphanaMetadataHandler.findTableNameFromQueryHint(inputTableName);
-        Assert.assertEquals(TableName.newBuilder().setSchemaName("TESTSCHEMA", "TESTTABLE")).setTableName(tableName).build();
+        Assert.assertEquals(TableName.newBuilder().setSchemaName("TESTSCHEMA").setTableName("TESTTABLE").build(), tableName);
 
         TableName inputTableName1 = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable@schemacase=upper&tablecase=lower").build();
         TableName tableName1 = saphanaMetadataHandler.findTableNameFromQueryHint(inputTableName1);
-        Assert.assertEquals(TableName.newBuilder().setSchemaName("TESTSCHEMA", "testtable")).setTableName(tableName1).build();
+        Assert.assertEquals(TableName.newBuilder().setSchemaName("TESTSCHEMA").setTableName("testtable").build(), tableName1);
 
         TableName inputTableName2 = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable@schemacase=lower&tablecase=lower").build();
         TableName tableName2 = saphanaMetadataHandler.findTableNameFromQueryHint(inputTableName2);
-        Assert.assertEquals(TableName.newBuilder().setSchemaName("testschema", "testtable")).setTableName(tableName2).build();
+        Assert.assertEquals(TableName.newBuilder().setSchemaName("testschema").setTableName("testtable").build(), tableName2);
 
         TableName inputTableName3 = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable@schemacase=lower&tablecase=upper").build();
         TableName tableName3 = saphanaMetadataHandler.findTableNameFromQueryHint(inputTableName3);
-        Assert.assertEquals(TableName.newBuilder().setSchemaName("testschema", "TESTTABLE")).setTableName(tableName3).build();
+        Assert.assertEquals(TableName.newBuilder().setSchemaName("testschema").setTableName("TESTTABLE").build(), tableName3);
 
     }
 

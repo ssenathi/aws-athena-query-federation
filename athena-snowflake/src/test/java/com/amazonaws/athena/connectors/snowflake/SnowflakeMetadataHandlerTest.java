@@ -25,6 +25,7 @@ import com.amazonaws.athena.connector.lambda.proto.domain.TableName;
 import com.amazonaws.athena.connector.lambda.domain.predicate.Constraints;
 import com.amazonaws.athena.connector.lambda.proto.metadata.*;
 import com.amazonaws.athena.connector.lambda.proto.security.FederatedIdentity;
+import com.amazonaws.athena.connector.lambda.serde.protobuf.ProtobufMessageConverter;
 import com.amazonaws.athena.connectors.jdbc.TestBase;
 import com.amazonaws.athena.connectors.jdbc.connection.DatabaseConnectionConfig;
 import com.amazonaws.athena.connectors.jdbc.connection.JdbcConnectionFactory;
@@ -278,7 +279,7 @@ public class SnowflakeMetadataHandlerTest
         GetTableLayoutResponse getTableLayoutResponse = this.snowflakeMetadataHandler.doGetTableLayout(blockAllocator, getTableLayoutRequest);
 
         BlockAllocator splitBlockAllocator = new BlockAllocatorImpl();
-        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(ProtobufMessageConverter.toProtoBlock(ProtobufMessageConverter.toProtoBlock(getTableLayoutResponse.getPartitions()))).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))).setContinuationToken($8).build();
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).build();
         GetSplitsResponse getSplitsResponse = this.snowflakeMetadataHandler.doGetSplits(splitBlockAllocator, getSplitsRequest);
 
         Set<Map<String, String>> expectedSplits = new HashSet<>();
@@ -315,7 +316,7 @@ public class SnowflakeMetadataHandlerTest
         GetTableLayoutResponse getTableLayoutResponse = this.snowflakeMetadataHandler.doGetTableLayout(blockAllocator, getTableLayoutRequest);
 
         BlockAllocator splitBlockAllocator = new BlockAllocatorImpl();
-        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).setContinuationToken("1")).build();
+        GetSplitsRequest getSplitsRequest = GetSplitsRequest.newBuilder().setIdentity(this.federatedIdentity).setQueryId("testQueryId").setCatalogName("testCatalogName").setTableName(tableName).setPartitions(getTableLayoutResponse.getPartitions()).addAllPartitionCols(new ArrayList<>(partitionCols)).setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints)).setContinuationToken("1").build();
         GetSplitsResponse getSplitsResponse = this.snowflakeMetadataHandler.doGetSplits(splitBlockAllocator, getSplitsRequest);
 
         Set<Map<String, String>> expectedSplits = new HashSet<>();
@@ -394,19 +395,19 @@ public class SnowflakeMetadataHandlerTest
     {
         TableName inputTableName = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable@schemacase=upper&tablecase=upper").build();
         TableName tableName = snowflakeMetadataHandler.findTableNameFromQueryHint(inputTableName);
-        Assert.assertEquals(TableName.newBuilder().setSchemaName("TESTSCHEMA", "TESTTABLE")).setTableName(tableName).build();
+        Assert.assertEquals(TableName.newBuilder().setSchemaName("TESTSCHEMA").setTableName("TESTTABLE").build(), tableName);
 
         TableName inputTableName1 = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable@schemacase=upper&tablecase=lower").build();
         TableName tableName1 = snowflakeMetadataHandler.findTableNameFromQueryHint(inputTableName1);
-        Assert.assertEquals(TableName.newBuilder().setSchemaName("TESTSCHEMA", "testtable")).setTableName(tableName1).build();
+        Assert.assertEquals(TableName.newBuilder().setSchemaName("TESTSCHEMA").setTableName("testtable").build(), tableName1);
 
         TableName inputTableName2 = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable@schemacase=lower&tablecase=lower").build();
         TableName tableName2 = snowflakeMetadataHandler.findTableNameFromQueryHint(inputTableName2);
-        Assert.assertEquals(TableName.newBuilder().setSchemaName("testschema", "testtable")).setTableName(tableName2).build();
+        Assert.assertEquals(TableName.newBuilder().setSchemaName("testschema").setTableName("testtable").build(), tableName2);
 
         TableName inputTableName3 = TableName.newBuilder().setSchemaName("testSchema").setTableName("testTable@schemacase=lower&tablecase=upper").build();
         TableName tableName3 = snowflakeMetadataHandler.findTableNameFromQueryHint(inputTableName3);
-        Assert.assertEquals(TableName.newBuilder().setSchemaName("testschema", "TESTTABLE")).setTableName(tableName3).build();
+        Assert.assertEquals(TableName.newBuilder().setSchemaName("testschema").setTableName("TESTTABLE").build(), tableName3);
 
     }
 
@@ -422,6 +423,6 @@ public class SnowflakeMetadataHandlerTest
         Mockito.when(this.connection.getMetaData().getSchemas()).thenReturn(schemaResultSet);
         ListSchemasResponse listSchemasResponse = this.snowflakeMetadataHandler.doListSchemaNames(blockAllocator, listSchemasRequest);
         String[] expectedResult = {"TESTSCHEMA","TESTCATALOG"};
-        Assert.assertEquals(Arrays.toString(expectedResult), listSchemasResponse.getSchemas().toString());
+        Assert.assertEquals(Arrays.toString(expectedResult), listSchemasResponse.getSchemasList().toString());
     }
 }

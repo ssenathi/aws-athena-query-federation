@@ -109,7 +109,7 @@ public class HiveMetadataHandler extends JdbcMetadataHandler
      * @throws Exception An Exception should be thrown for database connection failures , query syntax errors and so on.
      **/
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest getTableLayoutRequest,
+    public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest getTableLayoutRequest,
                               QueryStatusChecker queryStatusChecker) throws Exception
     {
         LOGGER.info("{}: Schema {}, table {}", getTableLayoutRequest.getQueryId(), getTableLayoutRequest.getTableName().getSchemaName(),

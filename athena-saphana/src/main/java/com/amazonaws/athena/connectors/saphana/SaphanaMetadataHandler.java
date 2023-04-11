@@ -124,7 +124,7 @@ public class SaphanaMetadataHandler extends JdbcMetadataHandler
      *
      */
     @Override
-    public void getPartitions(BlockWriter blockWriter, GetTableLayoutRequest getTableLayoutRequest,
+    public void getPartitions(BlockAllocator allocator, BlockWriter blockWriter, GetTableLayoutRequest getTableLayoutRequest,
                               QueryStatusChecker queryStatusChecker) throws Exception
     {
         LOGGER.debug("{}: Schema {}, table {}", getTableLayoutRequest.getQueryId(), getTableLayoutRequest.getTableName().getSchemaName(),
@@ -208,7 +208,7 @@ public class SaphanaMetadataHandler extends JdbcMetadataHandler
             splits.add(splitBuilder.build());
             if (splits.size() >= SaphanaConstants.MAX_SPLITS_PER_REQUEST) {
                 //We exceeded the number of split we want to return in a single request, return and provide a continuation token.
-                return new GetSplitsResponse(getSplitsRequest.getCatalogName(), splits, encodeContinuationToken(curPartition + 1));
+                return GetSplitsResponse.newBuilder().setCatalogName(getSplitsRequest.getCatalogName()).addAllSplits(splits).setContinuationToken(encodeContinuationToken(curPartition + 1)).build();
             }
         }
         return GetSplitsResponse.newBuilder().setType("GetSplitsResponse").setCatalogName(getSplitsRequest.getCatalogName()).addAllSplits(splits).build();
@@ -233,8 +233,7 @@ public class SaphanaMetadataHandler extends JdbcMetadataHandler
         try (Connection connection = getJdbcConnectionFactory().getConnection(getCredentialProvider())) {
             Schema partitionSchema = getPartitionSchema(getTableRequest.getCatalogName());
             TableName tableName = getTableFromMetadata(getTableRequest.getCatalogName(), getTableRequest.getTableName(), connection.getMetaData());
-            GetTableResponse getTableResponse = new GetTableResponse(getTableRequest.getCatalogName(), tableName, getSchema(connection, tableName, partitionSchema),
-                    partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet()));
+            GetTableResponse getTableResponse = GetTableResponse.newBuilder().setCatalogName(getTableRequest.getCatalogName()).setTableName(tableName).setSchema(ProtobufMessageConverter.toProtoSchemaBytes(getSchema(connection, tableName, partitionSchema))).addAllPartitionColumns(partitionSchema.getFields().stream().map(Field::getName).collect(Collectors.toSet())).build();
             return getTableResponse;
         }
     }
