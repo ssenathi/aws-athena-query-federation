@@ -60,6 +60,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -100,7 +101,9 @@ public class AmazonMskMetadataHandlerTest {
             "secret_manager_msk_creds_name", "testSecret",
             "kafka_endpoint", "12.207.18.179:9092",
             "certificates_s3_reference", "s3://msk-connector-test-bucket/mskfiles/",
-            "secrets_manager_secret", "AmazonMSK_afq");
+            "secrets_manager_secret", "AmazonMSK_afq",
+            "spill_bucket", "asdf_spill_bucket_loc"
+            );
 
         consumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
         Map<TopicPartition, Long> partitionsStart = new HashMap<>();
@@ -210,14 +213,21 @@ public class AmazonMskMetadataHandlerTest {
         PowerMockito.when(awsGlue.getSchema(any())).thenReturn(getSchemaResult);
         PowerMockito.when(awsGlue.getSchemaVersion(any())).thenReturn(getSchemaVersionResult);
 
-        GetSplitsRequest request = GetSplitsRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("kafka").setTableName(TableName.newBuilder().setSchemaName("default").setTableName("testTopic").build()).setPartitions(ProtobufMessageConverter.toProtoBlock(Mockito.mock(Block.class))).addAllPartitionCols(new ArrayList<>()).setConstraints(ProtobufMessageConverter.toProtoConstraints(Mockito.mock(Constraints.class))).build();;
+        GetSplitsRequest request = GetSplitsRequest.newBuilder()
+            .setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("kafka").setTableName(TableName.newBuilder().setSchemaName("default").setTableName("testTopic").build())
+            .setPartitions(com.amazonaws.athena.connector.lambda.proto.data.Block.newBuilder().build())
+            .setConstraints(ProtobufMessageConverter.toProtoConstraints(Mockito.mock(Constraints.class)))
+            .build();
 
         GetSplitsResponse response = amazonMskMetadataHandler.doGetSplits(blockAllocator, request);
         assertEquals(1000, response.getSplitsList().size());
         assertEquals("1000", response.getContinuationToken());
-        request = GetSplitsRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("kafka").setTableName(TableName.newBuilder().setSchemaName("default").setTableName("testTopic").build()).setPartitions(ProtobufMessageConverter.toProtoBlock(Mockito.mock(Block.class))).addAllPartitionCols(new ArrayList<>()).setConstraints(ProtobufMessageConverter.toProtoConstraints(Mockito.mock(Constraints.class))).setContinuationToken(response.getContinuationToken()).build();
+        request = GetSplitsRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName("kafka").setTableName(TableName.newBuilder().setSchemaName("default").setTableName("testTopic").build())
+            .setPartitions(com.amazonaws.athena.connector.lambda.proto.data.Block.newBuilder().build())
+            .setConstraints(ProtobufMessageConverter.toProtoConstraints(Mockito.mock(Constraints.class)))
+            .setContinuationToken(response.getContinuationToken()).build();
         response = amazonMskMetadataHandler.doGetSplits(blockAllocator, request);
         assertEquals(500, response.getSplitsList().size());
-        assertNull(response.getContinuationToken());
+        assertFalse(response.hasContinuationToken());
     }
 }
