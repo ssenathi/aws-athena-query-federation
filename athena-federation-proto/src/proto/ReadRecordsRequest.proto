@@ -4,7 +4,6 @@ package com.amazonaws.athena.connector.lambda.proto.records;
 
 import 'FederatedIdentity.proto';
 import 'TableName.proto';
-import 'Block.proto';
 import 'Constraints.proto';
 import 'Split.proto';
 
