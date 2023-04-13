@@ -339,7 +339,7 @@ public class ExampleMetadataHandler
                         matched &= block.setValue("year", rowNum, yearVal);
 
                         //these are additional field we added by overriding enhancePartitionSchema(...)
-                        matched &= block.setValue(PARTITION_LOCATION, rowNum, "s3://" + request.getPartitionColsList());
+                        matched &= block.setValue(PARTITION_LOCATION, rowNum, "s3://" + request.getPartitionColumnsList());
                         matched &= block.setValue(SERDE, rowNum, "TextInputFormat");
 
                         //if all fields passed then we wrote 1 row
@@ -432,7 +432,7 @@ public class ExampleMetadataHandler
                 //Add the partition column values to the split's properties.
                 //We are doing this because our example record reader depends on it, your specific needs
                 //will likely vary. Our example only supports a limited number of partition column types.
-                for (String next : request.getPartitionColsList()) {
+                for (String next : request.getPartitionColumnsList()) {
                     FieldReader reader = partitions.getFieldReader(next);
                     reader.setPosition(curPartition);
 

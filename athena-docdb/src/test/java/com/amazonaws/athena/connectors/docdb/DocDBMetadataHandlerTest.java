@@ -269,7 +269,7 @@ public class DocDBMetadataHandlerTest
         GetSplitsRequest req = GetSplitsRequest.newBuilder().setIdentity(IDENTITY).setQueryId(QUERY_ID).setCatalogName(DEFAULT_CATALOG)
         .setTableName(TABLE_NAME)
         .setPartitions(ProtobufMessageConverter.toProtoBlock(partitions))
-        .addAllPartitionCols(partitionCols)
+        .addAllPartitionColumns(partitionCols)
         .build();
         
         logger.info("doGetSplits: req[{}]", req);

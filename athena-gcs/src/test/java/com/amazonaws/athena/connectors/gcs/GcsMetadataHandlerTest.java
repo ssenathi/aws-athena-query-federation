@@ -299,7 +299,7 @@ public class GcsMetadataHandlerTest
     {
         Block partitions = BlockUtils.newBlock(blockAllocator, "year", Types.MinorType.VARCHAR.getType(), 2000, 2001);
         GetSplitsRequest request = GetSplitsRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName(CATALOG).setTableName(TABLE_NAME).setPartitions(ProtobufMessageConverter.toProtoBlock(partitions))
-            .addPartitionCols("year").build();
+            .addPartitionColumns("year").build();
         QueryStatusChecker queryStatusChecker = mock(QueryStatusChecker.class);
         when(queryStatusChecker.isQueryRunning()).thenReturn(true);
         GetTableResult getTableResult = mock(GetTableResult.class);
@@ -336,7 +336,7 @@ public class GcsMetadataHandlerTest
         }
         partitions.setRowCount(num_partitions);
         GetSplitsRequest request = GetSplitsRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName(CATALOG).setTableName(TABLE_NAME).setPartitions(ProtobufMessageConverter.toProtoBlock(partitions))
-            .addAllPartitionCols(com.google.common.collect.ImmutableList.of("yearCol", "monthCol")).build();
+            .addAllPartitionColumns(com.google.common.collect.ImmutableList.of("yearCol", "monthCol")).build();
         QueryStatusChecker queryStatusChecker = mock(QueryStatusChecker.class);
         when(queryStatusChecker.isQueryRunning()).thenReturn(true);
         GetTableResult getTableResult = mock(GetTableResult.class);
@@ -363,7 +363,7 @@ public class GcsMetadataHandlerTest
     {
         Block partitions = BlockUtils.newBlock(blockAllocator, "gcs_file_format", Types.MinorType.VARCHAR.getType(), 2000, 2001);
         GetSplitsRequest request = GetSplitsRequest.newBuilder().setIdentity(federatedIdentity).setQueryId(QUERY_ID).setCatalogName(CATALOG).setTableName(TABLE_NAME).setPartitions(ProtobufMessageConverter.toProtoBlock(partitions))
-            .addPartitionCols("gc_file_format").build();
+            .addPartitionColumns("gc_file_format").build();
         QueryStatusChecker queryStatusChecker = mock(QueryStatusChecker.class);
         when(queryStatusChecker.isQueryRunning()).thenReturn(true);
         GetTableResult getTableResult = mock(GetTableResult.class);

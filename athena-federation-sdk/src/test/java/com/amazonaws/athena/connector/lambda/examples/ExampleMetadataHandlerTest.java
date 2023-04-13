@@ -306,7 +306,7 @@ public class ExampleMetadataHandlerTest
                 .setTableName(TableName.newBuilder().setSchemaName("schema1").setTableName("table1").build())
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
                 .setSchema(ProtobufMessageConverter.toProtoSchemaBytes(tableSchema))
-                .addAllPartitionCols(partitionCols)
+                .addAllPartitionColumns(partitionCols)
                 .build();
 
             res = metadataHandler.doGetTableLayout(allocator, req);
@@ -404,7 +404,7 @@ public class ExampleMetadataHandlerTest
                 .putAllSummary(ProtobufMessageConverter.toProtoSummary(constraintsMap))
                 .build()
             )
-            .addAllPartitionCols(partitionCols);
+            .addAllPartitionColumns(partitionCols);
 
             if (continuationToken != null)
             {

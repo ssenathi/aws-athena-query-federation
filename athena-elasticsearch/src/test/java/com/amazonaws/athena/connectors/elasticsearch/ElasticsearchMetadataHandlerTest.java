@@ -386,7 +386,7 @@ public class ElasticsearchMetadataHandlerTest
         Block partitions = BlockUtils.newBlock(allocator, "partitionId", Types.MinorType.INT.getType(), 0);
 
         String continuationToken = null;
-        GetSplitsRequest req = GetSplitsRequest.newBuilder().setIdentity(fakeIdentity()).setQueryId("queryId").setCatalogName("elasticsearch").setTableName(TableName.newBuilder().setSchemaName("movies").setTableName("customer").build()).setPartitions(ProtobufMessageConverter.toProtoBlock(partitions)).addAllPartitionCols(partitionCols).build();
+        GetSplitsRequest req = GetSplitsRequest.newBuilder().setIdentity(fakeIdentity()).setQueryId("queryId").setCatalogName("elasticsearch").setTableName(TableName.newBuilder().setSchemaName("movies").setTableName("customer").build()).setPartitions(ProtobufMessageConverter.toProtoBlock(partitions)).addAllPartitionColumns(partitionCols).build();
         logger.info("doGetSplits: req[{}]", req);
 
         // Setup domain and endpoint

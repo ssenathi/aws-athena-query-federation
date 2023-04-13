@@ -179,7 +179,7 @@ public class AthenaFederationScanBuilder implements ScanBuilder, SupportsPushDow
                 .setTableName(getTableResponse.getTableName())
                 .setConstraints(ProtobufMessageConverter.toProtoConstraints(constraints))
                 .setSchema(getTableResponse.getSchema())
-                .addAllPartitionCols(getTableResponse.getPartitionColumnsList())
+                .addAllPartitionColumns(getTableResponse.getPartitionColumnsList())
                 .build();
             String getTableLayoutSerializedString = ProtobufSerDe.PROTOBUF_JSON_PRINTER.print(layoutReq);
             String description = String.format("Generated from: --- %s --- %s ---", getTableResponse, constraints);

@@ -221,7 +221,7 @@ public class MetricsMetadataHandlerTest
         GetSplitsRequest originalReq = GetSplitsRequest.newBuilder().setIdentity(identity).setQueryId("queryId").setCatalogName("catalog_name")
             .setTableName(TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metrics").build())
             .setPartitions(ProtobufMessageConverter.toProtoBlock(partitions))
-            .addPartitionCols("partitionId")
+            .addPartitionColumns("partitionId")
             .build();
         int numContinuations = 0;
         do {
@@ -295,7 +295,7 @@ public class MetricsMetadataHandlerTest
         GetSplitsRequest originalReq = GetSplitsRequest.newBuilder().setIdentity(identity).setQueryId("queryId").setCatalogName("catalog_name")
             .setTableName(TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metric_samples").build())
             .setPartitions(ProtobufMessageConverter.toProtoBlock(partitions))
-            .addPartitionCols("partitionId")
+            .addPartitionColumns("partitionId")
             .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
             .build();
 
@@ -364,7 +364,7 @@ public class MetricsMetadataHandlerTest
         GetSplitsRequest req = GetSplitsRequest.newBuilder().setIdentity(identity).setQueryId("queryId").setCatalogName("catalog_name")
             .setTableName(TableName.newBuilder().setSchemaName(defaultSchema).setTableName("metric_samples").build())
             .setPartitions(ProtobufMessageConverter.toProtoBlock(partitions))
-            .addPartitionCols("partitionId")
+            .addPartitionColumns("partitionId")
             .setConstraints(ProtobufMessageConverter.toProtoConstraints(new Constraints(constraintsMap)))
             .build();
         logger.info("doGetMetricSamplesSplitsEmptyMetrics: req[{}]", req);

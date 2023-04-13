@@ -85,7 +85,7 @@ public class AthenaFederationBatch implements Batch
                             .setCatalogName(layoutReq.getCatalogName())
                             .setTableName(layoutReq.getTableName())
                             .setPartitions(layoutResponse.getPartitions())
-                            .addAllPartitionCols(layoutReq.getPartitionColsList())
+                            .addAllPartitionColumns(layoutReq.getPartitionColumnsList())
                             .setConstraints(layoutReq.getConstraints())
                             .setContinuationToken(continuationToken)
                             .build());

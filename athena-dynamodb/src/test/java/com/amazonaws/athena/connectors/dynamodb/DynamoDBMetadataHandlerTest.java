@@ -612,7 +612,7 @@ public class DynamoDBMetadataHandlerTest
             .setTableName(TEST_TABLE_NAME.getTableName())
             .build())
         .setPartitions(layoutResponse.getPartitions())
-        .addAllPartitionCols(List.of("col_0"))
+        .addAllPartitionColumns(List.of("col_0"))
         .build();
 
         logger.info("doGetSplits: req[{}]", req);
@@ -640,7 +640,7 @@ public class DynamoDBMetadataHandlerTest
             .setTableName(TEST_TABLE_NAME.getTableName())
             .build())
         .setPartitions(layoutResponse.getPartitions())
-        .addAllPartitionCols(List.of("col_0"))
+        .addAllPartitionColumns(List.of("col_0"))
         .setContinuationToken(continuationToken)
         .build();
 
