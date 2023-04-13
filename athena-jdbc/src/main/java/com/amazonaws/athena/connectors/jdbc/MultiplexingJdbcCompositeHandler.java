@@ -43,10 +43,10 @@ public class MultiplexingJdbcCompositeHandler
     {
         super(
             hasCatalogConnections ?
-                muxMetadataHandlerClass.getConstructor(java.util.Map.class).newInstance(new java.util.HashMap<>(System.getenv())) :
-                metadataHandlerClass.getConstructor(java.util.Map.class).newInstance(new java.util.HashMap<>(System.getenv())),
+                muxMetadataHandlerClass.getConstructor(java.util.Map.class).newInstance(System.getenv()) :
+                metadataHandlerClass.getConstructor(java.util.Map.class).newInstance(System.getenv()),
             hasCatalogConnections ?
-                muxRecordHandlerClass.getConstructor(java.util.Map.class).newInstance(new java.util.HashMap<>(System.getenv())) :
-                recordHandlerClass.getConstructor(java.util.Map.class).newInstance(new java.util.HashMap<>(System.getenv())));
+                muxRecordHandlerClass.getConstructor(java.util.Map.class).newInstance(System.getenv()) :
+                recordHandlerClass.getConstructor(java.util.Map.class).newInstance(System.getenv()));
     }
 }

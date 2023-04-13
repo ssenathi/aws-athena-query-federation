@@ -32,6 +32,6 @@ public class MySqlCompositeHandler
 {
     public MySqlCompositeHandler()
     {
-        super(new MySqlMetadataHandler(new java.util.HashMap<>(System.getenv())), new MySqlRecordHandler(new java.util.HashMap<>(System.getenv())));
+        super(new MySqlMetadataHandler(System.getenv()), new MySqlRecordHandler(System.getenv()));
     }
 }

@@ -105,6 +105,7 @@ public abstract class MetadataHandler
     protected static final String KMS_KEY_ID_ENV = "kms_key_id";
     protected static final String DISABLE_SPILL_ENCRYPTION = "disable_spill_encryption";
     protected static final String FUNCTION_ARN_CONFIG_KEY = "FUNCTION_ARN";
+    protected String functionArn;
     private final CachableSecretsManager secretsManager;
     private final AmazonAthena athena;
     private final ThrottlingInvoker athenaInvoker;
@@ -185,6 +186,11 @@ public abstract class MetadataHandler
     protected EncryptionKey makeEncryptionKey()
     {
         return (encryptionKeyFactory != null) ? encryptionKeyFactory.create() : null;
+    }
+
+    protected void setFunctionArn(String functionArn)
+    {
+        this.functionArn = functionArn;
     }
 
         /**
