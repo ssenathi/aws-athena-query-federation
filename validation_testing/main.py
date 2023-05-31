@@ -2,7 +2,7 @@ import subprocess
 import os
 import sys
 
-TESTABLE_CONNECTORS = ['dynamodb']
+TESTABLE_CONNECTORS = ['mysql', 'dynamodb']
 
 
 def run_single_connector_release_tests(connector_name, results_location):

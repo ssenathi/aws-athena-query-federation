@@ -74,7 +74,7 @@ export class RdsGenericStack extends cdk.Stack {
       },
       removalPolicy: cdk.RemovalPolicy.DESTROY
     });
-    const connectionString = `jdbc:${db_type}://${cluster.clusterEndpoint.socketAddress}/test`;
+    const connectionString = `jdbc:${db_type}://${cluster.clusterEndpoint.socketAddress}/test?user=athena&password=${password}`;
     const subnet = vpc.isolatedSubnets[0]; // just pick one
 
     // make glue connection, use same security group and subnet as cluster above.
@@ -120,12 +120,15 @@ export class RdsGenericStack extends cdk.Stack {
       });
     }
     const cfn_template_file = path.join(__dirname, connector_yaml_path);
+    var connectionStringPrefix = '';
+    if (db_type == 'mysql') connectionStringPrefix = 'mysql';
+    if (db_type == 'postgresql') connectionStringPrefix = 'postgres';
     const connectorSubStack = new CfnInclude(this,`${db_type}LambdaStack`, {
       templateFile: cfn_template_file,
       parameters: {
         'LambdaFunctionName': `${db_type}-cdk-deployed`,
         'SecretNamePrefix': 'asdf',
-        'DefaultConnectionString': connectionString,
+        'DefaultConnectionString': `${connectionStringPrefix}://${connectionString}`,
         'SecurityGroupIds': [securityGroup.securityGroupId],
         'SubnetIds': [subnet.subnetId],
         'SpillBucket': 'amazon-athena-federation-perf-spill-bucket',
@@ -137,7 +140,7 @@ export class RdsGenericStack extends cdk.Stack {
     // for some reason, I can't just pass the below in as a property. So we have to just keep
     // a switch here until that's resolved.
     if (db_type == 'mysql') {
-      return rds.DatabaseClusterEngine.auroraMysql({version:rds.AuroraMysqlEngineVersion.VER_2_10_2});
+      return rds.DatabaseClusterEngine.auroraMysql({version:rds.AuroraMysqlEngineVersion.VER_3_01_0});
     } else if (db_type == 'postgresql') {
       return rds.DatabaseClusterEngine.auroraPostgres({version:rds.AuroraPostgresEngineVersion.VER_13_4});
     } else {
