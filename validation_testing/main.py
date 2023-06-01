@@ -17,7 +17,8 @@ def run_all_connector_release_tests(results_location):
 def assert_required_env_vars_set():
     has_results_location = os.environ.get('RESULTS_LOCATION') is not None
     has_repo_root = os.environ.get('REPOSITORY_ROOT') is not None
-    return has_results_location and has_repo_root
+    has_db_password = os.environ.get('DATABASE_PASSWORD') is not None
+    return has_results_location and has_repo_root and has_db_password
 
 if __name__ == '__main__':
     has_env_vars = assert_required_env_vars_set()
