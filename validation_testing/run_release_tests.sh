@@ -12,7 +12,6 @@
 # Expects input arg of a connector name and where query results should go
 CONNECTOR_NAME=$1
 RESULTS_LOCATION=$2
-echo "RESULTS LOCATION IS $RESULTS_LOCATION"
 VALIDATION_TESTING_ROOT=$REPOSITORY_ROOT/validation_testing
 mkdir -p ~/docker_images/
 curl -s https://raw.githubusercontent.com/henrymai/container_env/master/env.sh | sed '/--gpus/d' > ~/docker_images/gh_env.sh
